@@ -1,0 +1,3902 @@
+[
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 1/4 + 1/4?",
+    "options": [
+      "1/8",
+      "2/4",
+      "1/2",
+      "2/8"
+    ],
+    "correct": 1,
+    "explanation": "1/4 + 1/4 = 2/4, which simplifies to 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "Simplify: 6/8",
+    "options": [
+      "3/4",
+      "2/3",
+      "4/6",
+      "1/2"
+    ],
+    "correct": 0,
+    "explanation": "Both 6 and 8 are divisible by 2, so 6/8 = 3/4"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 1/2 + 1/2?",
+    "options": [
+      "1",
+      "2/4",
+      "1/4",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "1/2 + 1/2 = 2/2 = 1"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "Which fraction is equivalent to 1/2?",
+    "options": [
+      "2/4",
+      "1/3",
+      "3/5",
+      "1/4"
+    ],
+    "correct": 0,
+    "explanation": "2/4 simplifies to 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 3/4 - 1/4?",
+    "options": [
+      "2/4",
+      "1/2",
+      "2/8",
+      "4/4"
+    ],
+    "correct": 1,
+    "explanation": "3/4 - 1/4 = 2/4 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "Simplify: 4/6",
+    "options": [
+      "2/3",
+      "1/2",
+      "3/4",
+      "4/5"
+    ],
+    "correct": 0,
+    "explanation": "Divide both by 2: 4/6 = 2/3"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 1/3 + 1/3?",
+    "options": [
+      "2/6",
+      "2/3",
+      "1/6",
+      "3/3"
+    ],
+    "correct": 1,
+    "explanation": "1/3 + 1/3 = 2/3"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 1/2 of 8?",
+    "options": [
+      "4",
+      "2",
+      "6",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "1/2 \u00d7 8 = 8/2 = 4"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "Which is larger: 1/2 or 1/4?",
+    "options": [
+      "1/2",
+      "1/4",
+      "Equal",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "1/2 = 0.5 and 1/4 = 0.25, so 1/2 is larger"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "Simplify: 2/4",
+    "options": [
+      "1/2",
+      "1/3",
+      "2/3",
+      "3/4"
+    ],
+    "correct": 0,
+    "explanation": "Divide both by 2: 2/4 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 2/5 + 1/5?",
+    "options": [
+      "3/5",
+      "3/10",
+      "1/5",
+      "2/5"
+    ],
+    "correct": 0,
+    "explanation": "Same denominator: 2/5 + 1/5 = 3/5"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 3/3?",
+    "options": [
+      "1",
+      "3",
+      "0",
+      "1/3"
+    ],
+    "correct": 0,
+    "explanation": "Any number divided by itself equals 1"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 1/4 of 12?",
+    "options": [
+      "3",
+      "4",
+      "6",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "1/4 \u00d7 12 = 12/4 = 3"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "Simplify: 5/10",
+    "options": [
+      "1/2",
+      "2/5",
+      "5/5",
+      "1/5"
+    ],
+    "correct": 0,
+    "explanation": "Divide both by 5: 5/10 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 4/5 - 1/5?",
+    "options": [
+      "3/5",
+      "5/5",
+      "3/10",
+      "4/5"
+    ],
+    "correct": 0,
+    "explanation": "Same denominator: 4/5 - 1/5 = 3/5"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "Which fraction equals 1?",
+    "options": [
+      "4/4",
+      "4/5",
+      "1/4",
+      "4/1"
+    ],
+    "correct": 0,
+    "explanation": "Any number divided by itself equals 1"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 1/3 of 9?",
+    "options": [
+      "3",
+      "6",
+      "9",
+      "1"
+    ],
+    "correct": 0,
+    "explanation": "1/3 \u00d7 9 = 9/3 = 3"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 2/6 simplified?",
+    "options": [
+      "1/3",
+      "1/2",
+      "2/3",
+      "3/6"
+    ],
+    "correct": 0,
+    "explanation": "Divide both by 2: 2/6 = 1/3"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 5/8 - 1/8?",
+    "options": [
+      "4/8",
+      "1/2",
+      "6/8",
+      "5/8"
+    ],
+    "correct": 1,
+    "explanation": "5/8 - 1/8 = 4/8 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "beginner",
+    "question": "What is 1/5 + 2/5?",
+    "options": [
+      "3/5",
+      "3/10",
+      "1/5",
+      "2/5"
+    ],
+    "correct": 0,
+    "explanation": "Same denominator: 1/5 + 2/5 = 3/5"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 2/3 \u00d7 3/4?",
+    "options": [
+      "6/12",
+      "1/2",
+      "5/7",
+      "2/4"
+    ],
+    "correct": 1,
+    "explanation": "2/3 \u00d7 3/4 = 6/12 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "Which fraction is larger: 3/5 or 2/3?",
+    "options": [
+      "3/5",
+      "2/3",
+      "Equal",
+      "Cannot determine"
+    ],
+    "correct": 1,
+    "explanation": "3/5 = 0.6 and 2/3 \u2248 0.67"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 5/6 - 1/3?",
+    "options": [
+      "4/3",
+      "1/2",
+      "2/3",
+      "4/6"
+    ],
+    "correct": 1,
+    "explanation": "Convert 1/3 to 2/6, then 5/6 - 2/6 = 3/6 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 1/4 \u00d7 2/5?",
+    "options": [
+      "2/20",
+      "1/10",
+      "3/9",
+      "2/9"
+    ],
+    "correct": 1,
+    "explanation": "1/4 \u00d7 2/5 = 2/20 = 1/10"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 3/4 + 1/6?",
+    "options": [
+      "11/12",
+      "4/10",
+      "1/2",
+      "5/6"
+    ],
+    "correct": 0,
+    "explanation": "LCD is 12: 9/12 + 2/12 = 11/12"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 2/3 \u00f7 1/2?",
+    "options": [
+      "4/3",
+      "1/3",
+      "2/6",
+      "3/2"
+    ],
+    "correct": 0,
+    "explanation": "2/3 \u00f7 1/2 = 2/3 \u00d7 2/1 = 4/3"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 5/8 \u00d7 4/5?",
+    "options": [
+      "1/2",
+      "20/40",
+      "9/13",
+      "4/8"
+    ],
+    "correct": 0,
+    "explanation": "5/8 \u00d7 4/5 = 20/40 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 7/10 - 2/5?",
+    "options": [
+      "3/10",
+      "5/10",
+      "1/2",
+      "5/5"
+    ],
+    "correct": 0,
+    "explanation": "Convert 2/5 to 4/10: 7/10 - 4/10 = 3/10"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 3/5 + 1/4?",
+    "options": [
+      "17/20",
+      "4/9",
+      "7/20",
+      "4/20"
+    ],
+    "correct": 0,
+    "explanation": "LCD is 20: 12/20 + 5/20 = 17/20"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 1/2 \u00f7 1/4?",
+    "options": [
+      "2",
+      "1/8",
+      "1/6",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "1/2 \u00f7 1/4 = 1/2 \u00d7 4/1 = 4/2 = 2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 5/6 \u00d7 3/5?",
+    "options": [
+      "1/2",
+      "15/30",
+      "8/11",
+      "3/6"
+    ],
+    "correct": 0,
+    "explanation": "5/6 \u00d7 3/5 = 15/30 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 4/5 - 1/2?",
+    "options": [
+      "3/10",
+      "3/5",
+      "1/2",
+      "2/5"
+    ],
+    "correct": 0,
+    "explanation": "LCD is 10: 8/10 - 5/10 = 3/10"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 2/3 \u00d7 9/10?",
+    "options": [
+      "3/5",
+      "18/30",
+      "11/13",
+      "6/10"
+    ],
+    "correct": 0,
+    "explanation": "2/3 \u00d7 9/10 = 18/30 = 3/5"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 5/9 + 1/3?",
+    "options": [
+      "8/9",
+      "6/12",
+      "2/3",
+      "5/9"
+    ],
+    "correct": 0,
+    "explanation": "Convert 1/3 to 3/9: 5/9 + 3/9 = 8/9"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 3/4 \u00f7 3/8?",
+    "options": [
+      "2",
+      "9/32",
+      "1/2",
+      "6/12"
+    ],
+    "correct": 0,
+    "explanation": "3/4 \u00f7 3/8 = 3/4 \u00d7 8/3 = 24/12 = 2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 7/8 - 1/4?",
+    "options": [
+      "5/8",
+      "6/8",
+      "3/4",
+      "1/2"
+    ],
+    "correct": 0,
+    "explanation": "Convert 1/4 to 2/8: 7/8 - 2/8 = 5/8"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 2/5 \u00d7 5/6?",
+    "options": [
+      "1/3",
+      "10/30",
+      "7/11",
+      "2/6"
+    ],
+    "correct": 0,
+    "explanation": "2/5 \u00d7 5/6 = 10/30 = 1/3"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 11/12 - 2/3?",
+    "options": [
+      "1/4",
+      "9/12",
+      "1/2",
+      "2/3"
+    ],
+    "correct": 0,
+    "explanation": "Convert 2/3 to 8/12: 11/12 - 8/12 = 3/12 = 1/4"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 1/3 \u00f7 2/3?",
+    "options": [
+      "1/2",
+      "2/9",
+      "3/6",
+      "1"
+    ],
+    "correct": 0,
+    "explanation": "1/3 \u00f7 2/3 = 1/3 \u00d7 3/2 = 3/6 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "intermediate",
+    "question": "What is 3/8 + 5/12?",
+    "options": [
+      "19/24",
+      "8/20",
+      "1/2",
+      "15/24"
+    ],
+    "correct": 0,
+    "explanation": "LCD is 24: 9/24 + 10/24 = 19/24"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "Simplify: (2/3 + 1/4) \u00d7 3/5",
+    "options": [
+      "11/20",
+      "1/2",
+      "3/7",
+      "2/5"
+    ],
+    "correct": 0,
+    "explanation": "2/3 + 1/4 = 11/12, then 11/12 \u00d7 3/5 = 33/60 = 11/20"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is (3/4 \u00f7 1/2) - 1/3?",
+    "options": [
+      "7/6",
+      "1",
+      "5/6",
+      "3/2"
+    ],
+    "correct": 0,
+    "explanation": "3/4 \u00f7 1/2 = 3/2, then 3/2 - 1/3 = 9/6 - 2/6 = 7/6"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is 2/3 of 3/4 of 24?",
+    "options": [
+      "12",
+      "18",
+      "16",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "3/4 of 24 = 18, then 2/3 of 18 = 12"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "Simplify: (5/6 - 1/3) \u00f7 1/2",
+    "options": [
+      "1",
+      "2/3",
+      "1/2",
+      "3/4"
+    ],
+    "correct": 0,
+    "explanation": "5/6 - 1/3 = 1/2, then 1/2 \u00f7 1/2 = 1"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is (2/5 + 3/10) \u00d7 5/7?",
+    "options": [
+      "1/2",
+      "7/10",
+      "3/7",
+      "5/14"
+    ],
+    "correct": 0,
+    "explanation": "2/5 + 3/10 = 7/10, then 7/10 \u00d7 5/7 = 35/70 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is 4/9 \u00f7 (2/3 - 1/6)?",
+    "options": [
+      "8/9",
+      "2/3",
+      "4/9",
+      "1"
+    ],
+    "correct": 0,
+    "explanation": "2/3 - 1/6 = 1/2, then 4/9 \u00f7 1/2 = 8/9"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "Simplify: 3/4 + 1/6 - 1/3",
+    "options": [
+      "7/12",
+      "1/2",
+      "5/12",
+      "2/3"
+    ],
+    "correct": 0,
+    "explanation": "LCD is 12: 9/12 + 2/12 - 4/12 = 7/12"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is (5/8 \u00d7 4/5) + 1/4?",
+    "options": [
+      "3/4",
+      "1/2",
+      "5/8",
+      "7/8"
+    ],
+    "correct": 0,
+    "explanation": "5/8 \u00d7 4/5 = 1/2, then 1/2 + 1/4 = 3/4"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is 7/10 - (1/5 + 1/4)?",
+    "options": [
+      "1/4",
+      "3/10",
+      "1/2",
+      "2/5"
+    ],
+    "correct": 0,
+    "explanation": "1/5 + 1/4 = 9/20, 7/10 = 14/20, then 14/20 - 9/20 = 1/4"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "Simplify: (3/5 \u00f7 2/3) \u00d7 1/2",
+    "options": [
+      "9/20",
+      "1/2",
+      "3/10",
+      "2/5"
+    ],
+    "correct": 0,
+    "explanation": "3/5 \u00f7 2/3 = 9/10, then 9/10 \u00d7 1/2 = 9/20"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is 2/3 + 1/4 - 1/6?",
+    "options": [
+      "3/4",
+      "1/2",
+      "5/6",
+      "2/3"
+    ],
+    "correct": 0,
+    "explanation": "LCD is 12: 8/12 + 3/12 - 2/12 = 9/12 = 3/4"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is (4/5 - 1/2) \u00d7 10?",
+    "options": [
+      "3",
+      "4",
+      "5",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "4/5 - 1/2 = 3/10, then 3/10 \u00d7 10 = 3"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "Simplify: 5/6 \u00f7 (1/3 + 1/4)",
+    "options": [
+      "10/7",
+      "5/7",
+      "15/14",
+      "5/6"
+    ],
+    "correct": 0,
+    "explanation": "1/3 + 1/4 = 7/12, then 5/6 \u00f7 7/12 = 60/42 = 10/7"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is (7/8 - 3/4) + 1/2?",
+    "options": [
+      "5/8",
+      "1/2",
+      "3/8",
+      "3/4"
+    ],
+    "correct": 0,
+    "explanation": "7/8 - 3/4 = 1/8, then 1/8 + 1/2 = 5/8"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is 3/5 \u00d7 (2/3 + 1/6)?",
+    "options": [
+      "1/2",
+      "3/5",
+      "2/5",
+      "3/10"
+    ],
+    "correct": 0,
+    "explanation": "2/3 + 1/6 = 5/6, then 3/5 \u00d7 5/6 = 15/30 = 1/2"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "Simplify: (9/10 - 1/5) \u00f7 7/10",
+    "options": [
+      "1",
+      "7/10",
+      "3/5",
+      "7/5"
+    ],
+    "correct": 0,
+    "explanation": "9/10 - 1/5 = 7/10, then 7/10 \u00f7 7/10 = 1"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is 1/2 + 1/3 + 1/6?",
+    "options": [
+      "1",
+      "5/6",
+      "2/3",
+      "1/2"
+    ],
+    "correct": 0,
+    "explanation": "LCD is 6: 3/6 + 2/6 + 1/6 = 6/6 = 1"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is (5/6 \u00d7 3/5) - 1/4?",
+    "options": [
+      "1/4",
+      "1/2",
+      "3/8",
+      "1/3"
+    ],
+    "correct": 0,
+    "explanation": "5/6 \u00d7 3/5 = 1/2, then 1/2 - 1/4 = 1/4"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "Simplify: 4/7 \u00f7 (2/3 - 1/6)",
+    "options": [
+      "24/35",
+      "8/7",
+      "4/7",
+      "12/7"
+    ],
+    "correct": 1,
+    "explanation": "2/3 - 1/6 = 1/2, then 4/7 \u00f7 1/2 = 8/7"
+  },
+  {
+    "topic": "fractions",
+    "difficulty": "advanced",
+    "question": "What is (3/4 + 1/8) \u00d7 2/7?",
+    "options": [
+      "1/4",
+      "7/32",
+      "1/2",
+      "3/14"
+    ],
+    "correct": 0,
+    "explanation": "3/4 + 1/8 = 7/8, then 7/8 \u00d7 2/7 = 14/56 = 1/4"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 5 + 3 \u00d7 2",
+    "options": [
+      "16",
+      "11",
+      "13",
+      "10"
+    ],
+    "correct": 1,
+    "explanation": "Multiply first: 3 \u00d7 2 = 6, then add: 5 + 6 = 11"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: (8 + 2) \u00d7 3",
+    "options": [
+      "13",
+      "30",
+      "26",
+      "24"
+    ],
+    "correct": 1,
+    "explanation": "Brackets first: (8 + 2) = 10, then multiply: 10 \u00d7 3 = 30"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 20 - 10 + 5",
+    "options": [
+      "15",
+      "5",
+      "25",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "Work left to right: 20 - 10 = 10, then 10 + 5 = 15"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 12 \u00f7 4 \u00d7 3",
+    "options": [
+      "9",
+      "1",
+      "12",
+      "15"
+    ],
+    "correct": 0,
+    "explanation": "Work left to right: 12 \u00f7 4 = 3, then 3 \u00d7 3 = 9"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 7 + 8 - 5",
+    "options": [
+      "10",
+      "20",
+      "15",
+      "12"
+    ],
+    "correct": 0,
+    "explanation": "Work left to right: 7 + 8 = 15, then 15 - 5 = 10"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 6 \u00d7 2 + 3",
+    "options": [
+      "15",
+      "30",
+      "18",
+      "21"
+    ],
+    "correct": 0,
+    "explanation": "Multiply first: 6 \u00d7 2 = 12, then add: 12 + 3 = 15"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: (10 - 4) + 2",
+    "options": [
+      "8",
+      "4",
+      "12",
+      "6"
+    ],
+    "correct": 0,
+    "explanation": "Brackets first: 10 - 4 = 6, then add: 6 + 2 = 8"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 15 \u00f7 3 + 2",
+    "options": [
+      "7",
+      "5",
+      "3",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "Divide first: 15 \u00f7 3 = 5, then add: 5 + 2 = 7"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 4 + 5 \u00d7 2",
+    "options": [
+      "14",
+      "18",
+      "13",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "Multiply first: 5 \u00d7 2 = 10, then add: 4 + 10 = 14"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 18 - 6 \u00f7 2",
+    "options": [
+      "15",
+      "6",
+      "12",
+      "9"
+    ],
+    "correct": 0,
+    "explanation": "Divide first: 6 \u00f7 2 = 3, then subtract: 18 - 3 = 15"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: (5 + 5) \u00f7 2",
+    "options": [
+      "5",
+      "10",
+      "15",
+      "7.5"
+    ],
+    "correct": 0,
+    "explanation": "Brackets first: 5 + 5 = 10, then divide: 10 \u00f7 2 = 5"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 9 \u00d7 2 - 8",
+    "options": [
+      "10",
+      "2",
+      "26",
+      "18"
+    ],
+    "correct": 0,
+    "explanation": "Multiply first: 9 \u00d7 2 = 18, then subtract: 18 - 8 = 10"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 20 \u00f7 4 + 3",
+    "options": [
+      "8",
+      "5",
+      "17",
+      "23"
+    ],
+    "correct": 0,
+    "explanation": "Divide first: 20 \u00f7 4 = 5, then add: 5 + 3 = 8"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 3 + 6 - 4",
+    "options": [
+      "5",
+      "13",
+      "7",
+      "9"
+    ],
+    "correct": 0,
+    "explanation": "Work left to right: 3 + 6 = 9, then 9 - 4 = 5"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: (12 \u00f7 3) \u00d7 2",
+    "options": [
+      "8",
+      "2",
+      "6",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "Brackets first: 12 \u00f7 3 = 4, then multiply: 4 \u00d7 2 = 8"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 7 \u00d7 3 + 1",
+    "options": [
+      "22",
+      "28",
+      "24",
+      "21"
+    ],
+    "correct": 0,
+    "explanation": "Multiply first: 7 \u00d7 3 = 21, then add: 21 + 1 = 22"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 16 - 4 \u00d7 2",
+    "options": [
+      "8",
+      "24",
+      "12",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "Multiply first: 4 \u00d7 2 = 8, then subtract: 16 - 8 = 8"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: (9 - 3) + 4",
+    "options": [
+      "10",
+      "2",
+      "12",
+      "6"
+    ],
+    "correct": 0,
+    "explanation": "Brackets first: 9 - 3 = 6, then add: 6 + 4 = 10"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 24 \u00f7 6 + 5",
+    "options": [
+      "9",
+      "4",
+      "29",
+      "14"
+    ],
+    "correct": 0,
+    "explanation": "Divide first: 24 \u00f7 6 = 4, then add: 4 + 5 = 9"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "beginner",
+    "question": "Calculate: 5 + 4 \u00d7 3",
+    "options": [
+      "17",
+      "27",
+      "23",
+      "15"
+    ],
+    "correct": 0,
+    "explanation": "Multiply first: 4 \u00d7 3 = 12, then add: 5 + 12 = 17"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 20 - 4 \u00d7 3 + 2",
+    "options": [
+      "10",
+      "50",
+      "6",
+      "14"
+    ],
+    "correct": 0,
+    "explanation": "Multiply: 4 \u00d7 3 = 12, then 20 - 12 + 2 = 10"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 16 \u00f7 4 + 3 \u00d7 2",
+    "options": [
+      "10",
+      "14",
+      "8",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "Divide and multiply: 16 \u00f7 4 = 4, 3 \u00d7 2 = 6, then 4 + 6 = 10"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: (15 - 5) \u00f7 2 + 3",
+    "options": [
+      "8",
+      "5",
+      "13",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 15 - 5 = 10, divide: 10 \u00f7 2 = 5, add: 5 + 3 = 8"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 3 \u00d7 (4 + 2) - 5",
+    "options": [
+      "13",
+      "11",
+      "23",
+      "18"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 4 + 2 = 6, multiply: 3 \u00d7 6 = 18, subtract: 18 - 5 = 13"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 18 \u00f7 3 \u00d7 2 - 4",
+    "options": [
+      "8",
+      "3",
+      "2",
+      "12"
+    ],
+    "correct": 0,
+    "explanation": "Left to right: 18 \u00f7 3 = 6, 6 \u00d7 2 = 12, 12 - 4 = 8"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 5 + 6 \u00d7 2 - 7",
+    "options": [
+      "10",
+      "15",
+      "5",
+      "22"
+    ],
+    "correct": 0,
+    "explanation": "Multiply: 6 \u00d7 2 = 12, then 5 + 12 - 7 = 10"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: (20 \u00f7 4) \u00d7 3 + 2",
+    "options": [
+      "17",
+      "15",
+      "20",
+      "11"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 20 \u00f7 4 = 5, multiply: 5 \u00d7 3 = 15, add: 15 + 2 = 17"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 12 + 8 \u00f7 4 - 3",
+    "options": [
+      "11",
+      "2",
+      "5",
+      "14"
+    ],
+    "correct": 0,
+    "explanation": "Divide: 8 \u00f7 4 = 2, then 12 + 2 - 3 = 11"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 7 \u00d7 2 + 4 \u00d7 3",
+    "options": [
+      "26",
+      "42",
+      "38",
+      "22"
+    ],
+    "correct": 0,
+    "explanation": "Multiply: 7 \u00d7 2 = 14, 4 \u00d7 3 = 12, then 14 + 12 = 26"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: (18 - 6) \u00f7 3 + 5",
+    "options": [
+      "9",
+      "7",
+      "4",
+      "12"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 18 - 6 = 12, divide: 12 \u00f7 3 = 4, add: 4 + 5 = 9"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 24 \u00f7 6 + 2 \u00d7 5",
+    "options": [
+      "14",
+      "20",
+      "9",
+      "34"
+    ],
+    "correct": 0,
+    "explanation": "Divide and multiply: 24 \u00f7 6 = 4, 2 \u00d7 5 = 10, then 4 + 10 = 14"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 15 - (4 + 3) \u00d7 2",
+    "options": [
+      "1",
+      "16",
+      "26",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 4 + 3 = 7, multiply: 7 \u00d7 2 = 14, subtract: 15 - 14 = 1"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 9 \u00d7 3 - 12 \u00f7 4",
+    "options": [
+      "24",
+      "21",
+      "15",
+      "27"
+    ],
+    "correct": 0,
+    "explanation": "Multiply and divide: 9 \u00d7 3 = 27, 12 \u00f7 4 = 3, then 27 - 3 = 24"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: (10 + 5) \u00d7 2 - 10",
+    "options": [
+      "20",
+      "25",
+      "30",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 10 + 5 = 15, multiply: 15 \u00d7 2 = 30, subtract: 30 - 10 = 20"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 6 + 18 \u00f7 3 \u00d7 2",
+    "options": [
+      "18",
+      "8",
+      "16",
+      "12"
+    ],
+    "correct": 0,
+    "explanation": "Left to right: 18 \u00f7 3 = 6, 6 \u00d7 2 = 12, then 6 + 12 = 18"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 20 - 3 \u00d7 4 + 8 \u00f7 2",
+    "options": [
+      "12",
+      "16",
+      "24",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "Multiply and divide: 3 \u00d7 4 = 12, 8 \u00f7 2 = 4, then 20 - 12 + 4 = 12"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: (25 - 10) \u00f7 5 + 7",
+    "options": [
+      "10",
+      "8",
+      "12",
+      "3"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 25 - 10 = 15, divide: 15 \u00f7 5 = 3, add: 3 + 7 = 10"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 8 \u00d7 2 - 6 \u00f7 2",
+    "options": [
+      "13",
+      "5",
+      "10",
+      "16"
+    ],
+    "correct": 0,
+    "explanation": "Multiply and divide: 8 \u00d7 2 = 16, 6 \u00f7 2 = 3, then 16 - 3 = 13"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 4 + (7 - 2) \u00d7 3",
+    "options": [
+      "19",
+      "27",
+      "13",
+      "15"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 7 - 2 = 5, multiply: 5 \u00d7 3 = 15, add: 4 + 15 = 19"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "intermediate",
+    "question": "Calculate: 30 \u00f7 5 \u00d7 2 + 4",
+    "options": [
+      "16",
+      "10",
+      "3",
+      "34"
+    ],
+    "correct": 0,
+    "explanation": "Left to right: 30 \u00f7 5 = 6, 6 \u00d7 2 = 12, then 12 + 4 = 16"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 3 + 2\u00b2 \u00d7 5",
+    "options": [
+      "125",
+      "23",
+      "45",
+      "13"
+    ],
+    "correct": 1,
+    "explanation": "Exponent: 2\u00b2 = 4, multiply: 4 \u00d7 5 = 20, add: 3 + 20 = 23"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: (4 + 2)\u00b2 - 10",
+    "options": [
+      "26",
+      "16",
+      "46",
+      "20"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 4 + 2 = 6, exponent: 6\u00b2 = 36, subtract: 36 - 10 = 26"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 5 \u00d7 3\u00b2 - 20 \u00f7 4",
+    "options": [
+      "40",
+      "35",
+      "25",
+      "45"
+    ],
+    "correct": 0,
+    "explanation": "Exponent: 3\u00b2 = 9, multiply: 5 \u00d7 9 = 45, divide: 20 \u00f7 4 = 5, then 45 - 5 = 40"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: (15 - 3\u00b2) \u00d7 2 + 8",
+    "options": [
+      "20",
+      "12",
+      "32",
+      "28"
+    ],
+    "correct": 0,
+    "explanation": "Exponent: 3\u00b2 = 9, brackets: 15 - 9 = 6, multiply: 6 \u00d7 2 = 12, add: 12 + 8 = 20"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 4\u00b2 \u00f7 2 + 3 \u00d7 5",
+    "options": [
+      "23",
+      "19",
+      "35",
+      "40"
+    ],
+    "correct": 0,
+    "explanation": "Exponent: 4\u00b2 = 16, divide: 16 \u00f7 2 = 8, multiply: 3 \u00d7 5 = 15, then 8 + 15 = 23"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: (10 - 2) \u00d7 2\u00b2 - 16",
+    "options": [
+      "16",
+      "32",
+      "48",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 10 - 2 = 8, exponent: 2\u00b2 = 4, multiply: 8 \u00d7 4 = 32, subtract: 32 - 16 = 16"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 100 \u00f7 (5\u00b2 - 15)",
+    "options": [
+      "10",
+      "5",
+      "20",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "Exponent: 5\u00b2 = 25, brackets: 25 - 15 = 10, divide: 100 \u00f7 10 = 10"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 2\u00b3 + 4 \u00d7 3 - 10",
+    "options": [
+      "10",
+      "8",
+      "18",
+      "20"
+    ],
+    "correct": 0,
+    "explanation": "Exponent: 2\u00b3 = 8, multiply: 4 \u00d7 3 = 12, then 8 + 12 - 10 = 10"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: (3 + 2)\u00b2 \u00f7 5 + 7",
+    "options": [
+      "12",
+      "10",
+      "14",
+      "5"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 3 + 2 = 5, exponent: 5\u00b2 = 25, divide: 25 \u00f7 5 = 5, add: 5 + 7 = 12"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 6 \u00d7 2\u00b2 - (20 - 8)",
+    "options": [
+      "12",
+      "24",
+      "36",
+      "18"
+    ],
+    "correct": 0,
+    "explanation": "Exponent: 2\u00b2 = 4, multiply: 6 \u00d7 4 = 24, brackets: 20 - 8 = 12, subtract: 24 - 12 = 12"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 3\u00b2 \u00d7 2 + 16 \u00f7 4\u00b2",
+    "options": [
+      "19",
+      "18",
+      "22",
+      "20"
+    ],
+    "correct": 0,
+    "explanation": "Exponents: 3\u00b2 = 9, 4\u00b2 = 16, multiply: 9 \u00d7 2 = 18, divide: 16 \u00f7 16 = 1, add: 18 + 1 = 19"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: (12 \u00f7 3)\u00b2 - 2 \u00d7 5",
+    "options": [
+      "6",
+      "10",
+      "8",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 12 \u00f7 3 = 4, exponent: 4\u00b2 = 16, multiply: 2 \u00d7 5 = 10, subtract: 16 - 10 = 6"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 50 - 3 \u00d7 2\u00b3 + 10",
+    "options": [
+      "36",
+      "26",
+      "46",
+      "56"
+    ],
+    "correct": 0,
+    "explanation": "Exponent: 2\u00b3 = 8, multiply: 3 \u00d7 8 = 24, then 50 - 24 + 10 = 36"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: (8 - 3)\u00b2 \u00f7 5 \u00d7 2",
+    "options": [
+      "10",
+      "5",
+      "25",
+      "50"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 8 - 3 = 5, exponent: 5\u00b2 = 25, divide: 25 \u00f7 5 = 5, multiply: 5 \u00d7 2 = 10"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 4 \u00d7 3\u00b2 - 48 \u00f7 2\u00b3",
+    "options": [
+      "30",
+      "36",
+      "24",
+      "42"
+    ],
+    "correct": 0,
+    "explanation": "Exponents: 3\u00b2 = 9, 2\u00b3 = 8, multiply: 4 \u00d7 9 = 36, divide: 48 \u00f7 8 = 6, subtract: 36 - 6 = 30"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: (16 - 7) \u00d7 2\u00b2 + 3\u00b3",
+    "options": [
+      "63",
+      "54",
+      "90",
+      "36"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 16 - 7 = 9, exponents: 2\u00b2 = 4, 3\u00b3 = 27, multiply: 9 \u00d7 4 = 36, add: 36 + 27 = 63"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 100 - (5 + 3)\u00b2 \u00f7 4",
+    "options": [
+      "84",
+      "88",
+      "100",
+      "80"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 5 + 3 = 8, exponent: 8\u00b2 = 64, divide: 64 \u00f7 4 = 16, subtract: 100 - 16 = 84"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 2 \u00d7 5\u00b2 - 3\u00b3 + 10",
+    "options": [
+      "33",
+      "23",
+      "43",
+      "53"
+    ],
+    "correct": 0,
+    "explanation": "Exponents: 5\u00b2 = 25, 3\u00b3 = 27, multiply: 2 \u00d7 25 = 50, then 50 - 27 + 10 = 33"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: (20 \u00f7 4 + 1)\u00b2 - 6 \u00d7 3",
+    "options": [
+      "18",
+      "12",
+      "36",
+      "24"
+    ],
+    "correct": 0,
+    "explanation": "Brackets: 20 \u00f7 4 = 5, 5 + 1 = 6, exponent: 6\u00b2 = 36, multiply: 6 \u00d7 3 = 18, subtract: 36 - 18 = 18"
+  },
+  {
+    "topic": "bodmas",
+    "difficulty": "advanced",
+    "question": "Calculate: 3 \u00d7 (4\u00b2 - 10) + 2\u00b3",
+    "options": [
+      "26",
+      "18",
+      "34",
+      "22"
+    ],
+    "correct": 0,
+    "explanation": "Exponent: 4\u00b2 = 16, brackets: 16 - 10 = 6, multiply: 3 \u00d7 6 = 18, exponent: 2\u00b3 = 8, add: 18 + 8 = 26"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 15 + 23?",
+    "options": [
+      "38",
+      "28",
+      "48",
+      "32"
+    ],
+    "correct": 0,
+    "explanation": "15 + 23 = 38"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 45 - 18?",
+    "options": [
+      "27",
+      "37",
+      "17",
+      "33"
+    ],
+    "correct": 0,
+    "explanation": "45 - 18 = 27"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 7 \u00d7 8?",
+    "options": [
+      "56",
+      "54",
+      "48",
+      "64"
+    ],
+    "correct": 0,
+    "explanation": "7 \u00d7 8 = 56"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 36 \u00f7 4?",
+    "options": [
+      "9",
+      "8",
+      "10",
+      "6"
+    ],
+    "correct": 0,
+    "explanation": "36 \u00f7 4 = 9"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 100 - 47?",
+    "options": [
+      "53",
+      "57",
+      "43",
+      "63"
+    ],
+    "correct": 0,
+    "explanation": "100 - 47 = 53"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 12 \u00d7 5?",
+    "options": [
+      "60",
+      "50",
+      "70",
+      "55"
+    ],
+    "correct": 0,
+    "explanation": "12 \u00d7 5 = 60"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 72 \u00f7 8?",
+    "options": [
+      "9",
+      "8",
+      "6",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "72 \u00f7 8 = 9"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 28 + 35?",
+    "options": [
+      "63",
+      "53",
+      "73",
+      "58"
+    ],
+    "correct": 0,
+    "explanation": "28 + 35 = 63"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 91 - 46?",
+    "options": [
+      "45",
+      "55",
+      "35",
+      "47"
+    ],
+    "correct": 0,
+    "explanation": "91 - 46 = 45"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 9 \u00d7 9?",
+    "options": [
+      "81",
+      "72",
+      "90",
+      "99"
+    ],
+    "correct": 0,
+    "explanation": "9 \u00d7 9 = 81"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 64 \u00f7 8?",
+    "options": [
+      "8",
+      "7",
+      "9",
+      "6"
+    ],
+    "correct": 0,
+    "explanation": "64 \u00f7 8 = 8"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 55 + 37?",
+    "options": [
+      "92",
+      "82",
+      "102",
+      "88"
+    ],
+    "correct": 0,
+    "explanation": "55 + 37 = 92"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 80 - 29?",
+    "options": [
+      "51",
+      "49",
+      "61",
+      "59"
+    ],
+    "correct": 0,
+    "explanation": "80 - 29 = 51"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 6 \u00d7 11?",
+    "options": [
+      "66",
+      "77",
+      "56",
+      "76"
+    ],
+    "correct": 0,
+    "explanation": "6 \u00d7 11 = 66"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 48 \u00f7 6?",
+    "options": [
+      "8",
+      "6",
+      "7",
+      "9"
+    ],
+    "correct": 0,
+    "explanation": "48 \u00f7 6 = 8"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 42 + 59?",
+    "options": [
+      "101",
+      "91",
+      "111",
+      "100"
+    ],
+    "correct": 0,
+    "explanation": "42 + 59 = 101"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 125 - 68?",
+    "options": [
+      "57",
+      "67",
+      "47",
+      "63"
+    ],
+    "correct": 0,
+    "explanation": "125 - 68 = 57"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 8 \u00d7 7?",
+    "options": [
+      "56",
+      "48",
+      "64",
+      "54"
+    ],
+    "correct": 0,
+    "explanation": "8 \u00d7 7 = 56"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 54 \u00f7 9?",
+    "options": [
+      "6",
+      "5",
+      "7",
+      "9"
+    ],
+    "correct": 0,
+    "explanation": "54 \u00f7 9 = 6"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "beginner",
+    "question": "What is 33 + 29?",
+    "options": [
+      "62",
+      "52",
+      "72",
+      "58"
+    ],
+    "correct": 0,
+    "explanation": "33 + 29 = 62"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 237 + 486?",
+    "options": [
+      "723",
+      "713",
+      "733",
+      "623"
+    ],
+    "correct": 0,
+    "explanation": "237 + 486 = 723"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 654 - 278?",
+    "options": [
+      "376",
+      "386",
+      "366",
+      "476"
+    ],
+    "correct": 0,
+    "explanation": "654 - 278 = 376"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 34 \u00d7 25?",
+    "options": [
+      "850",
+      "750",
+      "950",
+      "650"
+    ],
+    "correct": 0,
+    "explanation": "34 \u00d7 25 = 850"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 456 \u00f7 12?",
+    "options": [
+      "38",
+      "36",
+      "42",
+      "48"
+    ],
+    "correct": 0,
+    "explanation": "456 \u00f7 12 = 38"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 1000 - 347?",
+    "options": [
+      "653",
+      "753",
+      "553",
+      "663"
+    ],
+    "correct": 0,
+    "explanation": "1000 - 347 = 653"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 48 \u00d7 36?",
+    "options": [
+      "1728",
+      "1828",
+      "1628",
+      "1528"
+    ],
+    "correct": 0,
+    "explanation": "48 \u00d7 36 = 1728"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 875 \u00f7 25?",
+    "options": [
+      "35",
+      "30",
+      "40",
+      "45"
+    ],
+    "correct": 0,
+    "explanation": "875 \u00f7 25 = 35"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 892 + 769?",
+    "options": [
+      "1661",
+      "1561",
+      "1761",
+      "1651"
+    ],
+    "correct": 0,
+    "explanation": "892 + 769 = 1661"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 2345 - 1678?",
+    "options": [
+      "667",
+      "677",
+      "657",
+      "687"
+    ],
+    "correct": 0,
+    "explanation": "2345 - 1678 = 667"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 52 \u00d7 18?",
+    "options": [
+      "936",
+      "936",
+      "846",
+      "1046"
+    ],
+    "correct": 0,
+    "explanation": "52 \u00d7 18 = 936"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 576 \u00f7 24?",
+    "options": [
+      "24",
+      "18",
+      "32",
+      "28"
+    ],
+    "correct": 0,
+    "explanation": "576 \u00f7 24 = 24"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 1567 + 2894?",
+    "options": [
+      "4461",
+      "4461",
+      "4361",
+      "4561"
+    ],
+    "correct": 0,
+    "explanation": "1567 + 2894 = 4461"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 5000 - 2347?",
+    "options": [
+      "2653",
+      "2753",
+      "2553",
+      "2663"
+    ],
+    "correct": 0,
+    "explanation": "5000 - 2347 = 2653"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 67 \u00d7 43?",
+    "options": [
+      "2881",
+      "2781",
+      "2981",
+      "2681"
+    ],
+    "correct": 0,
+    "explanation": "67 \u00d7 43 = 2881"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 1248 \u00f7 32?",
+    "options": [
+      "39",
+      "36",
+      "42",
+      "33"
+    ],
+    "correct": 0,
+    "explanation": "1248 \u00f7 32 = 39"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 4567 + 3891?",
+    "options": [
+      "8458",
+      "8558",
+      "8358",
+      "8468"
+    ],
+    "correct": 0,
+    "explanation": "4567 + 3891 = 8458"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 10000 - 6789?",
+    "options": [
+      "3211",
+      "3311",
+      "3111",
+      "3221"
+    ],
+    "correct": 0,
+    "explanation": "10000 - 6789 = 3211"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 85 \u00d7 76?",
+    "options": [
+      "6460",
+      "6360",
+      "6560",
+      "6260"
+    ],
+    "correct": 0,
+    "explanation": "85 \u00d7 76 = 6460"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 2025 \u00f7 45?",
+    "options": [
+      "45",
+      "40",
+      "50",
+      "55"
+    ],
+    "correct": 0,
+    "explanation": "2025 \u00f7 45 = 45"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "intermediate",
+    "question": "What is 7823 + 1456?",
+    "options": [
+      "9279",
+      "9179",
+      "9379",
+      "9289"
+    ],
+    "correct": 0,
+    "explanation": "7823 + 1456 = 9279"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 12345 + 67890?",
+    "options": [
+      "80235",
+      "79235",
+      "81235",
+      "80135"
+    ],
+    "correct": 0,
+    "explanation": "12345 + 67890 = 80235"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 54321 - 12987?",
+    "options": [
+      "41334",
+      "41334",
+      "42334",
+      "40334"
+    ],
+    "correct": 0,
+    "explanation": "54321 - 12987 = 41334"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 234 \u00d7 567?",
+    "options": [
+      "132678",
+      "132578",
+      "132778",
+      "131678"
+    ],
+    "correct": 0,
+    "explanation": "234 \u00d7 567 = 132678"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 98765 \u00f7 125?",
+    "options": [
+      "790.12",
+      "780.12",
+      "800.12",
+      "770.12"
+    ],
+    "correct": 0,
+    "explanation": "98765 \u00f7 125 = 790.12"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 87654 + 23456 + 11111?",
+    "options": [
+      "122221",
+      "121221",
+      "123221",
+      "122121"
+    ],
+    "correct": 0,
+    "explanation": "87654 + 23456 + 11111 = 122221"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 100000 - 37896 - 15432?",
+    "options": [
+      "46672",
+      "46672",
+      "47672",
+      "45672"
+    ],
+    "correct": 0,
+    "explanation": "100000 - 37896 - 15432 = 46672"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 456 \u00d7 789?",
+    "options": [
+      "359784",
+      "358784",
+      "360784",
+      "357784"
+    ],
+    "correct": 0,
+    "explanation": "456 \u00d7 789 = 359784"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 65536 \u00f7 256?",
+    "options": [
+      "256",
+      "246",
+      "266",
+      "236"
+    ],
+    "correct": 0,
+    "explanation": "65536 \u00f7 256 = 256"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 99999 + 88888 + 77777?",
+    "options": [
+      "266664",
+      "267664",
+      "265664",
+      "266564"
+    ],
+    "correct": 0,
+    "explanation": "99999 + 88888 + 77777 = 266664"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 500000 - 234567 - 123456?",
+    "options": [
+      "141977",
+      "142977",
+      "140977",
+      "141877"
+    ],
+    "correct": 0,
+    "explanation": "500000 - 234567 - 123456 = 141977"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 678 \u00d7 432?",
+    "options": [
+      "292896",
+      "291896",
+      "293896",
+      "290896"
+    ],
+    "correct": 0,
+    "explanation": "678 \u00d7 432 = 292896"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 123456 \u00f7 48?",
+    "options": [
+      "2572",
+      "2562",
+      "2582",
+      "2552"
+    ],
+    "correct": 0,
+    "explanation": "123456 \u00f7 48 = 2572"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 45678 + 56789 + 67890?",
+    "options": [
+      "170357",
+      "171357",
+      "169357",
+      "170457"
+    ],
+    "correct": 0,
+    "explanation": "45678 + 56789 + 67890 = 170357"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 1000000 - 456789?",
+    "options": [
+      "543211",
+      "544211",
+      "542211",
+      "543111"
+    ],
+    "correct": 0,
+    "explanation": "1000000 - 456789 = 543211"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 987 \u00d7 654?",
+    "options": [
+      "645498",
+      "644498",
+      "646498",
+      "643498"
+    ],
+    "correct": 0,
+    "explanation": "987 \u00d7 654 = 645498"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 999999 \u00f7 111?",
+    "options": [
+      "9009",
+      "8909",
+      "9109",
+      "8909"
+    ],
+    "correct": 0,
+    "explanation": "999999 \u00f7 111 = 9009"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 123456 + 234567 + 345678?",
+    "options": [
+      "703701",
+      "702701",
+      "704701",
+      "703801"
+    ],
+    "correct": 0,
+    "explanation": "123456 + 234567 + 345678 = 703701"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 876543 - 234567 - 111111?",
+    "options": [
+      "530865",
+      "531865",
+      "529865",
+      "530965"
+    ],
+    "correct": 0,
+    "explanation": "876543 - 234567 - 111111 = 530865"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 1234 \u00d7 5678?",
+    "options": [
+      "7006652",
+      "7007652",
+      "7005652",
+      "7006552"
+    ],
+    "correct": 0,
+    "explanation": "1234 \u00d7 5678 = 7006652"
+  },
+  {
+    "topic": "arithmetic",
+    "difficulty": "advanced",
+    "question": "What is 987654 \u00f7 234?",
+    "options": [
+      "4220.74",
+      "4210.74",
+      "4230.74",
+      "4200.74"
+    ],
+    "correct": 0,
+    "explanation": "987654 \u00f7 234 \u2248 4220.74"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If f(x) = x + 5, what is f(3)?",
+    "options": [
+      "8",
+      "15",
+      "2",
+      "5"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 3: f(3) = 3 + 5 = 8"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If g(x) = 2x, what is g(4)?",
+    "options": [
+      "8",
+      "6",
+      "2",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 4: g(4) = 2(4) = 8"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If h(x) = x - 3, what is h(10)?",
+    "options": [
+      "7",
+      "13",
+      "3",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 10: h(10) = 10 - 3 = 7"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If f(x) = 3x, what is f(5)?",
+    "options": [
+      "15",
+      "8",
+      "2",
+      "3"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 5: f(5) = 3(5) = 15"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If g(x) = x + 10, what is g(0)?",
+    "options": [
+      "10",
+      "0",
+      "-10",
+      "1"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 0: g(0) = 0 + 10 = 10"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If h(x) = x \u00f7 2, what is h(8)?",
+    "options": [
+      "4",
+      "16",
+      "6",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 8: h(8) = 8 \u00f7 2 = 4"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If f(x) = 5x, what is f(2)?",
+    "options": [
+      "10",
+      "7",
+      "3",
+      "5"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 2: f(2) = 5(2) = 10"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If g(x) = x - 7, what is g(15)?",
+    "options": [
+      "8",
+      "22",
+      "7",
+      "15"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 15: g(15) = 15 - 7 = 8"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If h(x) = x + 12, what is h(6)?",
+    "options": [
+      "18",
+      "6",
+      "72",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 6: h(6) = 6 + 12 = 18"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If f(x) = 4x, what is f(3)?",
+    "options": [
+      "12",
+      "7",
+      "1",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 3: f(3) = 4(3) = 12"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If g(x) = x - 5, what is g(8)?",
+    "options": [
+      "3",
+      "13",
+      "5",
+      "40"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 8: g(8) = 8 - 5 = 3"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If h(x) = x \u00f7 3, what is h(15)?",
+    "options": [
+      "5",
+      "45",
+      "12",
+      "18"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 15: h(15) = 15 \u00f7 3 = 5"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If f(x) = x + 8, what is f(7)?",
+    "options": [
+      "15",
+      "56",
+      "1",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 7: f(7) = 7 + 8 = 15"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If g(x) = 6x, what is g(1)?",
+    "options": [
+      "6",
+      "7",
+      "5",
+      "1"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 1: g(1) = 6(1) = 6"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If h(x) = x - 10, what is h(20)?",
+    "options": [
+      "10",
+      "30",
+      "200",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 20: h(20) = 20 - 10 = 10"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If f(x) = x + 15, what is f(5)?",
+    "options": [
+      "20",
+      "75",
+      "10",
+      "15"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 5: f(5) = 5 + 15 = 20"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If g(x) = 8x, what is g(2)?",
+    "options": [
+      "16",
+      "10",
+      "4",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 2: g(2) = 8(2) = 16"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If h(x) = x \u00f7 4, what is h(20)?",
+    "options": [
+      "5",
+      "80",
+      "16",
+      "24"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 20: h(20) = 20 \u00f7 4 = 5"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If f(x) = x - 2, what is f(12)?",
+    "options": [
+      "10",
+      "14",
+      "24",
+      "6"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 12: f(12) = 12 - 2 = 10"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "beginner",
+    "question": "If g(x) = 10x, what is g(3)?",
+    "options": [
+      "30",
+      "13",
+      "7",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 3: g(3) = 10(3) = 30"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If f(x) = 2x + 3, what is f(4)?",
+    "options": [
+      "11",
+      "9",
+      "8",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 4: f(4) = 2(4) + 3 = 8 + 3 = 11"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If g(x) = x\u00b2, what is g(5)?",
+    "options": [
+      "10",
+      "25",
+      "15",
+      "20"
+    ],
+    "correct": 1,
+    "explanation": "Substitute x = 5: g(5) = 5\u00b2 = 25"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If h(x) = 3x - 1, what value of x makes h(x) = 8?",
+    "options": [
+      "3",
+      "2",
+      "4",
+      "5"
+    ],
+    "correct": 0,
+    "explanation": "Solve: 3x - 1 = 8, so 3x = 9, x = 3"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If f(x) = x + 5 and f(a) = 12, what is a?",
+    "options": [
+      "7",
+      "17",
+      "5",
+      "12"
+    ],
+    "correct": 0,
+    "explanation": "Solve: a + 5 = 12, so a = 7"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If g(x) = 4x, what is g(3) + g(2)?",
+    "options": [
+      "20",
+      "18",
+      "12",
+      "24"
+    ],
+    "correct": 0,
+    "explanation": "g(3) = 12, g(2) = 8, so g(3) + g(2) = 20"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If h(x) = x\u00b2 - 4, what is h(3)?",
+    "options": [
+      "5",
+      "9",
+      "13",
+      "1"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 3: h(3) = 3\u00b2 - 4 = 9 - 4 = 5"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If f(x) = 5x + 2, what is f(6)?",
+    "options": [
+      "32",
+      "30",
+      "28",
+      "27"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 6: f(6) = 5(6) + 2 = 30 + 2 = 32"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If g(x) = x\u00b2 + 3, what is g(4)?",
+    "options": [
+      "19",
+      "16",
+      "7",
+      "13"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 4: g(4) = 4\u00b2 + 3 = 16 + 3 = 19"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If h(x) = 2x - 5, what value of x makes h(x) = 7?",
+    "options": [
+      "6",
+      "5",
+      "7",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "Solve: 2x - 5 = 7, so 2x = 12, x = 6"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If f(x) = 3x + 4, what is f(0)?",
+    "options": [
+      "4",
+      "0",
+      "7",
+      "3"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 0: f(0) = 3(0) + 4 = 4"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If g(x) = x\u00b2 - 2x, what is g(5)?",
+    "options": [
+      "15",
+      "25",
+      "10",
+      "20"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 5: g(5) = 5\u00b2 - 2(5) = 25 - 10 = 15"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If h(x) = 4x - 8, what is h(5)?",
+    "options": [
+      "12",
+      "20",
+      "13",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 5: h(5) = 4(5) - 8 = 20 - 8 = 12"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If f(x) = x\u00b2 + 2x + 1, what is f(3)?",
+    "options": [
+      "16",
+      "10",
+      "13",
+      "9"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 3: f(3) = 3\u00b2 + 2(3) + 1 = 9 + 6 + 1 = 16"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If g(x) = 6x - 3, what value of x makes g(x) = 15?",
+    "options": [
+      "3",
+      "2",
+      "4",
+      "5"
+    ],
+    "correct": 0,
+    "explanation": "Solve: 6x - 3 = 15, so 6x = 18, x = 3"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If h(x) = x\u00b2 - 5x, what is h(6)?",
+    "options": [
+      "6",
+      "1",
+      "11",
+      "36"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 6: h(6) = 6\u00b2 - 5(6) = 36 - 30 = 6"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If f(x) = 7x + 1, what is f(4)?",
+    "options": [
+      "29",
+      "28",
+      "22",
+      "21"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 4: f(4) = 7(4) + 1 = 28 + 1 = 29"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If g(x) = x\u00b2 + 4x, what is g(2)?",
+    "options": [
+      "12",
+      "8",
+      "6",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 2: g(2) = 2\u00b2 + 4(2) = 4 + 8 = 12"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If h(x) = 5x - 10, what value of x makes h(x) = 20?",
+    "options": [
+      "6",
+      "5",
+      "7",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "Solve: 5x - 10 = 20, so 5x = 30, x = 6"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If f(x) = 2x\u00b2 - 3, what is f(3)?",
+    "options": [
+      "15",
+      "18",
+      "21",
+      "12"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 3: f(3) = 2(3\u00b2) - 3 = 2(9) - 3 = 15"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "intermediate",
+    "question": "If g(x) = 3x + 7, what is g(5)?",
+    "options": [
+      "22",
+      "15",
+      "21",
+      "20"
+    ],
+    "correct": 0,
+    "explanation": "Substitute x = 5: g(5) = 3(5) + 7 = 15 + 7 = 22"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If f(x) = x\u00b2 + 2x - 3, what is f(-1)?",
+    "options": [
+      "-4",
+      "-2",
+      "0",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "f(-1) = (-1)\u00b2 + 2(-1) - 3 = 1 - 2 - 3 = -4"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If g(x) = 2x\u00b2 - 3x + 1, what is g(2)?",
+    "options": [
+      "3",
+      "5",
+      "7",
+      "1"
+    ],
+    "correct": 0,
+    "explanation": "g(2) = 2(2\u00b2) - 3(2) + 1 = 8 - 6 + 1 = 3"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If h(x) = 3x - 7, and h(a) = 14, what is a?",
+    "options": [
+      "7",
+      "5",
+      "6",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "Solve: 3a - 7 = 14, so 3a = 21, a = 7"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If f(x) = x\u00b3 - 2x, what is f(2)?",
+    "options": [
+      "4",
+      "6",
+      "8",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "f(2) = 2\u00b3 - 2(2) = 8 - 4 = 4"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If g(x) = (x + 2)\u00b2, what is g(3)?",
+    "options": [
+      "25",
+      "9",
+      "16",
+      "36"
+    ],
+    "correct": 0,
+    "explanation": "g(3) = (3 + 2)\u00b2 = 5\u00b2 = 25"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If h(x) = 4x\u00b2 - 5x + 1, what is h(1)?",
+    "options": [
+      "0",
+      "1",
+      "2",
+      "-1"
+    ],
+    "correct": 0,
+    "explanation": "h(1) = 4(1\u00b2) - 5(1) + 1 = 4 - 5 + 1 = 0"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If f(x) = x\u00b3, what is f(-2)?",
+    "options": [
+      "-8",
+      "8",
+      "-6",
+      "6"
+    ],
+    "correct": 0,
+    "explanation": "f(-2) = (-2)\u00b3 = -8"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If g(x) = 5x - 2, and g(x) = 23, what is x?",
+    "options": [
+      "5",
+      "4",
+      "6",
+      "7"
+    ],
+    "correct": 0,
+    "explanation": "Solve: 5x - 2 = 23, so 5x = 25, x = 5"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If h(x) = x\u00b2 - 6x + 9, what is h(3)?",
+    "options": [
+      "0",
+      "9",
+      "3",
+      "6"
+    ],
+    "correct": 0,
+    "explanation": "h(3) = 3\u00b2 - 6(3) + 9 = 9 - 18 + 9 = 0"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If f(x) = 2x\u00b3 + x, what is f(2)?",
+    "options": [
+      "18",
+      "16",
+      "20",
+      "14"
+    ],
+    "correct": 0,
+    "explanation": "f(2) = 2(2\u00b3) + 2 = 2(8) + 2 = 16 + 2 = 18"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If g(x) = (x - 3)\u00b2 + 2, what is g(5)?",
+    "options": [
+      "6",
+      "4",
+      "8",
+      "10"
+    ],
+    "correct": 0,
+    "explanation": "g(5) = (5 - 3)\u00b2 + 2 = 2\u00b2 + 2 = 4 + 2 = 6"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If h(x) = x\u00b3 - 3x\u00b2 + 2x, what is h(3)?",
+    "options": [
+      "6",
+      "9",
+      "3",
+      "0"
+    ],
+    "correct": 0,
+    "explanation": "h(3) = 3\u00b3 - 3(3\u00b2) + 2(3) = 27 - 27 + 6 = 6"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If f(x) = 6x - 11, and f(a) = 25, what is a?",
+    "options": [
+      "6",
+      "5",
+      "7",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "Solve: 6a - 11 = 25, so 6a = 36, a = 6"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If g(x) = x\u00b2 + x - 6, what is g(-3)?",
+    "options": [
+      "0",
+      "-6",
+      "6",
+      "3"
+    ],
+    "correct": 0,
+    "explanation": "g(-3) = (-3)\u00b2 + (-3) - 6 = 9 - 3 - 6 = 0"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If h(x) = 3x\u00b2 - 2x - 5, what is h(2)?",
+    "options": [
+      "3",
+      "5",
+      "7",
+      "1"
+    ],
+    "correct": 0,
+    "explanation": "h(2) = 3(2\u00b2) - 2(2) - 5 = 12 - 4 - 5 = 3"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If f(x) = (2x + 1)\u00b2, what is f(2)?",
+    "options": [
+      "25",
+      "9",
+      "16",
+      "36"
+    ],
+    "correct": 0,
+    "explanation": "f(2) = (2(2) + 1)\u00b2 = (4 + 1)\u00b2 = 5\u00b2 = 25"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If g(x) = x\u00b3 + 4x, what is g(-2)?",
+    "options": [
+      "-16",
+      "16",
+      "-8",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "g(-2) = (-2)\u00b3 + 4(-2) = -8 - 8 = -16"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If h(x) = 4x - 9, and h(x) = 31, what is x?",
+    "options": [
+      "10",
+      "9",
+      "11",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "Solve: 4x - 9 = 31, so 4x = 40, x = 10"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If f(x) = x\u00b2 - 4x + 4, what is f(2)?",
+    "options": [
+      "0",
+      "4",
+      "8",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "f(2) = 2\u00b2 - 4(2) + 4 = 4 - 8 + 4 = 0"
+  },
+  {
+    "topic": "functions",
+    "difficulty": "advanced",
+    "question": "If g(x) = 2x\u00b3 - 5x + 1, what is g(2)?",
+    "options": [
+      "7",
+      "5",
+      "9",
+      "3"
+    ],
+    "correct": 0,
+    "explanation": "g(2) = 2(2\u00b3) - 5(2) + 1 = 16 - 10 + 1 = 7"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is the union of {1, 2, 3} and {3, 4, 5}?",
+    "options": [
+      "{1, 2, 3, 4, 5}",
+      "{3}",
+      "{1, 2, 4, 5}",
+      "{1, 2, 3, 3, 4, 5}"
+    ],
+    "correct": 0,
+    "explanation": "Union includes all elements from both sets: {1, 2, 3, 4, 5}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is the intersection of {1, 2, 3} and {3, 4, 5}?",
+    "options": [
+      "{3}",
+      "{1, 2, 3, 4, 5}",
+      "{1, 2, 4, 5}",
+      "{}"
+    ],
+    "correct": 0,
+    "explanation": "Intersection includes only common elements: {3}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "How many elements are in the set {a, b, c, d}?",
+    "options": [
+      "4",
+      "3",
+      "5",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "Count the elements: 4 elements"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "Is 5 \u2208 {1, 3, 5, 7}?",
+    "options": [
+      "Yes",
+      "No",
+      "Maybe",
+      "Cannot determine"
+    ],
+    "correct": 0,
+    "explanation": "5 is an element of the set, so Yes"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is the empty set symbol?",
+    "options": [
+      "\u2205 or {}",
+      "0",
+      "null",
+      "-"
+    ],
+    "correct": 0,
+    "explanation": "Empty set is denoted by \u2205 or {}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is {2, 4, 6} \u2229 {1, 2, 3}?",
+    "options": [
+      "{2}",
+      "{1, 2, 3, 4, 6}",
+      "{4, 6}",
+      "{}"
+    ],
+    "correct": 0,
+    "explanation": "Intersection: only 2 is common"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is {1, 2} \u222a {2, 3}?",
+    "options": [
+      "{1, 2, 3}",
+      "{2}",
+      "{1, 3}",
+      "{1, 2, 2, 3}"
+    ],
+    "correct": 0,
+    "explanation": "Union includes all unique elements: {1, 2, 3}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "How many elements in {}?",
+    "options": [
+      "0",
+      "1",
+      "Infinite",
+      "Undefined"
+    ],
+    "correct": 0,
+    "explanation": "Empty set has 0 elements"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "Is 7 \u2208 {2, 4, 6, 8}?",
+    "options": [
+      "No",
+      "Yes",
+      "Maybe",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "7 is not in the set, so No"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is {5, 10} \u2229 {10, 15}?",
+    "options": [
+      "{10}",
+      "{5, 10, 15}",
+      "{5, 15}",
+      "{}"
+    ],
+    "correct": 0,
+    "explanation": "Intersection: only 10 is common"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is {a, b} \u222a {b, c, d}?",
+    "options": [
+      "{a, b, c, d}",
+      "{b}",
+      "{a, c, d}",
+      "{a, b, b, c, d}"
+    ],
+    "correct": 0,
+    "explanation": "Union: {a, b, c, d}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "How many elements in {1}?",
+    "options": [
+      "1",
+      "0",
+      "2",
+      "Infinite"
+    ],
+    "correct": 0,
+    "explanation": "One element in the set"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "Is b \u2208 {a, b, c}?",
+    "options": [
+      "Yes",
+      "No",
+      "Maybe",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "b is in the set, so Yes"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is {3, 6, 9} \u2229 {2, 4, 6}?",
+    "options": [
+      "{6}",
+      "{3, 6, 9, 2, 4}",
+      "{3, 9, 2, 4}",
+      "{}"
+    ],
+    "correct": 0,
+    "explanation": "Intersection: only 6 is common"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is {x} \u222a {y, z}?",
+    "options": [
+      "{x, y, z}",
+      "{x}",
+      "{y, z}",
+      "{x, x, y, z}"
+    ],
+    "correct": 0,
+    "explanation": "Union: {x, y, z}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "How many elements in {1, 1, 2, 3}?",
+    "options": [
+      "3",
+      "4",
+      "2",
+      "5"
+    ],
+    "correct": 0,
+    "explanation": "Sets contain unique elements: {1, 2, 3} has 3 elements"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "Is 0 \u2208 {1, 2, 3, 4}?",
+    "options": [
+      "No",
+      "Yes",
+      "Maybe",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "0 is not in the set, so No"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is {4, 8} \u2229 {8, 12}?",
+    "options": [
+      "{8}",
+      "{4, 8, 12}",
+      "{4, 12}",
+      "{}"
+    ],
+    "correct": 0,
+    "explanation": "Intersection: only 8 is common"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "What is {m, n} \u222a {n, o, p}?",
+    "options": [
+      "{m, n, o, p}",
+      "{n}",
+      "{m, o, p}",
+      "{m, n, n, o, p}"
+    ],
+    "correct": 0,
+    "explanation": "Union: {m, n, o, p}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "beginner",
+    "question": "How many elements in {7, 8, 9, 10}?",
+    "options": [
+      "4",
+      "3",
+      "5",
+      "6"
+    ],
+    "correct": 0,
+    "explanation": "Count the elements: 4"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If A = {1, 2, 3, 4} and B = {3, 4, 5, 6}, what is A - B?",
+    "options": [
+      "{1, 2}",
+      "{3, 4}",
+      "{5, 6}",
+      "{1, 2, 5, 6}"
+    ],
+    "correct": 0,
+    "explanation": "A - B means elements in A but not in B: {1, 2}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "What is the cardinality of {a, b, c, d, e}?",
+    "options": [
+      "5",
+      "4",
+      "6",
+      "3"
+    ],
+    "correct": 0,
+    "explanation": "Cardinality is the number of elements: 5"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If A = {1, 2, 3} and B = {4, 5, 6}, what is A \u2229 B?",
+    "options": [
+      "\u2205",
+      "{1, 2, 3, 4, 5, 6}",
+      "{1, 4}",
+      "{3, 6}"
+    ],
+    "correct": 0,
+    "explanation": "No common elements, so intersection is empty set"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If U = {1, 2, 3, 4, 5} and A = {1, 2, 3}, what is A complement?",
+    "options": [
+      "{4, 5}",
+      "{1, 2, 3}",
+      "{1, 2, 3, 4, 5}",
+      "\u2205"
+    ],
+    "correct": 0,
+    "explanation": "Complement contains elements in U but not in A: {4, 5}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "Is {1, 2} \u2286 {1, 2, 3}?",
+    "options": [
+      "Yes",
+      "No",
+      "Maybe",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "Every element of {1, 2} is in {1, 2, 3}, so Yes"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If A = {2, 4, 6, 8} and B = {1, 2, 3, 4}, what is A \u222a B?",
+    "options": [
+      "{1, 2, 3, 4, 6, 8}",
+      "{2, 4}",
+      "{1, 3, 6, 8}",
+      "{1, 2, 2, 3, 4, 4, 6, 8}"
+    ],
+    "correct": 0,
+    "explanation": "Union: {1, 2, 3, 4, 6, 8}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "What is |{x, y, z}|?",
+    "options": [
+      "3",
+      "2",
+      "4",
+      "1"
+    ],
+    "correct": 0,
+    "explanation": "Cardinality (number of elements): 3"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If A = {1, 3, 5, 7} and B = {2, 3, 5, 8}, what is A \u2229 B?",
+    "options": [
+      "{3, 5}",
+      "{1, 7}",
+      "{2, 8}",
+      "{1, 2, 3, 5, 7, 8}"
+    ],
+    "correct": 0,
+    "explanation": "Common elements: {3, 5}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "Is {a, b, c} = {c, b, a}?",
+    "options": [
+      "Yes",
+      "No",
+      "Maybe",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "Sets are equal if they have same elements, order doesn't matter"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If A = {1, 2, 3, 4, 5} and B = {4, 5, 6, 7}, what is B - A?",
+    "options": [
+      "{6, 7}",
+      "{4, 5}",
+      "{1, 2, 3}",
+      "{1, 2, 3, 6, 7}"
+    ],
+    "correct": 0,
+    "explanation": "Elements in B but not in A: {6, 7}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "What is the power set of {a, b}?",
+    "options": [
+      "{\u2205, {a}, {b}, {a,b}}",
+      "{a, b}",
+      "{{a}, {b}}",
+      "{\u2205, {a,b}}"
+    ],
+    "correct": 0,
+    "explanation": "Power set includes all subsets"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If A = {2, 4, 6} and B = {3, 6, 9}, what is A \u2229 B?",
+    "options": [
+      "{6}",
+      "{2, 4, 3, 9}",
+      "{2, 3, 4, 6, 9}",
+      "\u2205"
+    ],
+    "correct": 0,
+    "explanation": "Common element: {6}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "Is \u2205 \u2286 {1, 2, 3}?",
+    "options": [
+      "Yes",
+      "No",
+      "Maybe",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "Empty set is subset of every set"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If U = {1, 2, 3, 4, 5, 6} and A = {2, 4, 6}, what is A'?",
+    "options": [
+      "{1, 3, 5}",
+      "{2, 4, 6}",
+      "{1, 2, 3, 4, 5, 6}",
+      "\u2205"
+    ],
+    "correct": 0,
+    "explanation": "Complement: elements in U not in A"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If A = {1, 2} and B = {2, 3}, what is (A \u222a B) \u2229 A?",
+    "options": [
+      "{1, 2}",
+      "{2}",
+      "{1, 2, 3}",
+      "{3}"
+    ],
+    "correct": 0,
+    "explanation": "A \u222a B = {1, 2, 3}, then {1, 2, 3} \u2229 {1, 2} = {1, 2}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "How many subsets does {1, 2, 3} have?",
+    "options": [
+      "8",
+      "6",
+      "3",
+      "9"
+    ],
+    "correct": 0,
+    "explanation": "Number of subsets = 2^n = 2\u00b3 = 8"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If A = {a, b, c, d} and B = {c, d, e, f}, what is A \u2229 B?",
+    "options": [
+      "{c, d}",
+      "{a, b, e, f}",
+      "{a, b, c, d, e, f}",
+      "\u2205"
+    ],
+    "correct": 0,
+    "explanation": "Common elements: {c, d}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "Is {1, 2, 3} \u2282 {1, 2, 3}?",
+    "options": [
+      "No",
+      "Yes",
+      "Maybe",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "Proper subset must have fewer elements"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "If A = {x, y} and B = {y, z}, what is A - B?",
+    "options": [
+      "{x}",
+      "{y}",
+      "{z}",
+      "{x, y, z}"
+    ],
+    "correct": 0,
+    "explanation": "Elements in A not in B: {x}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "intermediate",
+    "question": "What is |\u2205|?",
+    "options": [
+      "0",
+      "1",
+      "Undefined",
+      "Infinite"
+    ],
+    "correct": 0,
+    "explanation": "Empty set has 0 elements"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If A = {1, 2, 3}, B = {2, 3, 4}, C = {3, 4, 5}, what is A \u2229 B \u2229 C?",
+    "options": [
+      "{3}",
+      "{2, 3, 4}",
+      "{1, 2, 3, 4, 5}",
+      "\u2205"
+    ],
+    "correct": 0,
+    "explanation": "Common to all three: {3}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "What is |(A \u222a B)| if |A| = 5, |B| = 7, |A \u2229 B| = 3?",
+    "options": [
+      "9",
+      "12",
+      "10",
+      "8"
+    ],
+    "correct": 0,
+    "explanation": "Use formula: |A \u222a B| = |A| + |B| - |A \u2229 B| = 5 + 7 - 3 = 9"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If A = {1, 2, 3, 4}, what is |P(A)|?",
+    "options": [
+      "16",
+      "4",
+      "8",
+      "32"
+    ],
+    "correct": 0,
+    "explanation": "Power set cardinality = 2^n = 2\u2074 = 16"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If A \u00d7 B = {(1,x), (1,y), (2,x), (2,y)}, what are A and B?",
+    "options": [
+      "A={1,2}, B={x,y}",
+      "A={x,y}, B={1,2}",
+      "A={1,x,2,y}, B=\u2205",
+      "Cannot determine"
+    ],
+    "correct": 0,
+    "explanation": "Cartesian product shows A = {1, 2}, B = {x, y}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If A \u2286 B and B \u2286 C, is A \u2286 C?",
+    "options": [
+      "Yes",
+      "No",
+      "Maybe",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "Subset relation is transitive"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "What is (A \u222a B)' using De Morgan's Law?",
+    "options": [
+      "A' \u2229 B'",
+      "A' \u222a B'",
+      "A \u2229 B",
+      "A - B"
+    ],
+    "correct": 0,
+    "explanation": "De Morgan: (A \u222a B)' = A' \u2229 B'"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If |A| = 20, |B| = 15, |A \u222a B| = 30, what is |A \u2229 B|?",
+    "options": [
+      "5",
+      "10",
+      "15",
+      "0"
+    ],
+    "correct": 0,
+    "explanation": "|A \u2229 B| = |A| + |B| - |A \u222a B| = 20 + 15 - 30 = 5"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "Is {{1}, {2}} = {1, 2}?",
+    "options": [
+      "No",
+      "Yes",
+      "Maybe",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "First is set of sets, second is set of numbers"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If A = {1, 2, 3} and B = {3, 4}, what is A \u25b3 B (symmetric difference)?",
+    "options": [
+      "{1, 2, 4}",
+      "{3}",
+      "{1, 2, 3, 4}",
+      "{1, 2}"
+    ],
+    "correct": 0,
+    "explanation": "Symmetric difference: (A - B) \u222a (B - A) = {1, 2, 4}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "What is the cardinality of {x \u2208 \u2115 | 1 \u2264 x \u2264 10}?",
+    "options": [
+      "10",
+      "9",
+      "11",
+      "Infinite"
+    ],
+    "correct": 0,
+    "explanation": "Natural numbers from 1 to 10: 10 elements"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If A \u2229 B = B, what is the relationship?",
+    "options": [
+      "B \u2286 A",
+      "A \u2286 B",
+      "A = B",
+      "No relationship"
+    ],
+    "correct": 0,
+    "explanation": "If A \u2229 B = B, then B \u2286 A"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "What is (A \u2229 B)' using De Morgan's Law?",
+    "options": [
+      "A' \u222a B'",
+      "A' \u2229 B'",
+      "A \u222a B",
+      "A - B"
+    ],
+    "correct": 0,
+    "explanation": "De Morgan: (A \u2229 B)' = A' \u222a B'"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If |A| = 100 and |A'| = 50, what is |U|?",
+    "options": [
+      "150",
+      "50",
+      "100",
+      "200"
+    ],
+    "correct": 0,
+    "explanation": "|U| = |A| + |A'| = 100 + 50 = 150"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "Is \u2115 \u2286 \u2124 \u2286 \u211a \u2286 \u211d?",
+    "options": [
+      "Yes",
+      "No",
+      "Partially",
+      "Cannot tell"
+    ],
+    "correct": 0,
+    "explanation": "Natural \u2286 Integers \u2286 Rational \u2286 Real numbers"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If A = {1, 2} and B = {a, b, c}, what is |A \u00d7 B|?",
+    "options": [
+      "6",
+      "5",
+      "3",
+      "2"
+    ],
+    "correct": 0,
+    "explanation": "|A \u00d7 B| = |A| \u00d7 |B| = 2 \u00d7 3 = 6"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "What is A \u2229 A'?",
+    "options": [
+      "\u2205",
+      "A",
+      "U",
+      "A'"
+    ],
+    "correct": 0,
+    "explanation": "A set and its complement have no common elements"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If A \u222a B = U and A \u2229 B = \u2205, what are A and B?",
+    "options": [
+      "Complements",
+      "Equal",
+      "Subsets",
+      "Disjoint only"
+    ],
+    "correct": 0,
+    "explanation": "They partition the universal set, so they are complements"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "What is the cardinality of {{1, 2}, {3}}?",
+    "options": [
+      "2",
+      "3",
+      "1",
+      "4"
+    ],
+    "correct": 0,
+    "explanation": "Two elements: {1, 2} and {3}"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "If A - B = A, what can you conclude?",
+    "options": [
+      "A \u2229 B = \u2205",
+      "A = B",
+      "B \u2286 A",
+      "A \u2286 B"
+    ],
+    "correct": 0,
+    "explanation": "If A - B = A, then A and B are disjoint"
+  },
+  {
+    "topic": "sets",
+    "difficulty": "advanced",
+    "question": "What is |P(\u2205)|?",
+    "options": [
+      "1",
+      "0",
+      "2",
+      "Undefined"
+    ],
+    "correct": 0,
+    "explanation": "Power set of empty set is {\u2205}, which has 1 element"
+  }
+]

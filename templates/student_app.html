@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Master - Student</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 min-h-screen">
+    <!-- Header with User Info -->
+    <div class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">🎓 Math Master</h1>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-700" id="userName"></span>
+                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="text-center py-20">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto"></div>
+            <p class="mt-4 text-xl text-gray-700">Loading...</p>
+        </div>
+
+        <!-- Topic Selection Screen -->
+        <div id="topicScreen" class="hidden">
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Choose a Topic</h2>
+                <p class="text-xl text-gray-600">Select what you'd like to practice today</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8" id="topicsGrid"></div>
+
+            <!-- Progress Summary -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">📊 Your Progress</h3>
+                <div id="progressSummary" class="text-gray-600">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Difficulty Selection Screen -->
+        <div id="difficultyScreen" class="hidden">
+            <div class="max-w-4xl mx-auto">
+                <button onclick="backToTopics()" class="mb-6 bg-white text-gray-700 px-6 py-2 rounded-lg shadow hover:shadow-md transition-all">
+                    ← Back to Topics
+                </button>
+                
+                <div class="text-center mb-12">
+                    <h2 id="selectedTopicTitle" class="text-4xl font-bold text-gray-800 mb-4"></h2>
+                    <p class="text-xl text-gray-600">Select your difficulty level</p>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <button onclick="startQuiz('beginner')" class="bg-green-500 hover:bg-green-600 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all">
+                        <i class="fas fa-seedling text-6xl mb-4"></i>
+                        <h3 class="text-2xl font-bold mb-2">Beginner</h3>
+                        <p class="text-white text-opacity-90">Start with the basics</p>
+                        <p class="mt-2 text-sm">20 questions</p>
+                    </button>
+                    
+                    <button onclick="startQuiz('intermediate')" class="bg-yellow-500 hover:bg-yellow-600 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all">
+                        <i class="fas fa-chart-line text-6xl mb-4"></i>
+                        <h3 class="text-2xl font-bold mb-2">Intermediate</h3>
+                        <p class="text-white text-opacity-90">Challenge yourself more</p>
+                        <p class="mt-2 text-sm">20 questions</p>
+                    </button>
+                    
+                    <button onclick="startQuiz('advanced')" class="bg-red-500 hover:bg-red-600 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all">
+                        <i class="fas fa-trophy text-6xl mb-4"></i>
+                        <h3 class="text-2xl font-bold mb-2">Advanced</h3>
+                        <p class="text-white text-opacity-90">Master the topic</p>
+                        <p class="mt-2 text-sm">20 questions</p>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="hidden max-w-3xl mx-auto">
+            <div class="mb-6 flex justify-between items-center">
+                <button onclick="backToDifficulty()" class="bg-white text-gray-700 px-6 py-2 rounded-lg shadow hover:shadow-md transition-all">
+                    ← Back
+                </button>
+                <div class="bg-white px-6 py-2 rounded-lg shadow">
+                    <span class="font-semibold text-gray-700">Score: <span id="score">0</span>/<span id="total">20</span></span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-8 shadow-2xl">
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="quizTopicTitle" class="text-2xl font-bold text-gray-800"></h2>
+                        <span class="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-semibold">
+                            Question <span id="currentQuestion">1</span>/<span id="totalQuestions">20</span>
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h3 id="questionText" class="text-3xl font-semibold text-gray-800 mb-6"></h3>
+                    <div id="optionsContainer" class="space-y-3"></div>
+                </div>
+
+                <div id="feedbackContainer" class="hidden mb-6"></div>
+
+                <button id="nextButton" onclick="nextQuestion()" class="hidden w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg">
+                    Next Question →
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="hidden max-w-2xl mx-auto">
+            <div class="bg-white rounded-2xl p-8 shadow-2xl text-center">
+                <i class="fas fa-trophy text-yellow-500 text-8xl mb-6"></i>
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Quiz Complete!</h2>
+                <div id="percentage" class="text-6xl font-bold text-purple-600 mb-4"></div>
+                <p id="scoreText" class="text-2xl text-gray-700 mb-8"></p>
+                <div id="performanceMessage" class="text-xl font-semibold mb-6"></div>
+                
+                <div class="space-y-4">
+                    <button onclick="retryQuiz()" class="w-full bg-purple-600 text-white py-4 rounded-xl font-semibold hover:bg-purple-700 transition-colors">
+                        Try Again
+                    </button>
+                    <button onclick="backToTopics()" class="w-full bg-gray-200 text-gray-800 py-4 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+                        Choose Another Topic
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTopic = '';
+        let currentDifficulty = '';
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+        let startTime = null;
+
+        const iconMap = {
+            'calculator': 'fa-calculator',
+            'divide': 'fa-divide',
+            'book': 'fa-book',
+            'chart': 'fa-chart-line',
+            'layers': 'fa-layer-group'
+        };
+
+        window.onload = async function() {
+            await loadCurrentUser();
+            await loadTopics();
+            await loadProgress();
+        };
+
+        async function loadCurrentUser() {
+            try {
+                const response = await fetch('/api/current-user');
+                const user = await response.json();
+                document.getElementById('userName').textContent = user.full_name;
+            } catch (error) {
+                console.error('Error loading user:', error);
+            }
+        }
+
+        async function loadTopics() {
+            try {
+                const response = await fetch('/api/topics');
+                const topics = await response.json();
+                
+                const grid = document.getElementById('topicsGrid');
+                grid.innerHTML = '';
+                
+                for (const [key, topic] of Object.entries(topics)) {
+                    const iconClass = iconMap[topic.icon] || 'fa-book';
+                    const card = document.createElement('button');
+                    card.onclick = () => selectTopic(key, topic.title);
+                    card.className = `${topic.color} text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-200`;
+                    card.innerHTML = `
+                        <i class="fas ${iconClass} text-6xl mb-4"></i>
+                        <h2 class="text-2xl font-bold mb-2">${topic.title}</h2>
+                        <p class="text-white text-opacity-90">60 questions</p>
+                    `;
+                    grid.appendChild(card);
+                }
+                
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('topicScreen').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading topics:', error);
+            }
+        }
+
+        async function loadProgress() {
+            try {
+                const response = await fetch('/api/my-progress');
+                const attempts = await response.json();
+                
+                const summary = document.getElementById('progressSummary');
+                if (attempts.length === 0) {
+                    summary.innerHTML = '<p>No quizzes completed yet. Start learning!</p>';
+                } else {
+                    const total = attempts.length;
+                    const avgScore = (attempts.reduce((sum, a) => sum + a.percentage, 0) / total).toFixed(1);
+                    
+                    summary.innerHTML = `
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-3xl font-bold text-purple-600">${total}</div>
+                                <div class="text-sm">Quizzes Completed</div>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-bold text-green-600">${avgScore}%</div>
+                                <div class="text-sm">Average Score</div>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-bold text-blue-600">${attempts[0].topic}</div>
+                                <div class="text-sm">Last Topic</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading progress:', error);
+            }
+        }
+
+        function selectTopic(topic, title) {
+            currentTopic = topic;
+            document.getElementById('selectedTopicTitle').textContent = title;
+            document.getElementById('topicScreen').classList.add('hidden');
+            document.getElementById('difficultyScreen').classList.remove('hidden');
+        }
+
+        async function startQuiz(difficulty) {
+            currentDifficulty = difficulty;
+            currentQuestionIndex = 0;
+            score = 0;
+            answered = false;
+            startTime = Date.now();
+            
+            document.getElementById('difficultyScreen').classList.add('hidden');
+            document.getElementById('loadingScreen').classList.remove('hidden');
+            
+            try {
+                const response = await fetch(`/api/questions/${currentTopic}/${difficulty}`);
+                questions = await response.json();
+                
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('quizScreen').classList.remove('hidden');
+                
+                document.getElementById('quizTopicTitle').textContent = currentTopic.charAt(0).toUpperCase() + currentTopic.slice(1);
+                document.getElementById('total').textContent = questions.length;
+                document.getElementById('totalQuestions').textContent = questions.length;
+                
+                showQuestion();
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                alert('Error loading questions. Please try again.');
+                backToDifficulty();
+            }
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestionIndex];
+            answered = false;
+            
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('score').textContent = score;
+            
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'w-full p-4 rounded-xl text-left text-lg font-medium transition-all bg-gray-50 hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300 text-gray-800';
+                button.textContent = option;
+                button.onclick = () => handleAnswer(index);
+                optionsContainer.appendChild(button);
+            });
+            
+            document.getElementById('feedbackContainer').classList.add('hidden');
+            document.getElementById('nextButton').classList.add('hidden');
+        }
+
+        function handleAnswer(selectedIndex) {
+            if (answered) return;
+            answered = true;
+            
+            const question = questions[currentQuestionIndex];
+            const correct = selectedIndex === question.correct;
+            
+            if (correct) {
+                score++;
+                document.getElementById('score').textContent = score;
+            }
+            
+            const buttons = document.getElementById('optionsContainer').children;
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].disabled = true;
+                if (i === question.correct) {
+                    buttons[i].className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-green-100 border-2 border-green-500 text-green-800';
+                    buttons[i].innerHTML += ' <i class="fas fa-check float-right text-green-600"></i>';
+                } else if (i === selectedIndex && !correct) {
+                    buttons[i].className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-red-100 border-2 border-red-500 text-red-800';
+                    buttons[i].innerHTML += ' <i class="fas fa-times float-right text-red-600"></i>';
+                } else {
+                    buttons[i].className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-gray-100 text-gray-600';
+                }
+            }
+            
+            const feedback = document.getElementById('feedbackContainer');
+            feedback.className = correct ? 'mb-6 p-6 rounded-xl bg-green-50 border-2 border-green-200' : 'mb-6 p-6 rounded-xl bg-blue-50 border-2 border-blue-200';
+            feedback.innerHTML = `
+                <div class="flex items-start">
+                    <i class="fas ${correct ? 'fa-check' : 'fa-book'} ${correct ? 'text-green-600' : 'text-blue-600'} text-2xl mr-3 mt-1"></i>
+                    <div>
+                        <p class="font-bold text-lg mb-2 ${correct ? 'text-green-800' : 'text-blue-800'}">
+                            ${correct ? '🎉 Correct!' : '📖 Let\'s learn from this!'}
+                        </p>
+                        <p class="text-gray-700">${question.explanation}</p>
+                    </div>
+                </div>
+            `;
+            feedback.classList.remove('hidden');
+            
+            document.getElementById('nextButton').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                submitAndShowResults();
+            }
+        }
+
+        async function submitAndShowResults() {
+            const percentage = Math.round((score / questions.length) * 100);
+            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+            
+            // Submit to backend
+            try {
+                await fetch('/api/submit-quiz', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        topic: currentTopic,
+                        difficulty: currentDifficulty,
+                        score: score,
+                        total_questions: questions.length,
+                        percentage: percentage,
+                        time_taken: timeTaken
+                    })
+                });
+            } catch (error) {
+                console.error('Error submitting quiz:', error);
+            }
+            
+            showResults(percentage);
+        }
+
+        function showResults(percentage) {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.remove('hidden');
+            
+            document.getElementById('percentage').textContent = percentage + '%';
+            document.getElementById('scoreText').textContent = `You scored ${score} out of ${questions.length}`;
+            
+            const messageEl = document.getElementById('performanceMessage');
+            if (percentage === 100) {
+                messageEl.className = 'text-xl text-green-600 font-semibold mb-6';
+                messageEl.textContent = '🌟 Perfect score! Amazing work!';
+            } else if (percentage >= 80) {
+                messageEl.className = 'text-xl text-blue-600 font-semibold mb-6';
+                messageEl.textContent = '🎉 Great job! You\'re really getting it!';
+            } else if (percentage >= 60) {
+                messageEl.className = 'text-xl text-orange-600 font-semibold mb-6';
+                messageEl.textContent = '👍 Good effort! Keep practicing!';
+            } else {
+                messageEl.className = 'text-xl text-red-600 font-semibold mb-6';
+                messageEl.textContent = '💪 Keep trying! Practice makes perfect!';
+            }
+        }
+
+        function retryQuiz() {
+            document.getElementById('resultsScreen').classList.add('hidden');
+            startQuiz(currentDifficulty);
+        }
+
+        function backToTopics() {
+            document.getElementById('difficultyScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('topicScreen').classList.remove('hidden');
+            loadProgress(); // Refresh progress
+        }
+
+        function backToDifficulty() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('difficultyScreen').classList.remove('hidden');
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Error logging out:', error);
+            }
+        }
+    </script>
+</body>
+</html>
