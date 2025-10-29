@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtualenvs
+venv/
+.env/
+.venv/
+*.sqlite3
+
+# PythonAnywhere & logs
+staticfiles/
+media/
+*.log
+*.pid
+
+# Node tooling (if any)
+node_modules/
+dist/
+
+# IDE
+.vscode/
+.idea/

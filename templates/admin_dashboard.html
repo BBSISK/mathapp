@@ -39,6 +39,13 @@
                 <button onclick="showTab('comparison')" id="comparisonTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
                     <i class="fas fa-chart-bar mr-2"></i>Class Comparison
                 </button>
+                <button onclick="showTab('manageQuestions')" id="manageQuestionsTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
+                    <i class="fas fa-edit mr-2"></i>Manage Questions
+                </button>
+                <button onclick="showTab('questions')" id="questionsTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
+                    <i class="fas fa-question-circle mr-2"></i>Question Flags
+                    <span id="pendingFlagsCount" class="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs hidden"></span>
+                </button>
             </div>
         </div>
 
@@ -73,6 +80,200 @@
             <h2 class="text-2xl font-bold mb-6">Class Performance Comparison</h2>
             <div id="comparisonData" class="bg-white rounded-lg shadow-md overflow-x-auto"></div>
         </div>
+
+        <!-- Manage Questions Tab -->
+        <div id="manageQuestionsContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-6">Manage Questions</h2>
+
+            <!-- Filter Section -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block font-semibold mb-2">Topic:</label>
+                        <select id="filterTopic" onchange="loadQuestionsByFilter()" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">All Topics</option>
+                            <option value="arithmetic">Arithmetic</option>
+                            <option value="fractions">Fractions</option>
+                            <option value="functions">Functions</option>
+                            <option value="BOMDAS">BOMDAS</option>
+                            <option value="Multiplication & Division">Multiplication & Division</option>
+                            <option value="Sets">Sets</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-2">Difficulty:</label>
+                        <select id="filterDifficulty" onchange="loadQuestionsByFilter()" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">All Levels</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-2">Search:</label>
+                        <input type="text" id="searchQuestion" onkeyup="filterQuestionsLocally()" placeholder="Search question text..." class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="text-gray-600">
+                        <span class="font-semibold" id="questionCount">0</span> questions found
+                    </div>
+                    <button onclick="loadQuestionsByFilter()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-sync mr-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Questions List -->
+            <div id="questionsList" class="space-y-3">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-question-circle text-4xl mb-3"></i>
+                    <p>Select filters above to view questions</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Flags Tab -->
+        <div id="questionsContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-6">Question Management</h2>
+
+            <!-- Statistics Cards -->
+            <div class="grid md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-red-500 text-white rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="statPendingFlags">0</div>
+                    <div class="text-sm">Pending Flags</div>
+                </div>
+                <div class="bg-blue-500 text-white rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="statFlaggedQuestions">0</div>
+                    <div class="text-sm">Flagged Questions</div>
+                </div>
+                <div class="bg-green-500 text-white rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="statResolvedFlags">0</div>
+                    <div class="text-sm">Resolved Flags</div>
+                </div>
+                <div class="bg-purple-500 text-white rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="statTotalEdits">0</div>
+                    <div class="text-sm">Question Edits</div>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="bg-white rounded-lg shadow-md mb-6">
+                <div class="flex border-b">
+                    <button onclick="filterFlags('pending')" id="filterPending" class="flag-filter px-6 py-3 font-semibold border-b-2 border-red-600">
+                        Pending Flags
+                    </button>
+                    <button onclick="filterFlags('resolved')" id="filterResolved" class="flag-filter px-6 py-3 font-semibold text-gray-600">
+                        Resolved
+                    </button>
+                    <button onclick="filterFlags('dismissed')" id="filterDismissed" class="flag-filter px-6 py-3 font-semibold text-gray-600">
+                        Dismissed
+                    </button>
+                    <button onclick="filterFlags('all')" id="filterAll" class="flag-filter px-6 py-3 font-semibold text-gray-600">
+                        All Flags
+                    </button>
+                </div>
+            </div>
+
+            <!-- Flags List -->
+            <div id="flagsList" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- Question Edit Modal -->
+    <div id="editQuestionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white rounded-lg p-8 max-w-4xl w-full mx-4 my-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Edit Question</h2>
+                <button onclick="hideEditModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- Flags for this question -->
+            <div id="editQuestionFlags" class="mb-6"></div>
+
+            <!-- Edit Form -->
+            <form id="editQuestionForm" class="space-y-4">
+                <input type="hidden" id="editQuestionId">
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold mb-2">Topic:</label>
+                        <select id="editTopic" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="arithmetic">Arithmetic</option>
+                            <option value="fractions">Fractions</option>
+                            <option value="geometry">Geometry</option>
+                            <option value="algebra">Algebra</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-2">Difficulty Level:</label>
+                        <select id="editDifficulty" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-2">Question Text:</label>
+                    <textarea id="editQuestionText" rows="3" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold mb-2">Option A:</label>
+                        <input type="text" id="editOptionA" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-2">Option B:</label>
+                        <input type="text" id="editOptionB" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-2">Option C:</label>
+                        <input type="text" id="editOptionC" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold mb-2">Option D:</label>
+                        <input type="text" id="editOptionD" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-2">Correct Answer:</label>
+                    <select id="editCorrectAnswer" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="0">Option A</option>
+                        <option value="1">Option B</option>
+                        <option value="2">Option C</option>
+                        <option value="3">Option D</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-2">Explanation:</label>
+                    <textarea id="editExplanation" rows="3" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block font-semibold mb-2">Edit Notes (why you're making this change):</label>
+                    <textarea id="editNotes" rows="2" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="E.g., Corrected answer based on student feedback"></textarea>
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="submit" class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
+                    <button type="button" onclick="hideEditModal()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 font-semibold">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+
+            <!-- Edit History -->
+            <div id="editHistory" class="mt-6"></div>
+        </div>
     </div>
 
     <script>
@@ -96,7 +297,7 @@
             try {
                 const response = await fetch('/api/admin/statistics');
                 const stats = await response.json();
-                
+
                 document.getElementById('statsCards').innerHTML = `
                     <div class="bg-blue-500 text-white rounded-lg p-6 shadow-lg">
                         <div class="text-4xl font-bold">${stats.total_students}</div>
@@ -124,7 +325,7 @@
             try {
                 const response = await fetch('/api/admin/pending-teachers');
                 const teachers = await response.json();
-                
+
                 const list = document.getElementById('pendingList');
                 if (teachers.length === 0) {
                     list.innerHTML = '<p class="text-gray-600">No pending teacher approvals.</p>';
@@ -136,7 +337,7 @@
                                 <div class="text-gray-600">${t.email}</div>
                                 <div class="text-sm text-gray-500">Registered: ${new Date(t.created_at).toLocaleString()}</div>
                             </div>
-                            <button onclick="approveTeacher(${t.id})" 
+                            <button onclick="approveTeacher(${t.id})"
                                     class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600">
                                 <i class="fas fa-check mr-2"></i>Approve
                             </button>
@@ -150,12 +351,12 @@
 
         async function approveTeacher(teacherId) {
             if (!confirm('Approve this teacher account?')) return;
-            
+
             try {
                 const response = await fetch(`/api/admin/approve-teacher/${teacherId}`, {
                     method: 'POST'
                 });
-                
+
                 if (response.ok) {
                     alert('Teacher approved successfully!');
                     await loadPendingTeachers();
@@ -174,7 +375,7 @@
                 const url = role ? `/api/admin/all-users?role=${role}` : '/api/admin/all-users';
                 const response = await fetch(url);
                 const users = await response.json();
-                
+
                 const list = document.getElementById('usersList');
                 list.innerHTML = `
                     <table class="w-full">
@@ -200,7 +401,7 @@
                                         }">${u.role}</span>
                                     </td>
                                     <td class="px-4 py-3">
-                                        ${u.is_approved ? 
+                                        ${u.is_approved ?
                                             '<span class="text-green-600">✓ Approved</span>' :
                                             '<span class="text-yellow-600">⏳ Pending</span>'}
                                     </td>
@@ -219,7 +420,7 @@
             try {
                 const response = await fetch('/api/admin/all-classes');
                 const classes = await response.json();
-                
+
                 const list = document.getElementById('classesList');
                 if (classes.length === 0) {
                     list.innerHTML = '<p class="p-6 text-gray-600">No classes created yet.</p>';
@@ -243,7 +444,7 @@
                                         <td class="px-4 py-3 text-center">${c.student_count}</td>
                                         <td class="px-4 py-3">${new Date(c.created_at).toLocaleDateString()}</td>
                                         <td class="px-4 py-3 text-center">
-                                            <button onclick="renameClass(${c.id}, '${c.name.replace(/'/g, "\\'")}')" 
+                                            <button onclick="renameClass(${c.id}, '${c.name.replace(/'/g, "\\'")}')"
                                                     class="text-blue-600 hover:text-blue-800 mr-2">
                                                 <i class="fas fa-edit"></i>
                                             </button>
@@ -262,14 +463,14 @@
         async function renameClass(classId, currentName) {
             const newName = prompt('Enter new class name:', currentName);
             if (!newName || newName === currentName) return;
-            
+
             try {
                 const response = await fetch(`/api/admin/rename-class/${classId}`, {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ name: newName })
                 });
-                
+
                 if (response.ok) {
                     alert('Class renamed successfully!');
                     await loadAllClasses();
@@ -285,7 +486,7 @@
             try {
                 const response = await fetch('/api/admin/class-comparison');
                 const data = await response.json();
-                
+
                 const container = document.getElementById('comparisonData');
                 if (data.length === 0) {
                     container.innerHTML = '<p class="p-6 text-gray-600">No data available yet.</p>';
@@ -334,14 +535,491 @@
                 el.classList.remove('border-purple-600', 'text-gray-800');
                 el.classList.add('text-gray-600');
             });
-            
+
             document.getElementById(tab + 'Content').classList.remove('hidden');
             document.getElementById(tab + 'Tab').classList.add('border-purple-600', 'text-gray-800');
-            
+
             if (tab === 'users') filterUsers();
             else if (tab === 'classes') loadAllClasses();
             else if (tab === 'comparison') loadClassComparison();
+            else if (tab === 'manageQuestions') loadQuestionsByFilter();
+            else if (tab === 'questions') loadQuestionManagement();
         }
+
+        // ==================== MANAGE QUESTIONS FUNCTIONS ====================
+
+        let allQuestionsData = [];
+
+        async function loadQuestionsByFilter() {
+            const topic = document.getElementById('filterTopic').value;
+            const difficulty = document.getElementById('filterDifficulty').value;
+
+            try {
+                let url = '/api/admin/all-questions?';
+                if (topic) url += `topic=${topic}&`;
+                if (difficulty) url += `difficulty=${difficulty}`;
+
+                const response = await fetch(url);
+                allQuestionsData = await response.json();
+
+                displayQuestions(allQuestionsData);
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                document.getElementById('questionsList').innerHTML = '<div class="text-center text-red-500 py-8">Error loading questions</div>';
+            }
+        }
+
+        function filterQuestionsLocally() {
+            const searchTerm = document.getElementById('searchQuestion').value.toLowerCase();
+
+            if (!searchTerm) {
+                displayQuestions(allQuestionsData);
+                return;
+            }
+
+            const filtered = allQuestionsData.filter(q =>
+                q.question.toLowerCase().includes(searchTerm) ||
+                q.options.some(opt => opt.toLowerCase().includes(searchTerm))
+            );
+
+            displayQuestions(filtered);
+        }
+
+        function displayQuestions(questions) {
+            const container = document.getElementById('questionsList');
+            const countEl = document.getElementById('questionCount');
+
+            countEl.textContent = questions.length;
+
+            if (questions.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-8"><i class="fas fa-search text-4xl mb-3"></i><p>No questions found</p></div>';
+                return;
+            }
+
+            container.innerHTML = questions.map((q, index) => {
+                const difficultyColors = {
+                    'beginner': 'bg-green-100 text-green-800',
+                    'intermediate': 'bg-yellow-100 text-yellow-800',
+                    'advanced': 'bg-red-100 text-red-800'
+                };
+
+                const topicIcons = {
+                    'arithmetic': 'fa-calculator',
+                    'fractions': 'fa-divide',
+                    'geometry': 'fa-shapes',
+                    'algebra': 'fa-function'
+                };
+
+                return `
+                    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                        <i class="fas ${topicIcons[q.topic] || 'fa-book'} mr-1"></i>${q.topic.charAt(0).toUpperCase() + q.topic.slice(1)}
+                                    </span>
+                                    <span class="${difficultyColors[q.difficulty]} px-3 py-1 rounded-full text-sm font-semibold">
+                                        ${q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1)}
+                                    </span>
+                                    <span class="text-gray-500 text-sm">ID: ${q.id}</span>
+                                </div>
+                            </div>
+                            <button onclick="openQuestionEditor(${q.id})" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                <i class="fas fa-edit mr-2"></i>Edit
+                            </button>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="font-semibold text-gray-700 mb-2">Question:</div>
+                            <div class="text-gray-800 bg-gray-50 p-3 rounded-lg">${q.question}</div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            ${q.options.map((opt, i) => `
+                                <div class="flex items-center gap-2 p-2 rounded ${i === q.correct ? 'bg-green-50 border-2 border-green-500' : 'bg-gray-50'}">
+                                    <span class="font-semibold ${i === q.correct ? 'text-green-700' : 'text-gray-600'}">
+                                        ${String.fromCharCode(65 + i)})
+                                    </span>
+                                    <span class="${i === q.correct ? 'text-green-700 font-semibold' : 'text-gray-700'}">
+                                        ${opt}
+                                    </span>
+                                    ${i === q.correct ? '<i class="fas fa-check text-green-600 ml-auto"></i>' : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="bg-blue-50 p-3 rounded-lg">
+                            <div class="font-semibold text-blue-900 text-sm mb-1">Explanation:</div>
+                            <div class="text-blue-800 text-sm">${q.explanation}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function openQuestionEditor(questionId) {
+            try {
+                const response = await fetch(`/api/admin/question/${questionId}`);
+                const data = await response.json();
+                const q = data.question;
+
+                // Populate form
+                document.getElementById('editQuestionId').value = q.id;
+                document.getElementById('editTopic').value = q.topic;
+                document.getElementById('editDifficulty').value = q.difficulty;
+                document.getElementById('editQuestionText').value = q.question;
+                document.getElementById('editOptionA').value = q.options[0];
+                document.getElementById('editOptionB').value = q.options[1];
+                document.getElementById('editOptionC').value = q.options[2];
+                document.getElementById('editOptionD').value = q.options[3];
+                document.getElementById('editCorrectAnswer').value = q.correct;
+                document.getElementById('editExplanation').value = q.explanation;
+                document.getElementById('editNotes').value = '';
+
+                // Show any pending flags
+                const flagsHtml = data.flags && data.flags.length > 0 ? data.flags.filter(f => f.status === 'pending').map(f => `
+                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-2">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm font-semibold">${f.user_name}</span>
+                            <span class="text-xs text-gray-600">${f.flag_type}</span>
+                        </div>
+                        <div class="text-sm text-gray-700">"${f.description}"</div>
+                    </div>
+                `).join('') : '<div class="text-sm text-gray-600">No pending flags</div>';
+
+                document.getElementById('editQuestionFlags').innerHTML = `
+                    <div class="mb-4">
+                        <div class="font-semibold mb-2">Pending Flags:</div>
+                        ${flagsHtml}
+                    </div>
+                `;
+
+                // Store flag IDs for resolution
+                flagsToResolve = data.flags ? data.flags.filter(f => f.status === 'pending').map(f => f.id) : [];
+
+                // Show edit history
+                if (data.edit_history && data.edit_history.length > 0) {
+                    const historyHtml = `
+                        <div class="border-t pt-4 mt-4">
+                            <h3 class="font-semibold mb-3">Edit History</h3>
+                            <div class="space-y-2 max-h-40 overflow-y-auto">
+                                ${data.edit_history.map(edit => `
+                                    <div class="text-sm p-2 bg-gray-50 rounded">
+                                        <div class="font-semibold">${edit.edited_by} - ${new Date(edit.edited_at).toLocaleString()}</div>
+                                        ${edit.edit_notes ? `<div class="text-gray-600">${edit.edit_notes}</div>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('editHistory').innerHTML = historyHtml;
+                } else {
+                    document.getElementById('editHistory').innerHTML = '';
+                }
+
+                // Show modal
+                document.getElementById('editQuestionModal').classList.remove('hidden');
+                document.getElementById('editQuestionModal').classList.add('flex');
+            } catch (error) {
+                console.error('Error loading question:', error);
+                alert('Error loading question details');
+            }
+        }
+
+        // ==================== QUESTION FLAG FUNCTIONS ====================
+
+        let currentFilteredFlags = [];
+        let currentQuestionId = null;
+        let flagsToResolve = [];
+
+        async function loadQuestionManagement() {
+            await loadFlagStatistics();
+            await loadPendingFlagsCount();
+            await filterFlags('pending');
+        }
+
+        async function loadFlagStatistics() {
+            try {
+                const response = await fetch('/api/admin/flags/statistics');
+                const stats = await response.json();
+
+                document.getElementById('statPendingFlags').textContent = stats.pending_flags;
+                document.getElementById('statFlaggedQuestions').textContent = stats.flagged_questions;
+                document.getElementById('statResolvedFlags').textContent = stats.resolved_flags;
+                document.getElementById('statTotalEdits').textContent = stats.total_edits;
+            } catch (error) {
+                console.error('Error loading flag statistics:', error);
+            }
+        }
+
+        async function loadPendingFlagsCount() {
+            try {
+                const response = await fetch('/api/admin/flags/statistics');
+                const stats = await response.json();
+
+                const badge = document.getElementById('pendingFlagsCount');
+                if (stats.pending_flags > 0) {
+                    badge.textContent = stats.pending_flags;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading pending flags count:', error);
+            }
+        }
+
+        async function filterFlags(status) {
+            // Update filter button styles
+            document.querySelectorAll('.flag-filter').forEach(btn => {
+                btn.classList.remove('border-red-600', 'border-green-600', 'border-gray-600', 'border-blue-600');
+                btn.classList.add('text-gray-600');
+            });
+
+            const activeBtn = document.getElementById('filter' + status.charAt(0).toUpperCase() + status.slice(1));
+            activeBtn.classList.remove('text-gray-600');
+            activeBtn.classList.add('text-gray-800');
+
+            if (status === 'pending') activeBtn.classList.add('border-red-600');
+            else if (status === 'resolved') activeBtn.classList.add('border-green-600');
+            else if (status === 'dismissed') activeBtn.classList.add('border-gray-600');
+            else activeBtn.classList.add('border-blue-600');
+
+            // Load flags
+            try {
+                const url = status === 'all' ? '/api/admin/flags/all' : `/api/admin/flags/all?status=${status}`;
+                const response = await fetch(url);
+                currentFilteredFlags = await response.json();
+
+                displayFlags(currentFilteredFlags);
+            } catch (error) {
+                console.error('Error loading flags:', error);
+            }
+        }
+
+        function displayFlags(flags) {
+            const container = document.getElementById('flagsList');
+
+            if (flags.length === 0) {
+                container.innerHTML = '<div class="bg-white rounded-lg shadow-md p-8 text-center text-gray-600">No flags found</div>';
+                return;
+            }
+
+            container.innerHTML = flags.map(flag => {
+                const statusColor = flag.status === 'pending' ? 'red' : flag.status === 'resolved' ? 'green' : 'gray';
+                const typeIcons = {
+                    'incorrect': 'fa-times-circle',
+                    'ambiguous': 'fa-question-circle',
+                    'typo': 'fa-spell-check',
+                    'other': 'fa-exclamation-circle'
+                };
+
+                return `
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="bg-${statusColor}-100 text-${statusColor}-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                        ${flag.status.toUpperCase()}
+                                    </span>
+                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                                        <i class="fas ${typeIcons[flag.flag_type]}"></i> ${flag.flag_type}
+                                    </span>
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    Reported by <strong>${flag.user_name}</strong> on ${new Date(flag.created_at).toLocaleDateString()}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                            <div class="font-semibold mb-2">Question:</div>
+                            <div class="text-gray-700 mb-3">${flag.question.question}</div>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                ${flag.question.options.map((opt, i) => `
+                                    <div class="${i === flag.question.correct ? 'text-green-600 font-semibold' : ''}">
+                                        ${String.fromCharCode(65 + i)}) ${opt}
+                                        ${i === flag.question.correct ? '<i class="fas fa-check ml-1"></i>' : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="font-semibold mb-1">Issue Description:</div>
+                            <div class="text-gray-700 italic">"${flag.description}"</div>
+                        </div>
+
+                        ${flag.admin_notes ? `
+                            <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+                                <div class="font-semibold text-sm mb-1">Admin Notes:</div>
+                                <div class="text-sm text-gray-700">${flag.admin_notes}</div>
+                            </div>
+                        ` : ''}
+
+                        ${flag.status === 'pending' ? `
+                            <div class="flex gap-3">
+                                <button onclick="openEditQuestion(${flag.question_id})"
+                                        class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                                    <i class="fas fa-edit mr-2"></i>Edit Question
+                                </button>
+                                <button onclick="dismissFlag(${flag.id})"
+                                        class="flex-1 bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500">
+                                    <i class="fas fa-ban mr-2"></i>Dismiss Flag
+                                </button>
+                            </div>
+                        ` : `
+                            <div class="text-sm text-gray-600">
+                                ${flag.status === 'resolved' ?
+                                    `✓ Resolved by ${flag.resolver_name} on ${new Date(flag.resolved_at).toLocaleDateString()}` :
+                                    `✗ Dismissed on ${new Date(flag.resolved_at).toLocaleDateString()}`
+                                }
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function openEditQuestion(questionId) {
+            currentQuestionId = questionId;
+
+            try {
+                const response = await fetch(`/api/admin/question/${questionId}`);
+                const data = await response.json();
+
+                // Populate form
+                document.getElementById('editQuestionId').value = questionId;
+                document.getElementById('editQuestionText').value = data.question.question;
+                document.getElementById('editOptionA').value = data.question.options[0];
+                document.getElementById('editOptionB').value = data.question.options[1];
+                document.getElementById('editOptionC').value = data.question.options[2];
+                document.getElementById('editOptionD').value = data.question.options[3];
+                document.getElementById('editCorrectAnswer').value = data.question.correct;
+                document.getElementById('editExplanation').value = data.question.explanation;
+                document.getElementById('editNotes').value = '';
+
+                // Show flags for this question
+                const flagsHtml = data.flags.filter(f => f.status === 'pending').map(f => `
+                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-2">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-sm font-semibold">${f.user_name}</span>
+                            <span class="text-xs text-gray-600">${f.flag_type}</span>
+                        </div>
+                        <div class="text-sm text-gray-700">"${f.description}"</div>
+                    </div>
+                `).join('');
+
+                document.getElementById('editQuestionFlags').innerHTML = flagsHtml || '<div class="text-sm text-gray-600">No pending flags for this question</div>';
+
+                // Store flag IDs to resolve
+                flagsToResolve = data.flags.filter(f => f.status === 'pending').map(f => f.id);
+
+                // Show edit history
+                if (data.edit_history.length > 0) {
+                    const historyHtml = `
+                        <div class="border-t pt-4">
+                            <h3 class="font-semibold mb-3">Edit History</h3>
+                            <div class="space-y-2">
+                                ${data.edit_history.map(edit => `
+                                    <div class="text-sm p-2 bg-gray-50 rounded">
+                                        <div class="font-semibold">${edit.edited_by} - ${new Date(edit.edited_at).toLocaleString()}</div>
+                                        ${edit.edit_notes ? `<div class="text-gray-600">${edit.edit_notes}</div>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('editHistory').innerHTML = historyHtml;
+                } else {
+                    document.getElementById('editHistory').innerHTML = '';
+                }
+
+                // Show modal
+                document.getElementById('editQuestionModal').classList.remove('hidden');
+                document.getElementById('editQuestionModal').classList.add('flex');
+            } catch (error) {
+                console.error('Error loading question:', error);
+                alert('Error loading question details');
+            }
+        }
+
+        function hideEditModal() {
+            document.getElementById('editQuestionModal').classList.add('hidden');
+            document.getElementById('editQuestionModal').classList.remove('flex');
+            currentQuestionId = null;
+            flagsToResolve = [];
+        }
+
+        document.getElementById('editQuestionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const questionId = document.getElementById('editQuestionId').value;
+            const questionData = {
+                topic: document.getElementById('editTopic').value,
+                difficulty: document.getElementById('editDifficulty').value,
+                question_text: document.getElementById('editQuestionText').value,
+                option_a: document.getElementById('editOptionA').value,
+                option_b: document.getElementById('editOptionB').value,
+                option_c: document.getElementById('editOptionC').value,
+                option_d: document.getElementById('editOptionD').value,
+                correct_answer: parseInt(document.getElementById('editCorrectAnswer').value),
+                explanation: document.getElementById('editExplanation').value,
+                notes: document.getElementById('editNotes').value,
+                resolve_flag_ids: flagsToResolve
+            };
+
+            try {
+                const response = await fetch(`/api/admin/question/${questionId}/edit`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(questionData)
+                });
+
+                if (response.ok) {
+                    alert('Question updated successfully!');
+                    hideEditModal();
+                    // Refresh both tabs
+                    await loadQuestionsByFilter();
+                    await loadQuestionManagement();
+                } else {
+                    alert('Error updating question');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating question');
+            }
+        });
+
+        async function dismissFlag(flagId) {
+            const notes = prompt('Enter reason for dismissing this flag (optional):');
+            if (notes === null) return; // User cancelled
+
+            try {
+                const response = await fetch(`/api/admin/flag/${flagId}/dismiss`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ notes })
+                });
+
+                if (response.ok) {
+                    alert('Flag dismissed');
+                    await loadQuestionManagement();
+                } else {
+                    alert('Error dismissing flag');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error dismissing flag');
+            }
+        }
+
+        // Load pending flags count on page load
+        window.addEventListener('load', function() {
+            loadPendingFlagsCount();
+            // Refresh count every 30 seconds
+            setInterval(loadPendingFlagsCount, 30000);
+        });
 
         async function logout() {
             try {

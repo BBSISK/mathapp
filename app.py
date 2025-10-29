@@ -25,7 +25,7 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False)  # 'student', 'teacher', 'admin'
     is_approved = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationships
     quiz_attempts = db.relationship('QuizAttempt', backref='user', lazy=True)
     classes_enrolled = db.relationship('ClassEnrollment', backref='student', lazy=True)
@@ -33,10 +33,10 @@ class User(db.Model):
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
-    
+
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -53,10 +53,10 @@ class Class(db.Model):
     name = db.Column(db.String(100), nullable=False)
     teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationships
     enrollments = db.relationship('ClassEnrollment', backref='class_obj', lazy=True)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -73,7 +73,7 @@ class ClassEnrollment(db.Model):
     class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
     student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     enrolled_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     __table_args__ = (db.UniqueConstraint('class_id', 'student_id', name='unique_enrollment'),)
 
 class Question(db.Model):
@@ -100,6 +100,96 @@ class Question(db.Model):
             'explanation': self.explanation
         }
 
+class QuestionFlag(db.Model):
+    """Track user-reported issues with questions"""
+    __tablename__ = 'question_flags'
+    id = db.Column(db.Integer, primary_key=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    flag_type = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending')
+    admin_notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    resolved_at = db.Column(db.DateTime)
+    resolved_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    question = db.relationship('Question', backref='flags')
+    reporter = db.relationship('User', foreign_keys=[user_id], backref='flags_reported')
+    resolver = db.relationship('User', foreign_keys=[resolved_by], backref='flags_resolved')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'question_id': self.question_id,
+            'user_id': self.user_id,
+            'user_name': self.reporter.full_name,
+            'flag_type': self.flag_type,
+            'description': self.description,
+            'status': self.status,
+            'admin_notes': self.admin_notes,
+            'created_at': self.created_at.isoformat(),
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'resolver_name': self.resolver.full_name if self.resolver else None
+        }
+
+class QuestionEdit(db.Model):
+    """Track all edits made to questions"""
+    __tablename__ = 'question_edits'
+    id = db.Column(db.Integer, primary_key=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    edited_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    edit_type = db.Column(db.String(50), nullable=False)
+
+    old_question_text = db.Column(db.Text)
+    old_option_a = db.Column(db.String(100))
+    old_option_b = db.Column(db.String(100))
+    old_option_c = db.Column(db.String(100))
+    old_option_d = db.Column(db.String(100))
+    old_correct_answer = db.Column(db.Integer)
+    old_explanation = db.Column(db.Text)
+
+    new_question_text = db.Column(db.Text)
+    new_option_a = db.Column(db.String(100))
+    new_option_b = db.Column(db.String(100))
+    new_option_c = db.Column(db.String(100))
+    new_option_d = db.Column(db.String(100))
+    new_correct_answer = db.Column(db.Integer)
+    new_explanation = db.Column(db.Text)
+
+    edit_notes = db.Column(db.Text)
+    edited_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    question = db.relationship('Question', backref='edit_history')
+    editor = db.relationship('User', backref='question_edits')
+
+    def to_dict(self):
+        changes = {}
+        if self.old_question_text != self.new_question_text:
+            changes['question_text'] = {'old': self.old_question_text, 'new': self.new_question_text}
+        if self.old_option_a != self.new_option_a:
+            changes['option_a'] = {'old': self.old_option_a, 'new': self.new_option_a}
+        if self.old_option_b != self.new_option_b:
+            changes['option_b'] = {'old': self.old_option_b, 'new': self.new_option_b}
+        if self.old_option_c != self.new_option_c:
+            changes['option_c'] = {'old': self.old_option_c, 'new': self.new_option_c}
+        if self.old_option_d != self.new_option_d:
+            changes['option_d'] = {'old': self.old_option_d, 'new': self.new_option_d}
+        if self.old_correct_answer != self.new_correct_answer:
+            changes['correct_answer'] = {'old': self.old_correct_answer, 'new': self.new_correct_answer}
+        if self.old_explanation != self.new_explanation:
+            changes['explanation'] = {'old': self.old_explanation, 'new': self.new_explanation}
+
+        return {
+            'id': self.id,
+            'question_id': self.question_id,
+            'edited_by': self.editor.full_name,
+            'edit_type': self.edit_type,
+            'edit_notes': self.edit_notes,
+            'edited_at': self.edited_at.isoformat(),
+            'changes': changes
+        }
+
 class QuizAttempt(db.Model):
     __tablename__ = 'quiz_attempts'
     id = db.Column(db.Integer, primary_key=True)
@@ -111,7 +201,7 @@ class QuizAttempt(db.Model):
     percentage = db.Column(db.Float, nullable=False)
     time_taken = db.Column(db.Integer)  # seconds
     completed_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -162,6 +252,279 @@ def approved_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ==================== QUESTION GENERATION HELPERS ====================
+
+def generate_options_for_answer(correct_answer, count=4, range_size=10, allow_negative=False):
+    """
+    Helper function to generate multiple choice options
+
+    Args:
+        correct_answer: The correct answer
+        count: Number of options to generate (default 4)
+        range_size: Range for generating wrong answers
+        allow_negative: Whether to allow negative wrong answers
+
+    Returns:
+        List of options shuffled with correct answer included
+    """
+    options = [correct_answer]
+
+    # Generate wrong answers
+    attempts = 0
+    max_attempts = 100
+
+    while len(options) < count and attempts < max_attempts:
+        attempts += 1
+
+        # Create wrong answer within range
+        offset = random.randint(-range_size, range_size)
+        if offset == 0:
+            offset = random.choice([-1, 1]) * random.randint(1, range_size)
+
+        wrong_answer = correct_answer + offset
+
+        # Apply negative restriction if needed
+        if not allow_negative and wrong_answer < 0:
+            wrong_answer = abs(wrong_answer)
+
+        # Ensure unique and not zero (unless correct answer is zero)
+        if wrong_answer not in options and (wrong_answer != 0 or correct_answer == 0):
+            options.append(wrong_answer)
+
+    # If we couldn't generate enough unique options, add some calculated ones
+    while len(options) < count:
+        # Generate wrong answers based on common mistakes
+        if correct_answer > 0:
+            wrong = correct_answer + random.choice([1, -1, 2, -2, 5, -5, 10, -10])
+        else:
+            wrong = correct_answer + random.choice([1, -1, 2, -2])
+
+        if wrong not in options:
+            options.append(wrong)
+
+    # Shuffle so correct answer isn't always first
+    random.shuffle(options)
+
+    return options
+
+
+def generate_multiplication_division_beginner():
+    """
+    Generate beginner level multiplication and division questions
+    - Single digit × single digit (2 × 3 = ?)
+    - Simple division with no remainders (6 ÷ 2 = ?)
+    - NO NEGATIVE NUMBERS
+    """
+    operation = random.choice(['multiply', 'divide'])
+
+    if operation == 'multiply':
+        a = random.randint(1, 10)
+        b = random.randint(1, 10)
+        answer = a * b
+        question = f"{a} × {b}"
+    else:  # divide
+        divisor = random.randint(1, 10)
+        quotient = random.randint(1, 10)
+        dividend = divisor * quotient
+        answer = quotient
+        question = f"{dividend} ÷ {divisor}"
+
+    options = generate_options_for_answer(answer, count=4, range_size=10)
+
+    return {
+        'question': question,
+        'answer': answer,
+        'options': options,
+        'explanation': f"The correct answer is {answer}"
+    }
+
+
+def generate_multiplication_division_intermediate():
+    """
+    Generate intermediate level multiplication and division questions
+    - INCLUDES SINGLE NEGATIVE NUMBERS with low value integers
+    """
+    operation = random.choice(['multiply', 'divide'])
+    include_negative = random.choice([True, False])
+
+    if operation == 'multiply':
+        if include_negative:
+            a = random.choice(list(range(-10, 0)) + list(range(1, 11)))
+            b = random.choice(list(range(-10, 0)) + list(range(1, 11)))
+
+            # Ensure only ONE is negative
+            if a < 0 and b < 0:
+                b = abs(b)
+            elif a > 0 and b > 0:
+                if random.choice([True, False]):
+                    a = -a
+                else:
+                    b = -b
+        else:
+            a = random.randint(10, 25)
+            b = random.randint(2, 12)
+
+        answer = a * b
+        question = f"{a} × {b}"
+    else:  # divide
+        if include_negative:
+            divisor = random.choice(list(range(-10, 0)) + list(range(2, 11)))
+            quotient = random.choice(list(range(-10, 0)) + list(range(1, 11)))
+
+            # Ensure only ONE is negative
+            if divisor < 0 and quotient < 0:
+                quotient = abs(quotient)
+            elif divisor > 0 and quotient > 0:
+                if random.choice([True, False]):
+                    divisor = -divisor
+                else:
+                    quotient = -quotient
+
+            dividend = divisor * quotient
+            answer = quotient
+        else:
+            divisor = random.randint(2, 12)
+            quotient = random.randint(10, 50)
+            dividend = divisor * quotient
+            answer = quotient
+
+        question = f"{dividend} ÷ {divisor}"
+
+    options = generate_options_for_answer(answer, count=4, range_size=20, allow_negative=True)
+
+    return {
+        'question': question,
+        'answer': answer,
+        'options': options,
+        'explanation': f"The correct answer is {answer}"
+    }
+
+
+def generate_multiplication_division_advanced():
+    """
+    Generate advanced level multiplication and division questions
+    - DOUBLE NEGATIVE CALCULATIONS
+    - THREE DIGIT COMPUTATIONS
+    """
+    operation = random.choice(['multiply', 'divide', 'mixed', 'three_digit'])
+
+    if operation == 'multiply':
+        neg_type = random.choices(['double_neg', 'single_neg', 'positive'], weights=[0.4, 0.4, 0.2])[0]
+
+        if neg_type == 'double_neg':
+            a = random.randint(-50, -10)
+            b = random.randint(-20, -2)
+            answer = a * b
+            question = f"({a}) × ({b})"
+        elif neg_type == 'single_neg':
+            a = random.randint(10, 50)
+            b = random.randint(2, 25)
+            if random.choice([True, False]):
+                a = -a
+            else:
+                b = -b
+            answer = a * b
+            question = f"{a} × {b}"
+        else:
+            a = random.randint(20, 99)
+            b = random.randint(11, 25)
+            answer = a * b
+            question = f"{a} × {b}"
+
+    elif operation == 'divide':
+        neg_type = random.choices(['double_neg', 'single_neg', 'positive'], weights=[0.4, 0.4, 0.2])[0]
+
+        if neg_type == 'double_neg':
+            divisor = random.randint(-25, -2)
+            quotient = random.randint(-50, -5)
+            dividend = divisor * quotient
+            answer = quotient
+            question = f"({dividend}) ÷ ({divisor})"
+        elif neg_type == 'single_neg':
+            divisor = random.randint(2, 25)
+            quotient = random.randint(5, 50)
+            if random.choice([True, False]):
+                divisor = -divisor
+            else:
+                quotient = -quotient
+            dividend = divisor * quotient
+            answer = quotient
+            question = f"{dividend} ÷ {divisor}"
+        else:
+            divisor = random.randint(11, 25)
+            quotient = random.randint(20, 100)
+            dividend = divisor * quotient
+            answer = quotient
+            question = f"{dividend} ÷ {divisor}"
+
+    elif operation == 'mixed':
+        mix_type = random.choice(['mult_then_div', 'div_then_mult'])
+
+        if mix_type == 'mult_then_div':
+            a = random.randint(-30, 30)
+            if a == 0:
+                a = random.choice([-15, 15])
+            b = random.randint(2, 10)
+            c = random.randint(-10, 10)
+            if c == 0:
+                c = random.choice([-5, 5])
+
+            temp = a * b
+            if temp % c != 0:
+                quotient = temp // c
+                temp = quotient * c
+                a = temp // b
+
+            answer = (a * b) // c
+            a_str = f"({a})" if a < 0 else str(a)
+            b_str = f"({b})" if b < 0 else str(b)
+            c_str = f"({c})" if c < 0 else str(c)
+            question = f"({a_str} × {b_str}) ÷ {c_str}"
+        else:
+            a = random.randint(-100, 100)
+            if a == 0:
+                a = random.choice([-48, 48])
+            b = random.randint(-10, 10)
+            if b == 0:
+                b = random.choice([-6, 6])
+            quotient = random.randint(-20, 20)
+            if quotient == 0:
+                quotient = random.choice([-8, 8])
+            a = quotient * b
+            c = random.randint(-10, 10)
+            if c == 0:
+                c = random.choice([-3, 3])
+
+            answer = (a // b) * c
+            a_str = f"({a})" if a < 0 else str(a)
+            b_str = f"({b})" if b < 0 else str(b)
+            c_str = f"({c})" if c < 0 else str(c)
+            question = f"({a_str} ÷ {b_str}) × {c_str}"
+
+    else:  # three_digit
+        sub_type = random.choice(['mult_3digit', 'div_3digit'])
+
+        if sub_type == 'mult_3digit':
+            a = random.randint(100, 999)
+            b = random.randint(10, 99)
+            answer = a * b
+            question = f"{a} × {b}"
+        else:
+            divisor = random.randint(10, 99)
+            quotient = random.randint(10, 99)
+            dividend = divisor * quotient
+            answer = quotient
+            question = f"{dividend} ÷ {divisor}"
+
+    options = generate_options_for_answer(answer, count=4, range_size=50, allow_negative=True)
+
+    return {
+        'question': question,
+        'answer': answer,
+        'options': options,
+        'explanation': f"The correct answer is {answer}"
+    }
+
 # ==================== AUTHENTICATION ROUTES ====================
 
 @app.route('/')
@@ -190,24 +553,24 @@ def register():
     password = data.get('password', '')
     full_name = data.get('full_name', '').strip()
     role = data.get('role', 'student')
-    
+
     # Validation
     if not email or not password or not full_name:
         return jsonify({'error': 'All fields are required'}), 400
-    
+
     if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', email):
         return jsonify({'error': 'Invalid email format'}), 400
-    
+
     if len(password) < 6:
         return jsonify({'error': 'Password must be at least 6 characters'}), 400
-    
+
     if role not in ['student', 'teacher']:
         return jsonify({'error': 'Invalid role'}), 400
-    
+
     # Check if user exists
     if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Email already registered'}), 400
-    
+
     # Create user
     user = User(
         email=email,
@@ -216,12 +579,12 @@ def register():
         is_approved=(role == 'student')  # Students auto-approved, teachers need approval
     )
     user.set_password(password)
-    
+
     db.session.add(user)
     db.session.commit()
-    
+
     message = 'Registration successful!' if role == 'student' else 'Registration successful! Your teacher account is pending admin approval.'
-    
+
     return jsonify({
         'message': message,
         'user': user.to_dict()
@@ -232,19 +595,19 @@ def login():
     data = request.json
     email = data.get('email', '').strip().lower()
     password = data.get('password', '')
-    
+
     if not email or not password:
         return jsonify({'error': 'Email and password are required'}), 400
-    
+
     user = User.query.filter_by(email=email).first()
-    
+
     if not user or not user.check_password(password):
         return jsonify({'error': 'Invalid email or password'}), 401
-    
+
     session['user_id'] = user.id
     session['user_role'] = user.role
     session['user_name'] = user.full_name
-    
+
     return jsonify({
         'message': 'Login successful',
         'user': user.to_dict()
@@ -279,9 +642,11 @@ def get_topics():
     topics = {
         'arithmetic': {'title': 'Arithmetic', 'icon': 'calculator', 'color': 'bg-red-500'},
         'fractions': {'title': 'Fractions', 'icon': 'divide', 'color': 'bg-blue-500'},
+        'multiplication_division': {'title': 'Multiplication & Division', 'icon': 'x', 'color': 'bg-indigo-500'},
         'bodmas': {'title': 'BODMAS', 'icon': 'book', 'color': 'bg-green-500'},
         'functions': {'title': 'Functions', 'icon': 'chart', 'color': 'bg-purple-500'},
-        'sets': {'title': 'Sets', 'icon': 'layers', 'color': 'bg-orange-500'}
+        'sets': {'title': 'Sets', 'icon': 'layers', 'color': 'bg-orange-500'},
+        'complex_numbers': {'title': 'Complex Numbers', 'icon': 'infinity', 'color': 'bg-pink-500'}
     }
     return jsonify(topics)
 
@@ -289,17 +654,26 @@ def get_topics():
 @login_required
 @approved_required
 def get_questions(topic, difficulty):
+    """
+    Get 25 random questions from the pool of 40 available questions
+    for the given topic and difficulty level.
+    Each student gets a different random selection.
+    """
     questions = Question.query.filter_by(topic=topic, difficulty=difficulty).all()
     questions_list = [q.to_dict() for q in questions]
+
+    # Shuffle to randomize order
     random.shuffle(questions_list)
-    return jsonify(questions_list[:20])
+
+    # Return 25 questions (or all available if less than 25)
+    return jsonify(questions_list[:25])
 
 @app.route('/api/submit-quiz', methods=['POST'])
 @login_required
 @approved_required
 def submit_quiz():
     data = request.json
-    
+
     attempt = QuizAttempt(
         user_id=session['user_id'],
         topic=data.get('topic'),
@@ -309,10 +683,10 @@ def submit_quiz():
         percentage=data.get('percentage'),
         time_taken=data.get('time_taken')
     )
-    
+
     db.session.add(attempt)
     db.session.commit()
-    
+
     return jsonify({
         'message': 'Quiz submitted successfully',
         'attempt': attempt.to_dict()
@@ -333,6 +707,17 @@ def my_progress():
 def teacher_dashboard():
     return render_template('teacher_dashboard.html')
 
+@app.route('/teacher/class-monitor')
+@login_required
+@role_required('teacher')
+@approved_required
+def class_monitor():
+    """
+    Class Monitor Dashboard - Live monitoring view for teachers
+    Shows performance matrix for all students in teacher's classes
+    """
+    return render_template('class_monitor.html')
+
 @app.route('/api/teacher/my-classes')
 @login_required
 @role_required('teacher')
@@ -348,18 +733,18 @@ def teacher_classes():
 def create_class():
     data = request.json
     name = data.get('name', '').strip()
-    
+
     if not name:
         return jsonify({'error': 'Class name is required'}), 400
-    
+
     new_class = Class(
         name=name,
         teacher_id=session['user_id']
     )
-    
+
     db.session.add(new_class)
     db.session.commit()
-    
+
     return jsonify({
         'message': 'Class created successfully',
         'class': new_class.to_dict()
@@ -371,15 +756,15 @@ def create_class():
 @approved_required
 def search_students():
     query = request.args.get('q', '').strip()
-    
+
     if len(query) < 2:
         return jsonify([])
-    
+
     students = User.query.filter(
         User.role == 'student',
         (User.email.ilike(f'%{query}%')) | (User.full_name.ilike(f'%{query}%'))
     ).limit(20).all()
-    
+
     return jsonify([s.to_dict() for s in students])
 
 @app.route('/api/teacher/class/<int:class_id>/enroll', methods=['POST'])
@@ -388,30 +773,30 @@ def search_students():
 @approved_required
 def enroll_student(class_id):
     class_obj = Class.query.get_or_404(class_id)
-    
+
     # Verify teacher owns this class
     if class_obj.teacher_id != session['user_id']:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     data = request.json
     student_id = data.get('student_id')
-    
+
     if not student_id:
         return jsonify({'error': 'Student ID required'}), 400
-    
+
     student = User.query.get(student_id)
     if not student or student.role != 'student':
         return jsonify({'error': 'Invalid student'}), 400
-    
+
     # Check if already enrolled
     existing = ClassEnrollment.query.filter_by(class_id=class_id, student_id=student_id).first()
     if existing:
         return jsonify({'error': 'Student already enrolled'}), 400
-    
+
     enrollment = ClassEnrollment(class_id=class_id, student_id=student_id)
     db.session.add(enrollment)
     db.session.commit()
-    
+
     return jsonify({'message': 'Student enrolled successfully'}), 201
 
 @app.route('/api/teacher/class/<int:class_id>/students')
@@ -420,17 +805,17 @@ def enroll_student(class_id):
 @approved_required
 def class_students(class_id):
     class_obj = Class.query.get_or_404(class_id)
-    
+
     if class_obj.teacher_id != session['user_id']:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
-    
+
     students_data = []
     for enrollment in enrollments:
         student = enrollment.student
         attempts = QuizAttempt.query.filter_by(user_id=student.id).all()
-        
+
         students_data.append({
             'id': student.id,
             'full_name': student.full_name,
@@ -440,7 +825,7 @@ def class_students(class_id):
             'average_score': sum(a.percentage for a in attempts) / len(attempts) if attempts else 0,
             'last_activity': max([a.completed_at for a in attempts]).isoformat() if attempts else None
         })
-    
+
     return jsonify(students_data)
 
 @app.route('/api/teacher/class/<int:class_id>/progress')
@@ -449,16 +834,16 @@ def class_students(class_id):
 @approved_required
 def class_progress(class_id):
     class_obj = Class.query.get_or_404(class_id)
-    
+
     if class_obj.teacher_id != session['user_id']:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
     student_ids = [e.student_id for e in enrollments]
-    
+
     # Get all attempts for students in this class
     attempts = QuizAttempt.query.filter(QuizAttempt.user_id.in_(student_ids)).order_by(QuizAttempt.completed_at.desc()).all()
-    
+
     return jsonify([a.to_dict() for a in attempts])
 
 @app.route('/api/teacher/class/<int:class_id>/remove-student/<int:student_id>', methods=['DELETE'])
@@ -467,18 +852,85 @@ def class_progress(class_id):
 @approved_required
 def remove_student(class_id, student_id):
     class_obj = Class.query.get_or_404(class_id)
-    
+
     if class_obj.teacher_id != session['user_id']:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     enrollment = ClassEnrollment.query.filter_by(class_id=class_id, student_id=student_id).first()
     if not enrollment:
         return jsonify({'error': 'Enrollment not found'}), 404
-    
+
     db.session.delete(enrollment)
     db.session.commit()
-    
+
     return jsonify({'message': 'Student removed successfully'})
+
+@app.route('/api/teacher/class/<int:class_id>/performance-matrix')
+@login_required
+@role_required('teacher')
+@approved_required
+def get_class_performance_matrix(class_id):
+    """
+    Get performance matrix for all students in a class
+    Returns: percentage correct and attempts for each topic/difficulty combination
+    Used by: Class Monitor Dashboard for live performance tracking
+    """
+    # Verify teacher owns this class
+    class_obj = Class.query.filter_by(id=class_id, teacher_id=session['user_id']).first()
+    if not class_obj:
+        return jsonify({'error': 'Class not found or access denied'}), 403
+
+    # Get all students in class
+    enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
+    student_ids = [e.student_id for e in enrollments]
+    students = User.query.filter(User.id.in_(student_ids)).all()
+
+    # Get all topics and difficulties
+    topics = ['arithmetic', 'fractions', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers']
+    difficulties = ['beginner', 'intermediate', 'advanced']
+
+    students_data = []
+
+    for student in students:
+        performance = {}
+
+        for topic in topics:
+            for difficulty in difficulties:
+                key = f"{topic}_{difficulty}"
+
+                # Get all attempts for this topic/difficulty
+                attempts = QuizAttempt.query.filter_by(
+                    user_id=student.id,
+                    topic=topic,
+                    difficulty=difficulty
+                ).all()
+
+                if attempts:
+                    # Calculate average percentage
+                    avg_percentage = sum(a.percentage for a in attempts) / len(attempts)
+                    performance[key] = {
+                        'percentage': round(avg_percentage, 1),
+                        'attempts': len(attempts)
+                    }
+                else:
+                    performance[key] = {
+                        'percentage': None,
+                        'attempts': 0
+                    }
+
+        students_data.append({
+            'student_id': student.id,
+            'student_name': student.full_name,
+            'performance': performance
+        })
+
+    return jsonify({
+        'class_name': class_obj.name,
+        'total_students': len(students_data),
+        'students': students_data,
+        'topics': topics,
+        'difficulties': difficulties
+    })
 
 # ==================== ADMIN ROUTES ====================
 
@@ -500,13 +952,13 @@ def pending_teachers():
 @role_required('admin')
 def approve_teacher(teacher_id):
     teacher = User.query.get_or_404(teacher_id)
-    
+
     if teacher.role != 'teacher':
         return jsonify({'error': 'User is not a teacher'}), 400
-    
+
     teacher.is_approved = True
     db.session.commit()
-    
+
     return jsonify({'message': 'Teacher approved successfully'})
 
 @app.route('/api/admin/all-users')
@@ -514,11 +966,11 @@ def approve_teacher(teacher_id):
 @role_required('admin')
 def all_users():
     role_filter = request.args.get('role')
-    
+
     query = User.query
     if role_filter:
         query = query.filter_by(role=role_filter)
-    
+
     users = query.all()
     return jsonify([u.to_dict() for u in users])
 
@@ -536,13 +988,13 @@ def rename_class(class_id):
     class_obj = Class.query.get_or_404(class_id)
     data = request.json
     new_name = data.get('name', '').strip()
-    
+
     if not new_name:
         return jsonify({'error': 'Class name required'}), 400
-    
+
     class_obj.name = new_name
     db.session.commit()
-    
+
     return jsonify({'message': 'Class renamed successfully', 'class': class_obj.to_dict()})
 
 @app.route('/api/admin/reassign-student', methods=['POST'])
@@ -553,20 +1005,20 @@ def reassign_student():
     student_id = data.get('student_id')
     from_class_id = data.get('from_class_id')
     to_class_id = data.get('to_class_id')
-    
+
     if not all([student_id, from_class_id, to_class_id]):
         return jsonify({'error': 'Missing required parameters'}), 400
-    
+
     # Remove from old class
     old_enrollment = ClassEnrollment.query.filter_by(class_id=from_class_id, student_id=student_id).first()
     if old_enrollment:
         db.session.delete(old_enrollment)
-    
+
     # Add to new class
     new_enrollment = ClassEnrollment(class_id=to_class_id, student_id=student_id)
     db.session.add(new_enrollment)
     db.session.commit()
-    
+
     return jsonify({'message': 'Student reassigned successfully'})
 
 @app.route('/api/admin/class-comparison')
@@ -575,15 +1027,15 @@ def reassign_student():
 def class_comparison():
     classes = Class.query.all()
     comparison_data = []
-    
+
     for class_obj in classes:
         enrollments = ClassEnrollment.query.filter_by(class_id=class_obj.id).all()
         student_ids = [e.student_id for e in enrollments]
-        
+
         attempts = QuizAttempt.query.filter(QuizAttempt.user_id.in_(student_ids)).all()
-        
+
         avg_score = sum(a.percentage for a in attempts) / len(attempts) if attempts else 0
-        
+
         comparison_data.append({
             'class_id': class_obj.id,
             'class_name': class_obj.name,
@@ -592,7 +1044,7 @@ def class_comparison():
             'total_quizzes': len(attempts),
             'average_score': round(avg_score, 2)
         })
-    
+
     return jsonify(comparison_data)
 
 @app.route('/api/admin/statistics')
@@ -609,10 +1061,435 @@ def admin_statistics():
     }
     return jsonify(stats)
 
+# ==================== REAL-TIME CLASS DASHBOARD ROUTES ====================
+
+@app.route('/teacher/class-dashboard/<int:class_id>')
+@login_required
+@role_required('teacher')
+@approved_required
+def class_dashboard(class_id):
+    """
+    Enhanced Class Performance Dashboard
+    - Compact cells (50% smaller)
+    - Hover tooltips with details and recommendations
+    - Student selection with checkboxes
+    - Export to CSV
+    """
+    class_obj = Class.query.get_or_404(class_id)
+
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        flash('Unauthorized access to class', 'error')
+        return redirect(url_for('teacher_dashboard'))
+
+    return render_template('teacher_class_dashboard_enhanced.html',
+                         class_id=class_id,
+                         class_name=class_obj.name)
+    """
+    DEPRECATED: Redirects to new Class Monitor
+
+    Old dashboard had purple gradient issue.
+    New monitor has better features and cleaner design.
+    """
+    flash('Redirected to improved Class Monitor dashboard!', 'info')
+    return redirect(url_for('class_monitor'))
+
+@app.route('/api/teacher/class/<int:class_id>/matrix-data')
+@login_required
+@role_required('teacher')
+@approved_required
+def get_class_matrix_data(class_id):
+    """Get matrix data for class dashboard"""
+    class_obj = Class.query.get_or_404(class_id)
+
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    # Get all students in class
+    enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
+
+    # All topics and difficulties
+    topics = ['arithmetic', 'fractions', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers']
+    difficulties = ['beginner', 'intermediate', 'advanced']
+
+    # Build matrix data
+    matrix_data = []
+
+    for enrollment in enrollments:
+        student = enrollment.student
+        student_data = {
+            'student_id': student.id,
+            'student_name': student.full_name,
+            'modules': {}
+        }
+
+        # For each topic/difficulty combination
+        for topic in topics:
+            for difficulty in difficulties:
+                module_key = f"{topic}_{difficulty}"
+
+                # Get all attempts for this module
+                attempts = QuizAttempt.query.filter_by(
+                    user_id=student.id,
+                    topic=topic,
+                    difficulty=difficulty
+                ).all()
+
+                if attempts:
+                    # Calculate average percentage
+                    avg_percentage = sum(a.percentage for a in attempts) / len(attempts)
+                    total_attempts = len(attempts)
+
+                    # Determine color based on performance
+                    if avg_percentage < 20:
+                        color = 'grey'
+                    elif avg_percentage <= 80:
+                        color = 'yellow'
+                    else:
+                        color = 'green'
+
+                    student_data['modules'][module_key] = {
+                        'percentage': round(avg_percentage, 1),
+                        'attempts': total_attempts,
+                        'color': color,
+                        'completed': True
+                    }
+                else:
+                    # Not attempted yet
+                    student_data['modules'][module_key] = {
+                        'percentage': 0,
+                        'attempts': 0,
+                        'color': 'grey',
+                        'completed': False
+                    }
+
+        matrix_data.append(student_data)
+
+    return jsonify({
+        'students': matrix_data,
+        'topics': topics,
+        'difficulties': difficulties,
+        'class_name': class_obj.name,
+        'total_students': len(matrix_data)
+    })
+
+@app.route('/api/teacher/class/<int:class_id>/dashboard-settings', methods=['GET', 'POST'])
+@login_required
+@role_required('teacher')
+@approved_required
+def dashboard_settings(class_id):
+    """Save/load dashboard display settings"""
+    class_obj = Class.query.get_or_404(class_id)
+
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    if request.method == 'POST':
+        settings = request.json
+        return jsonify({'message': 'Settings saved', 'settings': settings})
+    else:
+        # Return default settings
+        return jsonify({
+            'visible_modules': {
+                'arithmetic': True,
+                'fractions': True,
+                'bodmas': True,
+                'functions': True,
+                'sets': True
+            },
+            'visible_difficulties': {
+                'beginner': True,
+                'intermediate': True,
+                'advanced': True
+            },
+            'refresh_rate': 10,
+            'students_per_page': 12
+        })
+
+# ==================== QUESTION FLAGGING ROUTES ====================
+
+@app.route('/api/student/flag-question', methods=['POST'])
+@login_required
+def flag_question():
+    """Student/Teacher flags a question as incorrect or ambiguous"""
+    data = request.json
+
+    question_id = data.get('question_id')
+    flag_type = data.get('flag_type')
+    description = data.get('description', '').strip()
+
+    if not all([question_id, flag_type, description]):
+        return jsonify({'error': 'Question ID, flag type, and description are required'}), 400
+
+    if flag_type not in ['incorrect', 'ambiguous', 'typo', 'other']:
+        return jsonify({'error': 'Invalid flag type'}), 400
+
+    question = Question.query.get(question_id)
+    if not question:
+        return jsonify({'error': 'Question not found'}), 404
+
+    flag = QuestionFlag(
+        question_id=question_id,
+        user_id=session['user_id'],
+        flag_type=flag_type,
+        description=description
+    )
+
+    db.session.add(flag)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Question flagged successfully. An administrator will review it.',
+        'flag': flag.to_dict()
+    }), 201
+
+@app.route('/api/student/my-flags')
+@login_required
+def get_my_flags():
+    """Get all flags submitted by current user"""
+    flags = QuestionFlag.query.filter_by(user_id=session['user_id']).order_by(QuestionFlag.created_at.desc()).all()
+    return jsonify([f.to_dict() for f in flags])
+
+@app.route('/api/admin/flags/pending')
+@login_required
+@role_required('admin')
+def get_pending_flags():
+    """Get all pending question flags"""
+    flags = QuestionFlag.query.filter_by(status='pending').order_by(QuestionFlag.created_at.desc()).all()
+
+    flags_with_questions = []
+    for flag in flags:
+        flag_dict = flag.to_dict()
+        flag_dict['question'] = flag.question.to_dict()
+        flags_with_questions.append(flag_dict)
+
+    return jsonify(flags_with_questions)
+
+@app.route('/api/admin/flags/all')
+@login_required
+@role_required('admin')
+def get_all_flags():
+    """Get all question flags"""
+    status_filter = request.args.get('status')
+
+    query = QuestionFlag.query
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+
+    flags = query.order_by(QuestionFlag.created_at.desc()).all()
+
+    flags_with_questions = []
+    for flag in flags:
+        flag_dict = flag.to_dict()
+        flag_dict['question'] = flag.question.to_dict()
+        flags_with_questions.append(flag_dict)
+
+    return jsonify(flags_with_questions)
+
+@app.route('/api/admin/flag/<int:flag_id>/dismiss', methods=['POST'])
+@login_required
+@role_required('admin')
+def dismiss_flag(flag_id):
+    """Dismiss a flag without making changes"""
+    flag = QuestionFlag.query.get_or_404(flag_id)
+    data = request.json
+
+    flag.status = 'dismissed'
+    flag.admin_notes = data.get('notes', '')
+    flag.resolved_at = datetime.utcnow()
+    flag.resolved_by = session['user_id']
+
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Flag dismissed',
+        'flag': flag.to_dict()
+    })
+
+@app.route('/api/admin/question/<int:question_id>')
+@login_required
+@role_required('admin')
+def get_question_for_edit(question_id):
+    """Get question details for editing"""
+    question = Question.query.get_or_404(question_id)
+    flags = QuestionFlag.query.filter_by(question_id=question_id).order_by(QuestionFlag.created_at.desc()).all()
+    edits = QuestionEdit.query.filter_by(question_id=question_id).order_by(QuestionEdit.edited_at.desc()).all()
+
+    return jsonify({
+        'question': question.to_dict(),
+        'flags': [f.to_dict() for f in flags],
+        'edit_history': [e.to_dict() for e in edits]
+    })
+
+@app.route('/api/admin/all-questions')
+@login_required
+@role_required('admin')
+def get_all_questions():
+    """Get all questions with optional filters for management"""
+    topic = request.args.get('topic', '')
+    difficulty = request.args.get('difficulty', '')
+
+    query = Question.query
+
+    if topic:
+        query = query.filter_by(topic=topic)
+    if difficulty:
+        query = query.filter_by(difficulty=difficulty)
+
+    questions = query.order_by(Question.topic, Question.difficulty, Question.id).all()
+    return jsonify([q.to_dict() for q in questions])
+
+@app.route('/api/admin/question/<int:question_id>/edit', methods=['PUT'])
+@login_required
+@role_required('admin')
+def edit_question(question_id):
+    """Edit a question and track the changes"""
+    question = Question.query.get_or_404(question_id)
+    data = request.json
+
+    edit_record = QuestionEdit(
+        question_id=question_id,
+        edited_by=session['user_id'],
+        edit_type=data.get('edit_type', 'correction'),
+        old_question_text=question.question_text,
+        old_option_a=question.option_a,
+        old_option_b=question.option_b,
+        old_option_c=question.option_c,
+        old_option_d=question.option_d,
+        old_correct_answer=question.correct_answer,
+        old_explanation=question.explanation,
+        edit_notes=data.get('notes', '')
+    )
+
+    # Update topic if provided
+    if 'topic' in data:
+        question.topic = data['topic']
+
+    # Update difficulty if provided
+    if 'difficulty' in data:
+        question.difficulty = data['difficulty']
+
+    if 'question_text' in data:
+        question.question_text = data['question_text']
+        edit_record.new_question_text = data['question_text']
+    else:
+        edit_record.new_question_text = question.question_text
+
+    if 'option_a' in data:
+        question.option_a = data['option_a']
+        edit_record.new_option_a = data['option_a']
+    else:
+        edit_record.new_option_a = question.option_a
+
+    if 'option_b' in data:
+        question.option_b = data['option_b']
+        edit_record.new_option_b = data['option_b']
+    else:
+        edit_record.new_option_b = question.option_b
+
+    if 'option_c' in data:
+        question.option_c = data['option_c']
+        edit_record.new_option_c = data['option_c']
+    else:
+        edit_record.new_option_c = question.option_c
+
+    if 'option_d' in data:
+        question.option_d = data['option_d']
+        edit_record.new_option_d = data['option_d']
+    else:
+        edit_record.new_option_d = question.option_d
+
+    if 'correct_answer' in data:
+        question.correct_answer = data['correct_answer']
+        edit_record.new_correct_answer = data['correct_answer']
+    else:
+        edit_record.new_correct_answer = question.correct_answer
+
+    if 'explanation' in data:
+        question.explanation = data['explanation']
+        edit_record.new_explanation = data['explanation']
+    else:
+        edit_record.new_explanation = question.explanation
+
+    db.session.add(edit_record)
+    db.session.commit()
+
+    if 'resolve_flag_ids' in data:
+        for flag_id in data['resolve_flag_ids']:
+            flag = QuestionFlag.query.get(flag_id)
+            if flag and flag.question_id == question_id:
+                flag.status = 'resolved'
+                flag.resolved_at = datetime.utcnow()
+                flag.resolved_by = session['user_id']
+                flag.admin_notes = f"Question edited: {edit_record.edit_notes}"
+        db.session.commit()
+
+    return jsonify({
+        'message': 'Question updated successfully',
+        'question': question.to_dict(),
+        'edit': edit_record.to_dict()
+    })
+
+@app.route('/api/admin/question/<int:question_id>/history')
+@login_required
+@role_required('admin')
+def get_question_history(question_id):
+    """Get complete edit history for a question"""
+    question = Question.query.get_or_404(question_id)
+    edits = QuestionEdit.query.filter_by(question_id=question_id).order_by(QuestionEdit.edited_at.desc()).all()
+
+    return jsonify({
+        'question': question.to_dict(),
+        'edit_history': [e.to_dict() for e in edits]
+    })
+
+@app.route('/api/admin/questions/flagged')
+@login_required
+@role_required('admin')
+def get_flagged_questions():
+    """Get all questions that have pending flags"""
+    flagged_question_ids = db.session.query(QuestionFlag.question_id).filter_by(status='pending').distinct().all()
+    question_ids = [q[0] for q in flagged_question_ids]
+
+    questions_with_flags = []
+    for qid in question_ids:
+        question = Question.query.get(qid)
+        flags = QuestionFlag.query.filter_by(question_id=qid, status='pending').all()
+
+        questions_with_flags.append({
+            'question': question.to_dict(),
+            'flag_count': len(flags),
+            'flags': [f.to_dict() for f in flags]
+        })
+
+    return jsonify(questions_with_flags)
+
+@app.route('/api/admin/flags/statistics')
+@login_required
+@role_required('admin')
+def flag_statistics():
+    """Get statistics about question flags"""
+    stats = {
+        'total_flags': QuestionFlag.query.count(),
+        'pending_flags': QuestionFlag.query.filter_by(status='pending').count(),
+        'resolved_flags': QuestionFlag.query.filter_by(status='resolved').count(),
+        'dismissed_flags': QuestionFlag.query.filter_by(status='dismissed').count(),
+        'flagged_questions': db.session.query(QuestionFlag.question_id).filter_by(status='pending').distinct().count(),
+        'total_edits': QuestionEdit.query.count(),
+        'by_flag_type': {}
+    }
+
+    for flag_type in ['incorrect', 'ambiguous', 'typo', 'other']:
+        stats['by_flag_type'][flag_type] = QuestionFlag.query.filter_by(flag_type=flag_type, status='pending').count()
+
+    return jsonify(stats)
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        
+
         # Create default admin if doesn't exist
         admin = User.query.filter_by(email='admin@mathmaster.com').first()
         if not admin:
@@ -626,5 +1503,5 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print("Default admin created: admin@mathmaster.com / admin123")
-    
-    app.run(debug=True, port=5001)
+
+    app.run(debug=True)

@@ -1,0 +1,232 @@
+<!-- Add this CSS in the <head> section of student_app.html -->
+<style>
+    .number-line-container {
+        margin: 20px 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .number-line {
+        position: relative;
+        margin: 30px 20px;
+        height: 80px;
+    }
+    
+    .number-line-base {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #4a5568;
+        transform: translateY(-50%);
+    }
+    
+    .number-line-tick {
+        position: absolute;
+        top: 50%;
+        width: 2px;
+        height: 20px;
+        background: #4a5568;
+        transform: translate(-50%, -50%);
+    }
+    
+    .number-line-label {
+        position: absolute;
+        top: 70%;
+        transform: translateX(-50%);
+        font-size: 14px;
+        font-weight: bold;
+        color: #2d3748;
+    }
+    
+    .number-line-arc {
+        position: absolute;
+        top: 15%;
+        border: 3px solid #667eea;
+        border-bottom: none;
+        border-radius: 50px 50px 0 0;
+        height: 25px;
+    }
+    
+    .number-line-arrow {
+        position: absolute;
+        font-size: 24px;
+        color: #667eea;
+        animation: bounce 0.8s infinite;
+    }
+    
+    .number-line-start-dot {
+        position: absolute;
+        top: 50%;
+        width: 12px;
+        height: 12px;
+        background: #48bb78;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        z-index: 10;
+    }
+    
+    .number-line-end-dot {
+        position: absolute;
+        top: 50%;
+        width: 16px;
+        height: 16px;
+        background: #f56565;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        border: 3px solid white;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        z-index: 10;
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); }
+        50% { transform: translate(-50%, -50%) scale(1.1); }
+    }
+    
+    .number-line-instruction {
+        text-align: center;
+        color: #4a5568;
+        font-size: 14px;
+        margin-top: 10px;
+        font-weight: 500;
+    }
+</style>
+
+<!-- JavaScript function to add to your existing showQuestion() function -->
+<script>
+function generateNumberLine(questionText) {
+    // Parse the question to extract numbers and operation
+    const additionMatch = questionText.match(/(\d+)\s*\+\s*(\d+)/);
+    const subtractionMatch = questionText.match(/(\d+)\s*-\s*(\d+)/);
+    
+    if (!additionMatch && !subtractionMatch) {
+        return ''; // Not an addition or subtraction question
+    }
+    
+    let num1, num2, operation, result;
+    
+    if (additionMatch) {
+        num1 = parseInt(additionMatch[1]);
+        num2 = parseInt(additionMatch[2]);
+        operation = 'addition';
+        result = num1 + num2;
+    } else {
+        num1 = parseInt(subtractionMatch[1]);
+        num2 = parseInt(subtractionMatch[2]);
+        operation = 'subtraction';
+        result = num1 - num2;
+    }
+    
+    // Determine range for number line
+    const maxNum = Math.max(num1, num2, result) + 2;
+    const minNum = Math.max(0, result - 2);
+    const range = maxNum - minNum;
+    
+    // Generate number line HTML
+    let html = '<div class="number-line-container">';
+    html += '<div class="number-line">';
+    
+    // Base line
+    html += '<div class="number-line-base"></div>';
+    
+    // Add ticks and labels
+    for (let i = minNum; i <= maxNum; i++) {
+        const position = ((i - minNum) / range) * 100;
+        html += `<div class="number-line-tick" style="left: ${position}%"></div>`;
+        html += `<div class="number-line-label" style="left: ${position}%">${i}</div>`;
+    }
+    
+    // Add visualization based on operation
+    const startPos = ((num1 - minNum) / range) * 100;
+    const endPos = ((result - minNum) / range) * 100;
+    
+    // Start dot (green)
+    html += `<div class="number-line-start-dot" style="left: ${startPos}%"></div>`;
+    
+    if (operation === 'addition') {
+        // Arc showing the addition
+        const arcWidth = ((num2) / range) * 100;
+        html += `<div class="number-line-arc" style="left: ${startPos}%; width: ${arcWidth}%"></div>`;
+        
+        // Arrow pointing right
+        const arrowPos = ((num1 + num2/2) / range) * 100;
+        html += `<div class="number-line-arrow" style="left: ${arrowPos}%; top: 5%;">→</div>`;
+        
+        html += '</div>';
+        html += `<div class="number-line-instruction">Start at ${num1}, jump forward ${num2} spaces</div>`;
+    } else {
+        // Arc showing the subtraction
+        const arcWidth = ((num2) / range) * 100;
+        html += `<div class="number-line-arc" style="left: ${endPos}%; width: ${arcWidth}%; border-color: #f56565;"></div>`;
+        
+        // Arrow pointing left
+        const arrowPos = ((result + num2/2) / range) * 100;
+        html += `<div class="number-line-arrow" style="left: ${arrowPos}%; top: 5%; color: #f56565;">←</div>`;
+        
+        html += '</div>';
+        html += `<div class="number-line-instruction">Start at ${num1}, jump back ${num2} spaces</div>`;
+    }
+    
+    // End dot (red)
+    html += `<div class="number-line-end-dot" style="left: ${endPos}%"></div>`;
+    
+    html += '</div>';
+    
+    return html;
+}
+
+// Modified showQuestion function - INSERT THIS into your existing showQuestion()
+function showQuestion() {
+    const question = questions[currentQuestionIndex];
+    answered = false;
+    
+    document.getElementById('questionText').textContent = question.question;
+    document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+    document.getElementById('score').textContent = score;
+    
+    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+    
+    const optionsContainer = document.getElementById('optionsContainer');
+    optionsContainer.innerHTML = '';
+    
+    // *** NEW: Add number line for arithmetic questions ***
+    const numberLineHtml = generateNumberLine(question.question);
+    if (numberLineHtml) {
+        const numberLineDiv = document.createElement('div');
+        numberLineDiv.innerHTML = numberLineHtml;
+        optionsContainer.appendChild(numberLineDiv);
+    }
+    
+    // Rest of the existing code...
+    question.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.className = 'w-full p-4 rounded-xl text-left text-lg font-medium transition-all bg-gray-50 hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300 text-gray-800';
+        button.textContent = option;
+        button.onclick = () => handleAnswer(index);
+        optionsContainer.appendChild(button);
+    });
+    
+    // Add flag button
+    const flagButton = document.createElement('button');
+    flagButton.className = 'w-full mt-4 p-3 rounded-lg text-center text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all';
+    flagButton.innerHTML = '<i class="fas fa-flag mr-2"></i>Report an issue with this question';
+    flagButton.onclick = () => showFlagQuestionModal(question.id);
+    optionsContainer.appendChild(flagButton);
+    
+    document.getElementById('feedbackContainer').classList.add('hidden');
+    document.getElementById('nextButton').classList.add('hidden');
+}
+</script>

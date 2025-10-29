@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Performance Monitor | Math Master</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .controls {
+            padding: 25px;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .control-group select,
+        .control-group button {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .legend {
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .legend h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+        }
+
+        .legend-color.needs-help {
+            background-color: #e3f2fd;
+        }
+
+        .legend-color.developing {
+            background-color: #fff9c4;
+        }
+
+        .legend-color.mastered {
+            background-color: #e8f5e9;
+        }
+
+        .legend-color.not-started {
+            background-color: #f5f5f5;
+        }
+
+        .table-container {
+            padding: 25px;
+            overflow-x: auto;
+        }
+
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .performance-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .performance-table th {
+            padding: 18px 15px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .performance-table th:first-child {
+            text-align: left;
+            min-width: 180px;
+        }
+
+        .performance-table tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+            transition: all 0.2s ease;
+        }
+
+        .performance-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .performance-table td {
+            padding: 15px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .performance-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .performance-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border-radius: 8px;
+            min-width: 100px;
+            min-height: 70px;
+            transition: transform 0.2s ease;
+        }
+
+        .performance-cell:hover {
+            transform: scale(1.05);
+        }
+
+        .performance-cell.needs-help {
+            background-color: #e3f2fd;
+            border: 2px solid #2196f3;
+        }
+
+        .performance-cell.developing {
+            background-color: #fff9c4;
+            border: 2px solid #ffc107;
+        }
+
+        .performance-cell.mastered {
+            background-color: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+
+        .performance-cell.not-started {
+            background-color: #f5f5f5;
+            border: 2px solid #bdbdbd;
+            color: #999;
+        }
+
+        .percentage {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .attempts {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .statistics {
+            padding: 25px;
+            background: #f8f9fa;
+            border-top: 3px solid #667eea;
+        }
+
+        .statistics h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.3em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-card h4 {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px 20px;
+            margin: 20px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .alert-info {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #2196f3;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .control-row {
+                flex-direction: column;
+            }
+
+            .legend-items {
+                flex-direction: column;
+            }
+
+            .performance-table th,
+            .performance-table td {
+                padding: 10px 8px;
+                font-size: 0.9em;
+            }
+
+            .performance-cell {
+                min-width: 80px;
+                min-height: 60px;
+                padding: 8px;
+            }
+
+            .percentage {
+                font-size: 1.1em;
+            }
+
+            .attempts {
+                font-size: 0.75em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Class Performance Monitor</h1>
+            <p>Real-time student performance tracking</p>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-label">Total Students</div>
+                <div class="stat-value" id="totalStudents">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Showing</div>
+                <div class="stat-value" id="showingRange">0-0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Auto-Refresh</div>
+                <div class="stat-value" id="autoRefresh">10s</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Last Updated</div>
+                <div class="stat-value" id="lastUpdated" style="font-size: 1.2em;">--:--:--</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="classSelect">Select Class:</label>
+                    <select id="classSelect">
+                        <option value="">-- Choose a class --</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="topicFilter">Filter by Topic:</label>
+                    <select id="topicFilter">
+                        <option value="all">All Topics (18 columns)</option>
+                        <option value="arithmetic">Arithmetic Only</option>
+                        <option value="fractions">Fractions Only</option>
+                        <option value="multiplication_division">Multiplication & Division Only</option>
+                        <option value="bodmas">BODMAS Only</option>
+                        <option value="functions">Functions Only</option>
+                        <option value="sets">Sets Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-row">
+                <div class="alert alert-info" style="margin: 0; width: 100%;">
+                    💡 <strong>Tip:</strong> Use the topic filter to focus on specific areas. Statistics will update based on the selected topic.
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <h3>Performance Legend:</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color needs-help"></div>
+                    <span><strong>&lt; 20%</strong> (Needs Help)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color developing"></div>
+                    <span><strong>20-80%</strong> (Developing)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color mastered"></div>
+                    <span><strong>&gt; 80%</strong> (Mastered)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color not-started"></div>
+                    <span><strong>Not Started</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container" id="tableContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Select a class to view performance data...</p>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="statistics" id="statisticsContainer" style="display: none;">
+            <h3>📈 Class Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Overall Average</h4>
+                    <div class="value" id="overallAvg">0%</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Students Struggling (&lt;60%)</h4>
+                    <div class="value" id="struggling">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Students Excelling (&gt;80%)</h4>
+                    <div class="value" id="excelling">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Topics Needing Attention</h4>
+                    <div class="value" id="needAttention" style="font-size: 1.2em;">None</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let allStudents = [];
+        let topicFilter = 'all';
+        let currentClassId = null;
+
+        // Topic display names
+        const topicNames = {
+            'arithmetic': 'Arithmetic',
+            'fractions': 'Fractions',
+            'multiplication_division': 'Mult & Div',
+            'bodmas': 'BODMAS',
+            'functions': 'Functions',
+            'sets': 'Sets'
+        };
+
+        const difficulties = ['beginner', 'intermediate', 'advanced'];
+        const difficultyShort = {'beginner': 'B', 'intermediate': 'I', 'advanced': 'A'};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadClasses();
+            setupEventListeners();
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('classSelect').addEventListener('change', function() {
+                currentClassId = this.value;
+                if (currentClassId) {
+                    loadClassData(currentClassId);
+                } else {
+                    resetView();
+                }
+            });
+
+            document.getElementById('topicFilter').addEventListener('change', function() {
+                topicFilter = this.value;
+                renderTable();
+                updateStatistics();
+            });
+        }
+
+        // Load teacher's classes
+        async function loadClasses() {
+            try {
+                const response = await fetch('/api/teacher/my-classes');
+                const classes = await response.json();
+                
+                const select = document.getElementById('classSelect');
+                select.innerHTML = '<option value="">-- Choose a class --</option>';
+                
+                classes.forEach(cls => {
+                    const option = document.createElement('option');
+                    option.value = cls.id;
+                    option.textContent = `${cls.name} (${cls.student_count} students)`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading classes:', error);
+                alert('Failed to load classes. Please refresh the page.');
+            }
+        }
+
+        // Load class performance data
+        async function loadClassData(classId) {
+            showLoading();
+            
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}/performance-matrix`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load class data');
+                }
+                
+                const data = await response.json();
+                allStudents = data.students || [];
+                
+                updateLastUpdated();
+                renderTable();
+                updateStatistics();
+                
+                if (allStudents.length === 0) {
+                    showEmptyState('No students in this class');
+                }
+            } catch (error) {
+                console.error('Error loading class data:', error);
+                showEmptyState('Failed to load class data. Please try again.');
+            }
+        }
+
+        // Render the performance table
+        function renderTable() {
+            const container = document.getElementById('tableContainer');
+            
+            if (allStudents.length === 0) {
+                return;
+            }
+
+            // Determine which topics to show
+            const topics = topicFilter === 'all' 
+                ? Object.keys(topicNames)
+                : [topicFilter];
+
+            // Build table HTML
+            let html = `
+                <table class="performance-table">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            ${getTopicHeaders(topics)}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            allStudents.forEach(student => {
+                html += `
+                    <tr>
+                        <td>${student.student_name}</td>
+                        ${getPerformanceCells(student.performance, topics)}
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = html;
+            
+            // Update stats bar
+            document.getElementById('totalStudents').textContent = allStudents.length;
+            document.getElementById('showingRange').textContent = `1-${allStudents.length}`;
+        }
+
+        // Get table headers based on topic filter
+        function getTopicHeaders(topics) {
+            const headers = [];
+            
+            topics.forEach(topic => {
+                difficulties.forEach(difficulty => {
+                    headers.push(`<th>${topicNames[topic]}<br>${difficultyShort[difficulty]}</th>`);
+                });
+            });
+            
+            return headers.join('');
+        }
+
+        // Get performance cells based on topic filter
+        function getPerformanceCells(performance, topics) {
+            const cells = [];
+            
+            topics.forEach(topic => {
+                difficulties.forEach(difficulty => {
+                    const key = `${topic}_${difficulty}`;
+                    cells.push(createPerformanceCell(performance[key]));
+                });
+            });
+            
+            return cells.map(cell => `<td>${cell}</td>`).join('');
+        }
+
+        // Create a performance cell with color coding
+        function createPerformanceCell(data) {
+            if (!data || data.percentage === null || data.attempts === 0) {
+                return `
+                    <div class="performance-cell not-started">
+                        <div class="percentage">-</div>
+                        <div class="attempts">No data</div>
+                    </div>
+                `;
+            }
+
+            const percentage = data.percentage;
+            let cssClass = 'developing';
+            
+            if (percentage < 20) {
+                cssClass = 'needs-help';
+            } else if (percentage > 80) {
+                cssClass = 'mastered';
+            }
+
+            return `
+                <div class="performance-cell ${cssClass}">
+                    <div class="percentage">${percentage.toFixed(1)}%</div>
+                    <div class="attempts">${data.attempts} attempt${data.attempts !== 1 ? 's' : ''}</div>
+                </div>
+            `;
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const container = document.getElementById('statisticsContainer');
+            
+            if (allStudents.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+
+            let totalPercentage = 0;
+            let totalCount = 0;
+            let struggling = 0;
+            let excelling = 0;
+            const topicStats = {};
+
+            allStudents.forEach(student => {
+                const performance = student.performance;
+                let studentTotal = 0;
+                let studentCount = 0;
+                
+                Object.keys(performance).forEach(key => {
+                    if (topicFilter !== 'all') {
+                        if (!key.startsWith(topicFilter)) {
+                            return;
+                        }
+                    }
+
+                    const data = performance[key];
+                    if (data && data.percentage !== null && data.attempts > 0) {
+                        totalPercentage += data.percentage;
+                        totalCount++;
+                        studentTotal += data.percentage;
+                        studentCount++;
+
+                        if (!topicStats[key]) {
+                            topicStats[key] = { total: 0, count: 0, belowAvg: 0 };
+                        }
+                        topicStats[key].total += data.percentage;
+                        topicStats[key].count++;
+                        if (data.percentage < 60) {
+                            topicStats[key].belowAvg++;
+                        }
+                    }
+                });
+
+                if (studentCount > 0) {
+                    const studentAvg = studentTotal / studentCount;
+                    if (studentAvg < 60) struggling++;
+                    if (studentAvg > 80) excelling++;
+                }
+            });
+
+            const overallAvg = totalCount > 0 ? (totalPercentage / totalCount).toFixed(1) : 0;
+            document.getElementById('overallAvg').textContent = `${overallAvg}%`;
+            document.getElementById('struggling').textContent = struggling;
+            document.getElementById('excelling').textContent = excelling;
+
+            const needsAttention = [];
+            Object.keys(topicStats).forEach(topic => {
+                const stats = topicStats[topic];
+                const percentageBelow = (stats.belowAvg / stats.count) * 100;
+                if (percentageBelow > 50) {
+                    needsAttention.push(formatTopicName(topic));
+                }
+            });
+
+            document.getElementById('needAttention').textContent = 
+                needsAttention.length > 0 ? needsAttention.join(', ') : 'None';
+        }
+
+        // Format topic name for display
+        function formatTopicName(key) {
+            const parts = key.split('_');
+            const topic = topicNames[parts[0]] || parts[0];
+            const difficulty = difficultyShort[parts[1]] || parts[1];
+            return `${topic} ${difficulty}`;
+        }
+
+        // Update last updated time
+        function updateLastUpdated() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            document.getElementById('lastUpdated').textContent = time;
+        }
+
+        // Show loading state
+        function showLoading() {
+            const container = document.getElementById('tableContainer');
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading class data...</p>
+                </div>
+            `;
+        }
+
+        // Show empty state
+        function showEmptyState(message) {
+            const container = document.getElementById('tableContainer');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>${message}</h3>
+                    <p>Please select a different class or add students to this class.</p>
+                </div>
+            `;
+            
+            document.getElementById('statisticsContainer').style.display = 'none';
+        }
+
+        // Reset view
+        function resetView() {
+            allStudents = [];
+            
+            const container = document.getElementById('tableContainer');
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Select a class to view performance data...</p>
+                </div>
+            `;
+            
+            document.getElementById('statisticsContainer').style.display = 'none';
+            document.getElementById('totalStudents').textContent = '0';
+            document.getElementById('showingRange').textContent = '0-0';
+        }
+
+        // Auto-refresh every 10 seconds
+        setInterval(() => {
+            if (currentClassId) {
+                loadClassData(currentClassId);
+            }
+        }, 10000);
+    </script>
+</body>
+</html>

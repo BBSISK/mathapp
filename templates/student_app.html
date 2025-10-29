@@ -6,6 +6,110 @@
     <title>Math Master - Student</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .number-line-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .number-line {
+            position: relative;
+            margin: 30px 20px;
+            height: 80px;
+        }
+        
+        .number-line-base {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #4a5568;
+            transform: translateY(-50%);
+        }
+        
+        .number-line-tick {
+            position: absolute;
+            top: 50%;
+            width: 2px;
+            height: 20px;
+            background: #4a5568;
+            transform: translate(-50%, -50%);
+        }
+        
+        .number-line-label {
+            position: absolute;
+            top: 70%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .number-line-arc {
+            position: absolute;
+            top: 15%;
+            border: 3px solid #667eea;
+            border-bottom: none;
+            border-radius: 50px 50px 0 0;
+            height: 25px;
+        }
+        
+        .number-line-arrow {
+            position: absolute;
+            font-size: 24px;
+            color: #667eea;
+            animation: bounce 0.8s infinite;
+        }
+        
+        .number-line-start-dot {
+            position: absolute;
+            top: 50%;
+            width: 12px;
+            height: 12px;
+            background: #48bb78;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        
+        .number-line-end-dot {
+            position: absolute;
+            top: 50%;
+            width: 16px;
+            height: 16px;
+            background: #f56565;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid white;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            z-index: 10;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+        
+        .number-line-instruction {
+            text-align: center;
+            color: #4a5568;
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 min-h-screen">
     <!-- Header with User Info -->
@@ -53,30 +157,11 @@
                 
                 <div class="text-center mb-12">
                     <h2 id="selectedTopicTitle" class="text-4xl font-bold text-gray-800 mb-4"></h2>
-                    <p class="text-xl text-gray-600">Select your difficulty level</p>
+                    <p class="text-xl text-gray-600">Select your level</p>
                 </div>
                 
-                <div class="grid md:grid-cols-3 gap-6">
-                    <button onclick="startQuiz('beginner')" class="bg-green-500 hover:bg-green-600 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all">
-                        <i class="fas fa-seedling text-6xl mb-4"></i>
-                        <h3 class="text-2xl font-bold mb-2">Beginner</h3>
-                        <p class="text-white text-opacity-90">Start with the basics</p>
-                        <p class="mt-2 text-sm">20 questions</p>
-                    </button>
-                    
-                    <button onclick="startQuiz('intermediate')" class="bg-yellow-500 hover:bg-yellow-600 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all">
-                        <i class="fas fa-chart-line text-6xl mb-4"></i>
-                        <h3 class="text-2xl font-bold mb-2">Intermediate</h3>
-                        <p class="text-white text-opacity-90">Challenge yourself more</p>
-                        <p class="mt-2 text-sm">20 questions</p>
-                    </button>
-                    
-                    <button onclick="startQuiz('advanced')" class="bg-red-500 hover:bg-red-600 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all">
-                        <i class="fas fa-trophy text-6xl mb-4"></i>
-                        <h3 class="text-2xl font-bold mb-2">Advanced</h3>
-                        <p class="text-white text-opacity-90">Master the topic</p>
-                        <p class="mt-2 text-sm">20 questions</p>
-                    </button>
+                <div id="difficultyButtonsContainer" class="grid md:grid-cols-3 gap-6">
+                    <!-- Difficulty buttons will be generated dynamically -->
                 </div>
             </div>
         </div>
@@ -162,6 +247,119 @@
             await loadProgress();
         };
 
+        function generateNumberLine(questionText) {
+            // Parse the question to extract numbers and operation
+            const additionMatch = questionText.match(/(\d+)\s*\+\s*(\d+)/);
+            const subtractionMatch = questionText.match(/(\d+)\s*-\s*(\d+)/);
+            
+            if (!additionMatch && !subtractionMatch) {
+                return ''; // Not an addition or subtraction question
+            }
+            
+            let num1, num2, operation, result;
+            
+            if (additionMatch) {
+                num1 = parseInt(additionMatch[1]);
+                num2 = parseInt(additionMatch[2]);
+                operation = 'addition';
+                result = num1 + num2;
+            } else {
+                num1 = parseInt(subtractionMatch[1]);
+                num2 = parseInt(subtractionMatch[2]);
+                operation = 'subtraction';
+                result = num1 - num2;
+            }
+            
+            // Determine range for number line - show relevant section
+            // For larger numbers, show a focused range around the operation
+            let minNum, maxNum, stepSize;
+            
+            if (Math.max(num1, num2, result) > 30) {
+                // For larger numbers, show a window around the operation
+                // Show numbers with appropriate stepping
+                if (num2 <= 10) {
+                    // Small jump, show individual numbers
+                    minNum = Math.max(0, Math.min(num1, result) - 3);
+                    maxNum = Math.max(num1, result) + 3;
+                    stepSize = 1;
+                } else if (num2 <= 20) {
+                    // Medium jump, maybe show every other number
+                    minNum = Math.max(0, Math.min(num1, result) - 5);
+                    maxNum = Math.max(num1, result) + 5;
+                    stepSize = 2;
+                } else {
+                    // Large jump, show every 5 or 10
+                    const padding = Math.ceil(num2 * 0.2);
+                    minNum = Math.max(0, Math.floor((Math.min(num1, result) - padding) / 5) * 5);
+                    maxNum = Math.ceil((Math.max(num1, result) + padding) / 5) * 5;
+                    stepSize = (maxNum - minNum > 50) ? 10 : 5;
+                }
+            } else {
+                // Small numbers - show all
+                minNum = Math.max(0, Math.min(num1, result) - 2);
+                maxNum = Math.max(num1, result) + 2;
+                stepSize = 1;
+            }
+            
+            const range = maxNum - minNum;
+            
+            // Generate number line HTML
+            let html = '<div class="number-line-container">';
+            html += '<div class="number-line">';
+            
+            // Base line
+            html += '<div class="number-line-base"></div>';
+            
+            // Add ticks and labels with appropriate stepping
+            for (let i = minNum; i <= maxNum; i += stepSize) {
+                const position = ((i - minNum) / range) * 100;
+                html += `<div class="number-line-tick" style="left: ${position}%"></div>`;
+                html += `<div class="number-line-label" style="left: ${position}%">${i}</div>`;
+            }
+            
+            // Also add tick for start number if not already included
+            if (num1 % stepSize !== 0 && num1 >= minNum && num1 <= maxNum) {
+                const position = ((num1 - minNum) / range) * 100;
+                html += `<div class="number-line-tick" style="left: ${position}%; height: 15px;"></div>`;
+                html += `<div class="number-line-label" style="left: ${position}%; font-weight: bold;">${num1}</div>`;
+            }
+            
+            // Add visualization based on operation
+            const startPos = ((num1 - minNum) / range) * 100;
+            
+            // Start dot (green) - show where we begin
+            html += `<div class="number-line-start-dot" style="left: ${startPos}%"></div>`;
+            
+            if (operation === 'addition') {
+                // Arc showing the addition movement (but not ending at answer)
+                const arcWidth = ((num2) / range) * 100;
+                html += `<div class="number-line-arc" style="left: ${startPos}%; width: ${arcWidth}%"></div>`;
+                
+                // Arrow pointing right
+                const arrowPos = startPos + arcWidth / 2;
+                html += `<div class="number-line-arrow" style="left: ${arrowPos}%; top: 5%;">→</div>`;
+                
+                html += '</div>';
+                html += `<div class="number-line-instruction">🟢 Start at ${num1}, jump forward ${num2} spaces →</div>`;
+            } else {
+                // Arc showing the subtraction movement (but not ending at answer)
+                const arcWidth = ((num2) / range) * 100;
+                // Position arc going backwards from start
+                html += `<div class="number-line-arc" style="left: ${startPos - arcWidth}%; width: ${arcWidth}%; border-color: #f56565;"></div>`;
+                
+                // Arrow pointing left
+                const arrowPos = startPos - arcWidth / 2;
+                html += `<div class="number-line-arrow" style="left: ${arrowPos}%; top: 5%; color: #f56565;">←</div>`;
+                
+                html += '</div>';
+                html += `<div class="number-line-instruction">🟢 Start at ${num1}, jump back ${num2} spaces ←</div>`;
+            }
+            
+            html += '</div>';
+            
+            return html;
+        }
+
         async function loadCurrentUser() {
             try {
                 const response = await fetch('/api/current-user');
@@ -188,7 +386,7 @@
                     card.innerHTML = `
                         <i class="fas ${iconClass} text-6xl mb-4"></i>
                         <h2 class="text-2xl font-bold mb-2">${topic.title}</h2>
-                        <p class="text-white text-opacity-90">60 questions</p>
+                        <p class="text-white text-opacity-90">25 questions per quiz</p>
                     `;
                     grid.appendChild(card);
                 }
@@ -237,6 +435,62 @@
         function selectTopic(topic, title) {
             currentTopic = topic;
             document.getElementById('selectedTopicTitle').textContent = title;
+            
+            // Generate difficulty/section buttons based on topic
+            const container = document.getElementById('difficultyButtonsContainer');
+            container.innerHTML = '';
+            
+            // Complex Numbers has 5 sections, others have 3 difficulties
+            if (topic === 'complex_numbers') {
+                // 5 sections for Complex Numbers
+                const sections = [
+                    {level: 'section1', title: 'Section 1: The Basics', icon: 'fa-book-open', color: 'bg-pink-400', desc: 'Imaginary unit i, powers of i'},
+                    {level: 'section2', title: 'Section 2: Operations', icon: 'fa-plus-minus', color: 'bg-pink-500', desc: 'Add, subtract, multiply, conjugate'},
+                    {level: 'section3', title: 'Section 3: Division & Quadratics', icon: 'fa-divide', color: 'bg-pink-600', desc: 'Division and complex roots'},
+                    {level: 'section4', title: 'Section 4: Argand & Modulus', icon: 'fa-chart-scatter', color: 'bg-pink-700', desc: 'Plotting and distance'},
+                    {level: 'section5', title: 'Section 5: Transformations', icon: 'fa-arrows-rotate', color: 'bg-pink-800', desc: 'Translation, rotation, scaling'}
+                ];
+                
+                // Use 2-column grid for 5 sections
+                container.className = 'grid md:grid-cols-2 gap-6';
+                
+                sections.forEach(section => {
+                    const button = document.createElement('button');
+                    button.onclick = () => startQuiz(section.level);
+                    button.className = `${section.color} hover:opacity-90 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all`;
+                    button.innerHTML = `
+                        <i class="fas ${section.icon} text-5xl mb-3"></i>
+                        <h3 class="text-xl font-bold mb-2">${section.title}</h3>
+                        <p class="text-white text-opacity-90 text-sm">${section.desc}</p>
+                        <p class="mt-2 text-xs">25 questions</p>
+                    `;
+                    container.appendChild(button);
+                });
+            } else {
+                // 3 standard difficulties for other topics
+                const difficulties = [
+                    {level: 'beginner', title: 'Beginner', icon: 'fa-seedling', color: 'bg-green-500', desc: 'Start with the basics'},
+                    {level: 'intermediate', title: 'Intermediate', icon: 'fa-chart-line', color: 'bg-yellow-500', desc: 'Challenge yourself more'},
+                    {level: 'advanced', title: 'Advanced', icon: 'fa-trophy', color: 'bg-red-500', desc: 'Master the topic'}
+                ];
+                
+                // Use 3-column grid for standard difficulties
+                container.className = 'grid md:grid-cols-3 gap-6';
+                
+                difficulties.forEach(diff => {
+                    const button = document.createElement('button');
+                    button.onclick = () => startQuiz(diff.level);
+                    button.className = `${diff.color} hover:opacity-90 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all`;
+                    button.innerHTML = `
+                        <i class="fas ${diff.icon} text-6xl mb-4"></i>
+                        <h3 class="text-2xl font-bold mb-2">${diff.title}</h3>
+                        <p class="text-white text-opacity-90">${diff.desc}</p>
+                        <p class="mt-2 text-sm">25 questions</p>
+                    `;
+                    container.appendChild(button);
+                });
+            }
+            
             document.getElementById('topicScreen').classList.add('hidden');
             document.getElementById('difficultyScreen').classList.remove('hidden');
         }
@@ -284,6 +538,18 @@
             const optionsContainer = document.getElementById('optionsContainer');
             optionsContainer.innerHTML = '';
             
+            // Add number line ONLY for arithmetic questions (addition/subtraction)
+            // Do NOT show number line for complex numbers or other topics
+            if (currentTopic === 'arithmetic') {
+                const numberLineHtml = generateNumberLine(question.question);
+                if (numberLineHtml) {
+                    const numberLineDiv = document.createElement('div');
+                    numberLineDiv.innerHTML = numberLineHtml;
+                    optionsContainer.appendChild(numberLineDiv);
+                }
+            }
+            
+            // Add answer options
             question.options.forEach((option, index) => {
                 const button = document.createElement('button');
                 button.className = 'w-full p-4 rounded-xl text-left text-lg font-medium transition-all bg-gray-50 hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300 text-gray-800';
@@ -291,6 +557,13 @@
                 button.onclick = () => handleAnswer(index);
                 optionsContainer.appendChild(button);
             });
+            
+            // Add flag button
+            const flagButton = document.createElement('button');
+            flagButton.className = 'w-full mt-4 p-3 rounded-lg text-center text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all';
+            flagButton.innerHTML = '<i class="fas fa-flag mr-2"></i>Report an issue with this question';
+            flagButton.onclick = () => showFlagQuestionModal(question.id);
+            optionsContainer.appendChild(flagButton);
             
             document.getElementById('feedbackContainer').classList.add('hidden');
             document.getElementById('nextButton').classList.add('hidden');
@@ -308,17 +581,30 @@
                 document.getElementById('score').textContent = score;
             }
             
-            const buttons = document.getElementById('optionsContainer').children;
-            for (let i = 0; i < buttons.length; i++) {
-                buttons[i].disabled = true;
-                if (i === question.correct) {
-                    buttons[i].className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-green-100 border-2 border-green-500 text-green-800';
-                    buttons[i].innerHTML += ' <i class="fas fa-check float-right text-green-600"></i>';
-                } else if (i === selectedIndex && !correct) {
-                    buttons[i].className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-red-100 border-2 border-red-500 text-red-800';
-                    buttons[i].innerHTML += ' <i class="fas fa-times float-right text-red-600"></i>';
-                } else {
-                    buttons[i].className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-gray-100 text-gray-600';
+            const allChildren = document.getElementById('optionsContainer').children;
+            
+            // CRITICAL FIX: Find the offset by checking if first child is number line
+            // Number line div doesn't have onclick, buttons do
+            let buttonOffset = 0;
+            if (allChildren.length > 0 && !allChildren[0].onclick) {
+                buttonOffset = 1; // First child is number line, so buttons start at index 1
+            }
+            
+            // Now loop through actual button elements only
+            for (let i = buttonOffset; i < allChildren.length; i++) {
+                const button = allChildren[i];
+                const optionIndex = i - buttonOffset; // Convert container index to option index
+                
+                button.disabled = true;
+                
+                if (optionIndex === question.correct) {
+                    button.className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-green-100 border-2 border-green-500 text-green-800';
+                    button.innerHTML += ' <i class="fas fa-check float-right text-green-600"></i>';
+                } else if (optionIndex === selectedIndex && !correct) {
+                    button.className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-red-100 border-2 border-red-500 text-red-800';
+                    button.innerHTML += ' <i class="fas fa-times float-right text-red-600"></i>';
+                } else if (button.onclick) { // Only style actual option buttons
+                    button.className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-gray-100 text-gray-600';
                 }
             }
             
@@ -423,6 +709,113 @@
                 console.error('Error logging out:', error);
             }
         }
+
+        // ==================== QUESTION FLAGGING ====================
+        
+        let currentFlagQuestionId = null;
+
+        function showFlagQuestionModal(questionId) {
+            currentFlagQuestionId = questionId;
+            const question = questions[currentQuestionIndex];
+            
+            document.getElementById('flagQuestionText').textContent = question.question;
+            document.getElementById('flagQuestionModal').classList.remove('hidden');
+            document.getElementById('flagQuestionModal').classList.add('flex');
+            
+            document.getElementById('flagForm').reset();
+        }
+
+        function hideFlagModal() {
+            document.getElementById('flagQuestionModal').classList.add('hidden');
+            document.getElementById('flagQuestionModal').classList.remove('flex');
+            currentFlagQuestionId = null;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const flagForm = document.getElementById('flagForm');
+            if (flagForm) {
+                flagForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const flagType = document.getElementById('flagType').value;
+                    const description = document.getElementById('flagDescription').value;
+                    
+                    if (!flagType || !description.trim()) {
+                        alert('Please fill in all fields');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch('/api/student/flag-question', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                question_id: currentFlagQuestionId,
+                                flag_type: flagType,
+                                description: description
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            alert('Thank you! Your report has been submitted to the administrator.');
+                            hideFlagModal();
+                        } else {
+                            alert(data.error || 'Failed to submit report');
+                        }
+                    } catch (error) {
+                        console.error('Error submitting flag:', error);
+                        alert('Error submitting report. Please try again.');
+                    }
+                });
+            }
+        });
     </script>
+
+    <!-- Flag Question Modal -->
+    <div id="flagQuestionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Report Question Issue</h2>
+                <button onclick="hideFlagModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <div id="flagQuestionContent" class="mb-6">
+                <p class="text-gray-700 mb-4" id="flagQuestionText"></p>
+            </div>
+
+            <form id="flagForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Issue Type:</label>
+                    <select id="flagType" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">-- Select issue type --</option>
+                        <option value="incorrect">Incorrect Answer</option>
+                        <option value="ambiguous">Ambiguous/Unclear Question</option>
+                        <option value="typo">Typo or Grammar Error</option>
+                        <option value="other">Other Issue</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Description:</label>
+                    <textarea id="flagDescription" required rows="4" 
+                              class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              placeholder="Please describe the issue in detail..."></textarea>
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="submit" class="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 font-semibold">
+                        <i class="fas fa-flag mr-2"></i>Submit Report
+                    </button>
+                    <button type="button" onclick="hideFlagModal()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 font-semibold">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

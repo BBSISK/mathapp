@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Master - Diagnostic Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .test-result { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #5568d3; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Math Master - System Diagnostic</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Page Loaded</h2>
+        <div class="test-result">
+            <span class="success">✅ HTML page is loading correctly!</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: JavaScript Working</h2>
+        <div id="jsTest" class="test-result">Testing...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: API Connection Test</h2>
+        <button onclick="testAPI()">Test /api/questions</button>
+        <div id="apiTest" class="test-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Session Check</h2>
+        <div id="sessionTest" class="test-result">
+            Student Name: <strong>{{ student_name }}</strong><br>
+            {% if student_name %}
+                <span class="success">✅ Session is working!</span>
+            {% else %}
+                <span class="error">❌ Not logged in</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: Topic Loading</h2>
+        <div id="topicTest" class="test-result"></div>
+        <div id="topicCards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Navigation</h2>
+        <button onclick="window.location.href='/student/dashboard'">Go to Student Dashboard</button>
+        <button onclick="window.location.href='/student/logout'">Logout</button>
+    </div>
+
+    <script>
+        // Test 2: JavaScript
+        document.getElementById('jsTest').innerHTML = '<span class="success">✅ JavaScript is working!</span>';
+
+        // Test 3: API Connection
+        function testAPI() {
+            const testDiv = document.getElementById('apiTest');
+            testDiv.innerHTML = 'Testing API...';
+            
+            fetch('/api/questions?topic=arithmetic&difficulty=beginner')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API Response:', data);
+                    if (data.questions && data.questions.length > 0) {
+                        testDiv.innerHTML = `
+                            <span class="success">✅ API is working!</span><br>
+                            Retrieved ${data.questions.length} questions<br>
+                            First question: ${data.questions[0].question}
+                        `;
+                    } else {
+                        testDiv.innerHTML = '<span class="error">❌ API returned no questions</span>';
+                    }
+                })
+                .catch(error => {
+                    console.error('API Error:', error);
+                    testDiv.innerHTML = `
+                        <span class="error">❌ API Error:</span><br>
+                        ${error.message}<br>
+                        <small>Check browser console (F12) for details</small>
+                    `;
+                });
+        }
+
+        // Test 5: Topic Loading
+        const topics = {
+            'arithmetic': {
+                title: 'Arithmetic',
+                icon: '➕',
+                color: '#667eea'
+            },
+            'fractions': {
+                title: 'Fractions',
+                icon: '½',
+                color: '#f093fb'
+            },
+            'complex_numbers': {
+                title: 'Complex Numbers',
+                icon: '∞',
+                color: '#f5576c'
+            }
+        };
+
+        function loadTopics() {
+            const testDiv = document.getElementById('topicTest');
+            const cardsDiv = document.getElementById('topicCards');
+            
+            testDiv.innerHTML = '<span class="success">✅ Topics defined in JavaScript!</span>';
+            
+            for (const [key, topic] of Object.entries(topics)) {
+                const card = document.createElement('div');
+                card.style.background = topic.color;
+                card.style.color = 'white';
+                card.style.padding = '20px';
+                card.style.borderRadius = '10px';
+                card.style.textAlign = 'center';
+                card.style.cursor = 'pointer';
+                
+                card.innerHTML = `
+                    <div style="font-size: 2em;">${topic.icon}</div>
+                    <div style="font-weight: bold; margin-top: 10px;">${topic.title}</div>
+                `;
+                
+                card.onclick = () => alert(`You clicked: ${topic.title}`);
+                
+                cardsDiv.appendChild(card);
+            }
+        }
+
+        // Load topics on page load
+        loadTopics();
+
+        // Auto-test API after 1 second
+        setTimeout(() => {
+            console.log('Auto-testing API...');
+            testAPI();
+        }, 1000);
+    </script>
+</body>
+</html>

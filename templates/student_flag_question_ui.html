@@ -1,0 +1,157 @@
+<!-- Add this to student_app.html -->
+
+<!-- Flag Question Modal - Add before closing </body> tag -->
+<div id="flagQuestionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Report Question Issue</h2>
+            <button onclick="hideFlagModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+
+        <div id="flagQuestionContent" class="mb-6">
+            <p class="text-gray-700 mb-4" id="flagQuestionText"></p>
+        </div>
+
+        <form id="flagForm" class="space-y-4">
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Issue Type:</label>
+                <select id="flagType" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">-- Select issue type --</option>
+                    <option value="incorrect">Incorrect Answer</option>
+                    <option value="ambiguous">Ambiguous/Unclear Question</option>
+                    <option value="typo">Typo or Grammar Error</option>
+                    <option value="other">Other Issue</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Description:</label>
+                <textarea id="flagDescription" required rows="4" 
+                          class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Please describe the issue in detail..."></textarea>
+            </div>
+
+            <div class="flex gap-4">
+                <button type="submit" class="flex-1 bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 font-semibold">
+                    <i class="fas fa-flag mr-2"></i>Submit Report
+                </button>
+                <button type="button" onclick="hideFlagModal()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 font-semibold">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add these JavaScript functions to student_app.html -->
+
+<script>
+// Add these variables at the top with other global variables
+let currentFlagQuestionId = null;
+
+// Add this function to show the flag modal
+function showFlagQuestionModal(questionId) {
+    currentFlagQuestionId = questionId;
+    const question = questions[currentQuestionIndex];
+    
+    document.getElementById('flagQuestionText').textContent = question.question;
+    document.getElementById('flagQuestionModal').classList.remove('hidden');
+    document.getElementById('flagQuestionModal').classList.add('flex');
+    
+    // Reset form
+    document.getElementById('flagForm').reset();
+}
+
+function hideFlagModal() {
+    document.getElementById('flagQuestionModal').classList.add('hidden');
+    document.getElementById('flagQuestionModal').classList.remove('flex');
+    currentFlagQuestionId = null;
+}
+
+// Add event listener for flag form
+document.addEventListener('DOMContentLoaded', function() {
+    const flagForm = document.getElementById('flagForm');
+    if (flagForm) {
+        flagForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const flagType = document.getElementById('flagType').value;
+            const description = document.getElementById('flagDescription').value;
+            
+            if (!flagType || !description.trim()) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/student/flag-question', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        question_id: currentFlagQuestionId,
+                        flag_type: flagType,
+                        description: description
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Thank you! Your report has been submitted to the administrator.');
+                    hideFlagModal();
+                } else {
+                    alert(data.error || 'Failed to submit report');
+                }
+            } catch (error) {
+                console.error('Error submitting flag:', error);
+                alert('Error submitting report. Please try again.');
+            }
+        });
+    }
+});
+
+// Modify the showQuestion function to add a flag button
+// Find the optionsContainer creation and add a flag button after it
+
+function showQuestion() {
+    const question = questions[currentQuestionIndex];
+    answered = false;
+    
+    document.getElementById('questionText').textContent = question.question;
+    document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+    document.getElementById('score').textContent = score;
+    
+    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+    
+    const optionsContainer = document.getElementById('optionsContainer');
+    optionsContainer.innerHTML = '';
+    
+    question.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.className = 'w-full p-4 rounded-xl text-left text-lg font-medium transition-all bg-gray-50 hover:bg-purple-50 border-2 border-gray-200 hover:border-purple-300 text-gray-800';
+        button.textContent = option;
+        button.onclick = () => handleAnswer(index);
+        optionsContainer.appendChild(button);
+    });
+    
+    // Add flag button
+    const flagButton = document.createElement('button');
+    flagButton.className = 'w-full mt-4 p-3 rounded-lg text-center text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all';
+    flagButton.innerHTML = '<i class="fas fa-flag mr-2"></i>Report an issue with this question';
+    flagButton.onclick = () => showFlagQuestionModal(question.id);
+    optionsContainer.appendChild(flagButton);
+    
+    document.getElementById('feedbackContainer').classList.add('hidden');
+    document.getElementById('nextButton').classList.add('hidden');
+}
+</script>
+
+<!-- Update CSS to ensure modal works properly -->
+<style>
+#flagQuestionModal {
+    transition: opacity 0.3s ease-in-out;
+}
+</style>

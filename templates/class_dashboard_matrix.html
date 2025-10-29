@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Dashboard - {{ class_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .cell-grey { background-color: #9CA3AF; color: white; }
+        .cell-yellow { background-color: #FCD34D; color: black; }
+        .cell-green { background-color: #34D399; color: white; }
+        .cell-not-started { background-color: #E5E7EB; color: #6B7280; }
+        
+        .matrix-cell {
+            min-width: 70px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 1px solid #D1D5DB;
+            transition: transform 0.2s;
+        }
+        
+        .matrix-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .student-name-cell {
+            min-width: 150px;
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 5;
+            font-weight: bold;
+            padding: 8px;
+            border-right: 2px solid #9CA3AF;
+        }
+        
+        .header-cell {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            z-index: 10;
+            font-weight: bold;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.75rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .rotating-students {
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .fade-out {
+            opacity: 0;
+        }
+        
+        .fullscreen-dashboard {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            z-index: 1000;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="normalView">
+        <!-- Header -->
+        <div class="bg-white shadow-md">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-chalkboard-teacher mr-2"></i>{{ class_name }} - Live Dashboard
+                    </h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleFullscreen()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-expand mr-2"></i>Fullscreen
+                    </button>
+                    <button onclick="showSettings()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-cog mr-2"></i>Settings
+                    </button>
+                    <a href="/teacher" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-arrow-left mr-2"></i>Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Container -->
+    <div id="dashboardContainer" class="container mx-auto px-4 py-6">
+        <!-- Statistics Bar -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6 flex justify-between items-center">
+            <div>
+                <span class="text-sm text-gray-600">Total Students:</span>
+                <span id="totalStudents" class="text-2xl font-bold text-purple-600 ml-2">0</span>
+            </div>
+            <div>
+                <span class="text-sm text-gray-600">Showing:</span>
+                <span id="showingRange" class="text-2xl font-bold text-blue-600 ml-2">1-12</span>
+            </div>
+            <div>
+                <span class="text-sm text-gray-600">Auto-Refresh:</span>
+                <span id="refreshRate" class="text-2xl font-bold text-green-600 ml-2">10s</span>
+            </div>
+            <div>
+                <span class="text-sm text-gray-600">Last Updated:</span>
+                <span id="lastUpdate" class="text-sm text-gray-500 ml-2">Never</span>
+            </div>
+        </div>
+
+        <!-- Color Legend -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <h3 class="font-bold mb-3">Performance Legend:</h3>
+            <div class="flex gap-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-8 cell-grey rounded mr-2"></div>
+                    <span>&lt; 20% (Needs Help)</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-12 h-8 cell-yellow rounded mr-2"></div>
+                    <span>20-80% (Developing)</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-12 h-8 cell-green rounded mr-2"></div>
+                    <span>&gt; 80% (Mastered)</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-12 h-8 cell-not-started rounded mr-2"></div>
+                    <span>Not Started</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matrix Display -->
+        <div class="bg-white rounded-lg shadow-lg overflow-x-auto">
+            <div id="matrixContainer" class="rotating-students">
+                <table id="dashboardMatrix" class="w-full border-collapse">
+                    <thead id="matrixHeader"></thead>
+                    <tbody id="matrixBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Dashboard Settings</h2>
+                <button onclick="hideSettings()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- Module Selection -->
+            <div class="mb-6">
+                <h3 class="font-bold text-lg mb-3">Visible Topics:</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-center p-3 border rounded hover:bg-purple-50 cursor-pointer">
+                        <input type="checkbox" id="topic_arithmetic" checked class="mr-3 w-5 h-5">
+                        <span>Arithmetic</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded hover:bg-purple-50 cursor-pointer">
+                        <input type="checkbox" id="topic_fractions" checked class="mr-3 w-5 h-5">
+                        <span>Fractions</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded hover:bg-purple-50 cursor-pointer">
+                        <input type="checkbox" id="topic_bodmas" checked class="mr-3 w-5 h-5">
+                        <span>BODMAS</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded hover:bg-purple-50 cursor-pointer">
+                        <input type="checkbox" id="topic_functions" checked class="mr-3 w-5 h-5">
+                        <span>Functions</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded hover:bg-purple-50 cursor-pointer">
+                        <input type="checkbox" id="topic_sets" checked class="mr-3 w-5 h-5">
+                        <span>Sets</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Difficulty Selection -->
+            <div class="mb-6">
+                <h3 class="font-bold text-lg mb-3">Visible Difficulty Levels:</h3>
+                <div class="grid grid-cols-3 gap-3">
+                    <label class="flex items-center p-3 border rounded hover:bg-green-50 cursor-pointer">
+                        <input type="checkbox" id="diff_beginner" checked class="mr-3 w-5 h-5">
+                        <span>Beginner</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded hover:bg-yellow-50 cursor-pointer">
+                        <input type="checkbox" id="diff_intermediate" checked class="mr-3 w-5 h-5">
+                        <span>Intermediate</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded hover:bg-red-50 cursor-pointer">
+                        <input type="checkbox" id="diff_advanced" checked class="mr-3 w-5 h-5">
+                        <span>Advanced</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Refresh Rate -->
+            <div class="mb-6">
+                <h3 class="font-bold text-lg mb-3">Auto-Refresh Rate:</h3>
+                <select id="refreshRateSelect" class="w-full p-3 border rounded">
+                    <option value="5">5 seconds</option>
+                    <option value="10" selected>10 seconds</option>
+                    <option value="15">15 seconds</option>
+                    <option value="30">30 seconds</option>
+                    <option value="60">1 minute</option>
+                    <option value="0">Manual only</option>
+                </select>
+            </div>
+
+            <!-- Students Per Page -->
+            <div class="mb-6">
+                <h3 class="font-bold text-lg mb-3">Students Per Page:</h3>
+                <select id="studentsPerPageSelect" class="w-full p-3 border rounded">
+                    <option value="6">6 students</option>
+                    <option value="12" selected>12 students</option>
+                    <option value="18">18 students</option>
+                    <option value="24">24 students</option>
+                </select>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4">
+                <button onclick="applySettings()" class="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 font-semibold">
+                    Apply Settings
+                </button>
+                <button onclick="hideSettings()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400 font-semibold">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const classId = {{ class_id }};
+        let allStudents = [];
+        let currentPage = 0;
+        let settings = {
+            visible_modules: {
+                arithmetic: true,
+                fractions: true,
+                bodmas: true,
+                functions: true,
+                sets: true
+            },
+            visible_difficulties: {
+                beginner: true,
+                intermediate: true,
+                advanced: true
+            },
+            refresh_rate: 10,
+            students_per_page: 12
+        };
+        let refreshInterval = null;
+        let isFullscreen = false;
+
+        window.onload = function() {
+            loadData();
+            startAutoRefresh();
+        };
+
+        async function loadData() {
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}/matrix-data`);
+                const data = await response.json();
+                
+                allStudents = data.students;
+                document.getElementById('totalStudents').textContent = allStudents.length;
+                
+                renderMatrix(data);
+                updateLastUpdate();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function renderMatrix(data) {
+            const container = document.getElementById('matrixContainer');
+            container.classList.add('fade-out');
+            
+            setTimeout(() => {
+                // Build visible modules list
+                const visibleModules = [];
+                data.topics.forEach(topic => {
+                    if (settings.visible_modules[topic]) {
+                        data.difficulties.forEach(diff => {
+                            if (settings.visible_difficulties[diff]) {
+                                visibleModules.push({ topic, difficulty: diff });
+                            }
+                        });
+                    }
+                });
+
+                // Build header
+                let headerHTML = '<tr><th class="header-cell student-name-cell">Student Name</th>';
+                visibleModules.forEach(module => {
+                    const displayName = `${module.topic.charAt(0).toUpperCase() + module.topic.slice(1)}<br>${module.difficulty.charAt(0).toUpperCase()}`;
+                    headerHTML += `<th class="header-cell">${displayName}</th>`;
+                });
+                headerHTML += '</tr>';
+                document.getElementById('matrixHeader').innerHTML = headerHTML;
+
+                // Get students for current page
+                const startIdx = currentPage * settings.students_per_page;
+                const endIdx = Math.min(startIdx + settings.students_per_page, allStudents.length);
+                const pageStudents = allStudents.slice(startIdx, endIdx);
+
+                // Update showing range
+                document.getElementById('showingRange').textContent = `${startIdx + 1}-${endIdx}`;
+
+                // Build body
+                let bodyHTML = '';
+                pageStudents.forEach(student => {
+                    bodyHTML += `<tr><td class="student-name-cell">${student.student_name}</td>`;
+                    
+                    visibleModules.forEach(module => {
+                        const moduleKey = `${module.topic}_${module.difficulty}`;
+                        const moduleData = student.modules[moduleKey];
+                        
+                        const colorClass = moduleData.completed ? `cell-${moduleData.color}` : 'cell-not-started';
+                        const displayText = moduleData.completed ? `${moduleData.percentage}%` : '-';
+                        const tooltip = moduleData.completed ? 
+                            `${moduleData.attempts} attempt(s), Avg: ${moduleData.percentage}%` : 
+                            'Not started';
+                        
+                        bodyHTML += `<td class="matrix-cell ${colorClass}" title="${tooltip}">${displayText}</td>`;
+                    });
+                    
+                    bodyHTML += '</tr>';
+                });
+                document.getElementById('matrixBody').innerHTML = bodyHTML;
+
+                container.classList.remove('fade-out');
+
+                // Move to next page if more students
+                if (allStudents.length > settings.students_per_page) {
+                    const totalPages = Math.ceil(allStudents.length / settings.students_per_page);
+                    currentPage = (currentPage + 1) % totalPages;
+                }
+            }, 500);
+        }
+
+        function startAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+            
+            if (settings.refresh_rate > 0) {
+                refreshInterval = setInterval(() => {
+                    loadData();
+                }, settings.refresh_rate * 1000);
+            }
+        }
+
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+        }
+
+        function showSettings() {
+            // Load current settings into modal
+            document.getElementById('topic_arithmetic').checked = settings.visible_modules.arithmetic;
+            document.getElementById('topic_fractions').checked = settings.visible_modules.fractions;
+            document.getElementById('topic_bodmas').checked = settings.visible_modules.bodmas;
+            document.getElementById('topic_functions').checked = settings.visible_modules.functions;
+            document.getElementById('topic_sets').checked = settings.visible_modules.sets;
+            
+            document.getElementById('diff_beginner').checked = settings.visible_difficulties.beginner;
+            document.getElementById('diff_intermediate').checked = settings.visible_difficulties.intermediate;
+            document.getElementById('diff_advanced').checked = settings.visible_difficulties.advanced;
+            
+            document.getElementById('refreshRateSelect').value = settings.refresh_rate;
+            document.getElementById('studentsPerPageSelect').value = settings.students_per_page;
+            
+            document.getElementById('settingsModal').classList.remove('hidden');
+            document.getElementById('settingsModal').classList.add('flex');
+        }
+
+        function hideSettings() {
+            document.getElementById('settingsModal').classList.add('hidden');
+            document.getElementById('settingsModal').classList.remove('flex');
+        }
+
+        function applySettings() {
+            // Update settings from modal
+            settings.visible_modules.arithmetic = document.getElementById('topic_arithmetic').checked;
+            settings.visible_modules.fractions = document.getElementById('topic_fractions').checked;
+            settings.visible_modules.bodmas = document.getElementById('topic_bodmas').checked;
+            settings.visible_modules.functions = document.getElementById('topic_functions').checked;
+            settings.visible_modules.sets = document.getElementById('topic_sets').checked;
+            
+            settings.visible_difficulties.beginner = document.getElementById('diff_beginner').checked;
+            settings.visible_difficulties.intermediate = document.getElementById('diff_intermediate').checked;
+            settings.visible_difficulties.advanced = document.getElementById('diff_advanced').checked;
+            
+            settings.refresh_rate = parseInt(document.getElementById('refreshRateSelect').value);
+            settings.students_per_page = parseInt(document.getElementById('studentsPerPageSelect').value);
+            
+            // Update display
+            document.getElementById('refreshRate').textContent = settings.refresh_rate > 0 ? `${settings.refresh_rate}s` : 'Manual';
+            
+            // Reset to first page
+            currentPage = 0;
+            
+            // Restart auto-refresh with new rate
+            startAutoRefresh();
+            
+            // Reload data
+            loadData();
+            
+            hideSettings();
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('dashboardContainer');
+            const normalView = document.getElementById('normalView');
+            
+            if (!isFullscreen) {
+                container.classList.add('fullscreen-dashboard');
+                normalView.style.display = 'none';
+                isFullscreen = true;
+                
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                }
+            } else {
+                container.classList.remove('fullscreen-dashboard');
+                normalView.style.display = 'block';
+                isFullscreen = false;
+                
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Exit fullscreen on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isFullscreen) {
+                toggleFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>

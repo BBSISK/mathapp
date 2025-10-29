@@ -609,6 +609,136 @@ def admin_statistics():
     }
     return jsonify(stats)
 
+# ==================== REAL-TIME CLASS DASHBOARD ROUTES ====================
+
+@app.route('/teacher/class-dashboard/<int:class_id>')
+@login_required
+@role_required('teacher')
+@approved_required
+def class_dashboard(class_id):
+    """Real-time class performance dashboard"""
+    class_obj = Class.query.get_or_404(class_id)
+    
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    return render_template('class_dashboard_matrix.html', class_id=class_id, class_name=class_obj.name)
+
+@app.route('/api/teacher/class/<int:class_id>/matrix-data')
+@login_required
+@role_required('teacher')
+@approved_required
+def get_class_matrix_data(class_id):
+    """Get matrix data for class dashboard"""
+    class_obj = Class.query.get_or_404(class_id)
+    
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    # Get all students in class
+    enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
+    
+    # All topics and difficulties
+    topics = ['arithmetic', 'fractions', 'bodmas', 'functions', 'sets']
+    difficulties = ['beginner', 'intermediate', 'advanced']
+    
+    # Build matrix data
+    matrix_data = []
+    
+    for enrollment in enrollments:
+        student = enrollment.student
+        student_data = {
+            'student_id': student.id,
+            'student_name': student.full_name,
+            'modules': {}
+        }
+        
+        # For each topic/difficulty combination
+        for topic in topics:
+            for difficulty in difficulties:
+                module_key = f"{topic}_{difficulty}"
+                
+                # Get all attempts for this module
+                attempts = QuizAttempt.query.filter_by(
+                    user_id=student.id,
+                    topic=topic,
+                    difficulty=difficulty
+                ).all()
+                
+                if attempts:
+                    # Calculate average percentage
+                    avg_percentage = sum(a.percentage for a in attempts) / len(attempts)
+                    total_attempts = len(attempts)
+                    
+                    # Determine color based on performance
+                    if avg_percentage < 20:
+                        color = 'grey'
+                    elif avg_percentage <= 80:
+                        color = 'yellow'
+                    else:
+                        color = 'green'
+                    
+                    student_data['modules'][module_key] = {
+                        'percentage': round(avg_percentage, 1),
+                        'attempts': total_attempts,
+                        'color': color,
+                        'completed': True
+                    }
+                else:
+                    # Not attempted yet
+                    student_data['modules'][module_key] = {
+                        'percentage': 0,
+                        'attempts': 0,
+                        'color': 'grey',
+                        'completed': False
+                    }
+        
+        matrix_data.append(student_data)
+    
+    return jsonify({
+        'students': matrix_data,
+        'topics': topics,
+        'difficulties': difficulties,
+        'class_name': class_obj.name,
+        'total_students': len(matrix_data)
+    })
+
+@app.route('/api/teacher/class/<int:class_id>/dashboard-settings', methods=['GET', 'POST'])
+@login_required
+@role_required('teacher')
+@approved_required
+def dashboard_settings(class_id):
+    """Save/load dashboard display settings"""
+    class_obj = Class.query.get_or_404(class_id)
+    
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    if request.method == 'POST':
+        settings = request.json
+        return jsonify({'message': 'Settings saved', 'settings': settings})
+    else:
+        # Return default settings
+        return jsonify({
+            'visible_modules': {
+                'arithmetic': True,
+                'fractions': True,
+                'bodmas': True,
+                'functions': True,
+                'sets': True
+            },
+            'visible_difficulties': {
+                'beginner': True,
+                'intermediate': True,
+                'advanced': True
+            },
+            'refresh_rate': 10,
+            'students_per_page': 12
+        })
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
