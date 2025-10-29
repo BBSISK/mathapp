@@ -52,7 +52,7 @@
         <div id="studentsContent" class="tab-content hidden">
             <h2 class="text-2xl font-bold mb-6">Search Students</h2>
             <div class="bg-white rounded-lg shadow-md p-6">
-                <input type="text" id="studentSearch" placeholder="Search by name or email..." 
+                <input type="text" id="studentSearch" placeholder="Search by name or email..."
                        class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4">
                 <div id="studentResults"></div>
             </div>
@@ -63,7 +63,7 @@
             <h2 class="text-2xl font-bold mb-6">Real-time Class Progress</h2>
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <label class="block font-semibold mb-2">Select Class:</label>
-                <select id="progressClassSelect" onchange="loadClassProgress()" 
+                <select id="progressClassSelect" onchange="loadClassProgress()"
                         class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
                     <option value="">-- Select a class --</option>
                 </select>
@@ -76,7 +76,7 @@
     <div id="createClassModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
             <h3 class="text-2xl font-bold mb-4">Create New Class</h3>
-            <input type="text" id="newClassName" placeholder="Class name (e.g., Math 7A)" 
+            <input type="text" id="newClassName" placeholder="Class name (e.g., Math 7A)"
                    class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4">
             <div class="flex gap-4">
                 <button onclick="createClass()" class="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700">
@@ -124,10 +124,10 @@
             try {
                 const response = await fetch('/api/teacher/my-classes');
                 classes = await response.json();
-                
+
                 const list = document.getElementById('classesList');
                 const select = document.getElementById('progressClassSelect');
-                
+
                 if (classes.length === 0) {
                     list.innerHTML = '<p class="text-gray-600">No classes yet. Create your first class!</p>';
                 } else {
@@ -137,18 +137,18 @@
                             <p class="text-gray-600 mb-3"><i class="fas fa-users mr-2"></i>${c.student_count} students</p>
                             <p class="text-gray-500 text-sm mb-4">Created: ${new Date(c.created_at).toLocaleDateString()}</p>
                             <div class="flex gap-2">
-                                <button onclick="window.location.href='/teacher/class-dashboard/${c.id}'" 
+                                <button onclick="window.location.href='/teacher/class-dashboard/${c.id}'"
                                         class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all">
                                     <i class="fas fa-chart-bar mr-2"></i>Matrix Dashboard
                                 </button>
-                                <button onclick="event.stopPropagation(); showClassDetails(${c.id})" 
+                                <button onclick="event.stopPropagation(); showClassDetails(${c.id})"
                                         class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-all">
                                     <i class="fas fa-info-circle mr-2"></i>Details
                                 </button>
                             </div>
                         </div>
                     `).join('');
-                    
+
                     select.innerHTML = '<option value="">-- Select a class --</option>' +
                         classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
                 }
@@ -163,7 +163,7 @@
                 el.classList.remove('border-purple-600', 'text-gray-800');
                 el.classList.add('text-gray-600');
             });
-            
+
             document.getElementById(tab + 'Content').classList.remove('hidden');
             document.getElementById(tab + 'Tab').classList.add('border-purple-600', 'text-gray-800');
         }
@@ -185,14 +185,14 @@
                 alert('Please enter a class name');
                 return;
             }
-            
+
             try {
                 const response = await fetch('/api/teacher/create-class', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ name })
                 });
-                
+
                 if (response.ok) {
                     hideCreateClassModal();
                     await loadClasses();
@@ -209,15 +209,15 @@
         async function showClassDetails(classId) {
             currentClass = classId;
             const classObj = classes.find(c => c.id === classId);
-            
+
             document.getElementById('classDetailsTitle').textContent = classObj.name;
             document.getElementById('classDetailsModal').classList.remove('hidden');
             document.getElementById('classDetailsModal').classList.add('flex');
-            
+
             try {
                 const response = await fetch(`/api/teacher/class/${classId}/students`);
                 const students = await response.json();
-                
+
                 const content = document.getElementById('classDetailsContent');
                 if (students.length === 0) {
                     content.innerHTML = '<p class="text-gray-600">No students enrolled yet.</p>';
@@ -242,7 +242,7 @@
                                             <td class="px-4 py-3 text-center">${s.total_quizzes}</td>
                                             <td class="px-4 py-3 text-center">${s.average_score.toFixed(1)}%</td>
                                             <td class="px-4 py-3 text-center">
-                                                <button onclick="removeStudent(${classId}, ${s.id})" 
+                                                <button onclick="removeStudent(${classId}, ${s.id})"
                                                         class="text-red-600 hover:text-red-800">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
@@ -281,11 +281,11 @@
                 document.getElementById('studentResults').innerHTML = '';
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/teacher/students/search?q=${encodeURIComponent(query)}`);
                 const students = await response.json();
-                
+
                 const results = document.getElementById('studentResults');
                 if (students.length === 0) {
                     results.innerHTML = '<p class="text-gray-600">No students found.</p>';
@@ -296,7 +296,7 @@
                                 <div class="font-semibold">${s.full_name}</div>
                                 <div class="text-sm text-gray-600">${s.email}</div>
                             </div>
-                            <button onclick="showEnrollStudent(${s.id}, '${s.full_name}')" 
+                            <button onclick="showEnrollStudent(${s.id}, '${s.full_name}')"
                                     class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
                                 Add to Class
                             </button>
@@ -313,10 +313,10 @@
                 alert('Please create a class first');
                 return;
             }
-            
+
             const classId = prompt(`Enroll ${studentName} in which class? Enter class number:\n\n` +
                 classes.map((c, i) => `${i + 1}. ${c.name}`).join('\n'));
-            
+
             if (classId && !isNaN(classId) && classId > 0 && classId <= classes.length) {
                 enrollStudent(classes[classId - 1].id, studentId);
             }
@@ -329,7 +329,7 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ student_id: studentId })
                 });
-                
+
                 if (response.ok) {
                     alert('Student enrolled successfully!');
                     await loadClasses();
@@ -345,12 +345,12 @@
 
         async function removeStudent(classId, studentId) {
             if (!confirm('Remove this student from the class?')) return;
-            
+
             try {
                 const response = await fetch(`/api/teacher/class/${classId}/remove-student/${studentId}`, {
                     method: 'DELETE'
                 });
-                
+
                 if (response.ok) {
                     showClassDetails(classId);
                     await loadClasses();
@@ -368,11 +368,11 @@
                 document.getElementById('progressData').innerHTML = '';
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/api/teacher/class/${classId}/progress`);
                 const attempts = await response.json();
-                
+
                 const progressDiv = document.getElementById('progressData');
                 if (attempts.length === 0) {
                     progressDiv.innerHTML = '<div class="bg-white rounded-lg shadow-md p-6"><p class="text-gray-600">No quiz attempts yet.</p></div>';

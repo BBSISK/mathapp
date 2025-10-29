@@ -102,7 +102,6 @@
             overflow-x: auto;
         }
 
-        /* Matrix Table Styles */
         .matrix-table {
             width: 100%;
             border-collapse: separate;
@@ -136,14 +135,12 @@
             position: relative;
         }
 
-        /* Compact cell size - 50% smaller vertically */
         .matrix-table tbody td {
             height: 30px;
             padding: 4px;
             min-width: 60px;
         }
 
-        /* Student name column */
         .student-cell {
             position: sticky;
             left: 0;
@@ -165,7 +162,6 @@
             cursor: pointer;
         }
 
-        /* Performance cell */
         .performance-cell {
             font-weight: 700;
             font-size: 13px;
@@ -179,7 +175,6 @@
             z-index: 100;
         }
 
-        /* Color coding */
         .color-grey {
             background: #e9ecef;
             color: #6c757d;
@@ -195,25 +190,21 @@
             color: white;
         }
 
-        /* Tooltip on hover */
-        .tooltip {
-            position: absolute;
+        /* Tooltip styles */
+        #floatingTooltip {
+            position: fixed;
             display: none;
             background: #2d3748;
             color: white;
             padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            z-index: 1000;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            z-index: 10000;
             min-width: 280px;
             max-width: 350px;
             font-size: 13px;
             line-height: 1.6;
             pointer-events: none;
-        }
-
-        .performance-cell:hover .tooltip {
-            display: block;
         }
 
         .tooltip-header {
@@ -255,7 +246,6 @@
             font-size: 12px;
         }
 
-        /* Legend */
         .legend {
             display: flex;
             gap: 20px;
@@ -280,7 +270,6 @@
             border-radius: 4px;
         }
 
-        /* Loading state */
         .loading {
             text-align: center;
             padding: 60px;
@@ -299,7 +288,6 @@
             60%, 100% { content: '...'; }
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .dashboard-content {
                 padding: 15px;
@@ -314,7 +302,6 @@
             }
         }
 
-        /* Selection highlight */
         tr.selected {
             background-color: #e7f3ff !important;
         }
@@ -322,9 +309,16 @@
         tr.selected .student-cell {
             background-color: #d0e7ff !important;
         }
+
+        tr.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <!-- Floating tooltip (moved outside table for better positioning) -->
+    <div id="floatingTooltip"></div>
+
     <div class="container">
         <div class="header">
             <h1 id="className">Class Performance Dashboard</h1>
@@ -332,7 +326,7 @@
             <div class="header-controls">
                 <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh Data</button>
                 <button class="btn btn-secondary" onclick="exportData()">📊 Export to CSV</button>
-                <button class="btn btn-secondary" onclick="window.location.href='/teacher/dashboard'">← Back to Dashboard</button>
+                <button class="btn btn-secondary" onclick="goBack()">← Back</button>
             </div>
         </div>
 
@@ -371,21 +365,24 @@
     <script>
         let classData = null;
         let selectedStudents = new Set();
+        let tooltipData = {}; // Store tooltip data separately
         
-        // Get class ID from URL
         const classId = getClassIdFromURL();
 
         function getClassIdFromURL() {
-            // Assumes URL like /teacher/class-dashboard/123
             const path = window.location.pathname;
             const match = path.match(/\/teacher\/class-dashboard\/(\d+)/);
             return match ? match[1] : null;
         }
 
-        // Load data on page load
+        function goBack() {
+            window.location.href = '/teacher';
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             if (!classId) {
                 alert('No class ID provided');
+                goBack();
                 return;
             }
             loadClassData();
@@ -401,35 +398,29 @@
 
                 classData = await response.json();
                 
-                // Update header
                 document.getElementById('className').textContent = classData.class_name || 'Class Performance Dashboard';
                 document.getElementById('totalCount').textContent = classData.total_students;
                 document.getElementById('visibleCount').textContent = classData.total_students;
 
-                // Render matrix
                 renderMatrix(classData);
                 
-                // Hide loading, show content
                 document.getElementById('loadingMessage').style.display = 'none';
                 document.getElementById('matrixContainer').style.display = 'block';
 
             } catch (error) {
                 console.error('Error loading class data:', error);
                 document.getElementById('loadingMessage').innerHTML = 
-                    '<div style="color: #dc3545;">❌ Failed to load class data. Please refresh the page.</div>';
+                    '<div style="color: #dc3545;">❌ Failed to load class data. <button onclick="goBack()" style="padding: 10px 20px; margin-left: 10px; border-radius: 5px; cursor: pointer;">Go Back</button></div>';
             }
         }
 
         function renderMatrix(data) {
             const container = document.getElementById('matrixContainer');
+            tooltipData = {}; // Reset tooltip data
             
-            // Build table HTML
             let html = '<table class="matrix-table"><thead><tr>';
-            
-            // Header: Student name + checkboxes
             html += '<th>Student Name</th>';
             
-            // Header: Topic columns
             const topics = data.topics;
             const difficulties = data.difficulties;
             
@@ -443,11 +434,9 @@
             
             html += '</tr></thead><tbody>';
             
-            // Rows: Each student
-            data.students.forEach((student, index) => {
+            data.students.forEach((student) => {
                 html += `<tr id="student-row-${student.student_id}" class="${selectedStudents.has(student.student_id) ? 'selected' : ''}">`;
                 
-                // Student name with checkbox
                 html += `<td class="student-cell">
                     <input type="checkbox" class="student-checkbox" 
                            id="checkbox-${student.student_id}"
@@ -456,49 +445,47 @@
                     <label for="checkbox-${student.student_id}">${student.student_name}</label>
                 </td>`;
                 
-                // Performance cells
                 topics.forEach(topic => {
                     difficulties.forEach(diff => {
                         const moduleKey = `${topic}_${diff}`;
                         const module = student.modules[moduleKey];
+                        const cellId = `cell-${student.student_id}-${topic}-${diff}`;
                         
                         if (module) {
                             const recommendation = generateRecommendation(module, topic, diff);
                             
-                            html += `<td class="performance-cell color-${module.color}">
+                            // Store tooltip data
+                            tooltipData[cellId] = {
+                                topic: formatTopicName(topic),
+                                difficulty: formatDifficultyName(diff),
+                                percentage: module.percentage,
+                                attempts: module.attempts,
+                                completed: module.completed,
+                                recommendation: recommendation
+                            };
+                            
+                            html += `<td id="${cellId}" class="performance-cell color-${module.color}" 
+                                        onmouseenter="showTooltip(event, '${cellId}')" 
+                                        onmousemove="updateTooltipPosition(event)"
+                                        onmouseleave="hideTooltip()">
                                 ${module.percentage}%
-                                <div class="tooltip">
-                                    <div class="tooltip-header">${formatTopicName(topic)} - ${formatDifficultyName(diff)}</div>
-                                    <div class="tooltip-row">
-                                        <span class="tooltip-label">Average Score:</span>
-                                        <span class="tooltip-value">${module.percentage}%</span>
-                                    </div>
-                                    <div class="tooltip-row">
-                                        <span class="tooltip-label">Attempts:</span>
-                                        <span class="tooltip-value">${module.attempts}</span>
-                                    </div>
-                                    <div class="tooltip-row">
-                                        <span class="tooltip-label">Status:</span>
-                                        <span class="tooltip-value">${module.completed ? 'Completed' : 'Not Started'}</span>
-                                    </div>
-                                    ${recommendation ? `
-                                    <div class="tooltip-recommendation">
-                                        <div class="tooltip-recommendation-title">💡 Recommendation:</div>
-                                        <div class="tooltip-recommendation-text">${recommendation}</div>
-                                    </div>
-                                    ` : ''}
-                                </div>
                             </td>`;
                         } else {
-                            html += `<td class="performance-cell color-grey">
+                            // Store tooltip data for N/A cells
+                            tooltipData[cellId] = {
+                                topic: formatTopicName(topic),
+                                difficulty: formatDifficultyName(diff),
+                                percentage: 0,
+                                attempts: 0,
+                                completed: false,
+                                recommendation: "Student should attempt this module to establish baseline performance."
+                            };
+                            
+                            html += `<td id="${cellId}" class="performance-cell color-grey"
+                                        onmouseenter="showTooltip(event, '${cellId}')" 
+                                        onmousemove="updateTooltipPosition(event)"
+                                        onmouseleave="hideTooltip()">
                                 N/A
-                                <div class="tooltip">
-                                    <div class="tooltip-header">${formatTopicName(topic)} - ${formatDifficultyName(diff)}</div>
-                                    <div class="tooltip-row">
-                                        <span class="tooltip-label">Status:</span>
-                                        <span class="tooltip-value">No data available</span>
-                                    </div>
-                                </div>
                             </td>`;
                         }
                     });
@@ -508,8 +495,87 @@
             });
             
             html += '</tbody></table>';
-            
             container.innerHTML = html;
+        }
+
+        function showTooltip(event, cellId) {
+            const tooltip = document.getElementById('floatingTooltip');
+            const data = tooltipData[cellId];
+            
+            if (!data) {
+                console.error('No tooltip data for cell:', cellId);
+                return;
+            }
+            
+            let content = `
+                <div class="tooltip-header">${data.topic} - ${data.difficulty}</div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Average Score:</span>
+                    <span class="tooltip-value">${data.percentage}%</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Attempts:</span>
+                    <span class="tooltip-value">${data.attempts}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Status:</span>
+                    <span class="tooltip-value">${data.completed ? 'Completed' : 'Not Started'}</span>
+                </div>
+            `;
+            
+            if (data.recommendation) {
+                content += `
+                    <div class="tooltip-recommendation">
+                        <div class="tooltip-recommendation-title">💡 Recommendation:</div>
+                        <div class="tooltip-recommendation-text">${data.recommendation}</div>
+                    </div>
+                `;
+            }
+            
+            tooltip.innerHTML = content;
+            tooltip.style.display = 'block';
+            updateTooltipPosition(event);
+        }
+
+        function updateTooltipPosition(event) {
+            const tooltip = document.getElementById('floatingTooltip');
+            if (tooltip.style.display === 'none') return;
+            
+            const padding = 15;
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            let left = event.clientX + padding;
+            let top = event.clientY + padding;
+            
+            // Adjust if tooltip goes off right edge
+            if (left + tooltipRect.width > viewportWidth - padding) {
+                left = event.clientX - tooltipRect.width - padding;
+            }
+            
+            // Adjust if tooltip goes off bottom edge
+            if (top + tooltipRect.height > viewportHeight - padding) {
+                top = event.clientY - tooltipRect.height - padding;
+            }
+            
+            // Ensure tooltip doesn't go off left edge
+            if (left < padding) {
+                left = padding;
+            }
+            
+            // Ensure tooltip doesn't go off top edge
+            if (top < padding) {
+                top = padding;
+            }
+            
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+        }
+
+        function hideTooltip() {
+            const tooltip = document.getElementById('floatingTooltip');
+            tooltip.style.display = 'none';
         }
 
         function generateRecommendation(module, topic, difficulty) {
@@ -518,7 +584,6 @@
             }
 
             const percentage = module.percentage;
-            const attempts = module.attempts;
 
             if (percentage < 20) {
                 return "Critical: Student needs immediate intervention. Consider 1-on-1 support or foundational review.";
@@ -574,6 +639,29 @@
                 row.classList.remove('selected');
             }
             
+            updateVisibility();
+        }
+
+        function updateVisibility() {
+            if (!classData) return;
+            
+            const hasSelections = selectedStudents.size > 0;
+            
+            classData.students.forEach(student => {
+                const row = document.getElementById(`student-row-${student.student_id}`);
+                if (!row) return;
+                
+                if (hasSelections) {
+                    if (selectedStudents.has(student.student_id)) {
+                        row.classList.remove('hidden');
+                    } else {
+                        row.classList.add('hidden');
+                    }
+                } else {
+                    row.classList.remove('hidden');
+                }
+            });
+            
             updateVisibleCount();
         }
 
@@ -588,7 +676,7 @@
                 if (checkbox) checkbox.checked = true;
             });
             
-            updateVisibleCount();
+            updateVisibility();
         }
 
         function deselectAllStudents() {
@@ -602,14 +690,11 @@
                 row.classList.remove('selected');
             });
             
-            updateVisibleCount();
+            updateVisibility();
         }
 
         function resetSelection() {
             deselectAllStudents();
-            if (classData) {
-                document.getElementById('visibleCount').textContent = classData.total_students;
-            }
         }
 
         function updateVisibleCount() {
@@ -620,16 +705,15 @@
         function refreshData() {
             document.getElementById('loadingMessage').style.display = 'block';
             document.getElementById('matrixContainer').style.display = 'none';
+            selectedStudents.clear();
             loadClassData();
         }
 
         function exportData() {
             if (!classData) return;
             
-            // Build CSV
             let csv = 'Student Name,';
             
-            // Headers
             classData.topics.forEach(topic => {
                 classData.difficulties.forEach(diff => {
                     csv += `${formatTopicName(topic)} ${formatDifficultyName(diff)},`;
@@ -637,9 +721,7 @@
             });
             csv += '\n';
             
-            // Data rows
             classData.students.forEach(student => {
-                // Filter if students are selected
                 if (selectedStudents.size > 0 && !selectedStudents.has(student.student_id)) {
                     return;
                 }
@@ -657,7 +739,6 @@
                 csv += '\n';
             });
             
-            // Download
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
