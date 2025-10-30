@@ -590,8 +590,13 @@
                 buttonOffset = 1; // First child is number line, so buttons start at index 1
             }
             
-            // Now loop through actual button elements only
-            for (let i = buttonOffset; i < allChildren.length; i++) {
+            // Calculate where option buttons end (before flag button)
+            // There are always 4 option buttons, plus potentially 1 number line at start
+            const optionButtonCount = 4;
+            const optionButtonsEnd = buttonOffset + optionButtonCount;
+            
+            // Now loop through actual option buttons only (NOT the flag button at the end)
+            for (let i = buttonOffset; i < optionButtonsEnd; i++) {
                 const button = allChildren[i];
                 const optionIndex = i - buttonOffset; // Convert container index to option index
                 
@@ -607,6 +612,9 @@
                     button.className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-gray-100 text-gray-600';
                 }
             }
+            
+            // Keep the flag button enabled and clickable (it's the last child)
+            // No need to disable it - students should be able to report issues after seeing the answer
             
             const feedback = document.getElementById('feedbackContainer');
             feedback.className = correct ? 'mb-6 p-6 rounded-xl bg-green-50 border-2 border-green-200' : 'mb-6 p-6 rounded-xl bg-blue-50 border-2 border-blue-200';
