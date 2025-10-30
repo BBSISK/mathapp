@@ -1688,3 +1688,59 @@ if __name__ == '__main__':
             print("Default admin created: admin@mathmaster.com / admin123")
 
     app.run(debug=True)
+
+
+# ============================================================
+# Minimal class actions via simple HTML forms (stable)
+# ============================================================
+
+@app.route('/logout', methods=['GET'])
+def logout_simple():
+    session.clear()
+    try:
+        return redirect(url_for('index'))
+    except Exception:
+        return redirect('/')
+
+@app.route('/teacher/class/<int:class_id>/rename', methods=['POST'], endpoint='teacher_simple_rename_class')
+@login_required
+@role_required('teacher')
+@approved_required
+def teacher_simple_rename_class(class_id):
+    class_obj = Class.query.get_or_404(class_id)
+    if class_obj.teacher_id != session.get('user_id'):
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    new_name = (request.form.get('new_name') or '').strip()
+    if not new_name:
+        flash('Class name cannot be empty.', 'error')
+        return redirect('/teacher/classes')
+
+    existing = Class.query.filter(
+        Class.teacher_id == session['user_id'],
+        Class.name == new_name,
+        Class.id != class_id
+    ).first()
+    if existing:
+        flash('You already have a class with that name.', 'error')
+        return redirect('/teacher/classes')
+
+    class_obj.name = new_name
+    db.session.commit()
+    flash('Class renamed successfully.', 'success')
+    return redirect('/teacher/classes')
+
+@app.route('/teacher/class/<int:class_id>/delete', methods=['POST'], endpoint='teacher_simple_delete_class')
+@login_required
+@role_required('teacher')
+@approved_required
+def teacher_simple_delete_class(class_id):
+    class_obj = Class.query.get_or_404(class_id)
+    if class_obj.teacher_id != session.get('user_id'):
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    ClassEnrollment.query.filter_by(class_id=class_id).delete()
+    db.session.delete(class_obj)
+    db.session.commit()
+    flash('Class deleted.', 'success')
+    return redirect('/teacher/classes')

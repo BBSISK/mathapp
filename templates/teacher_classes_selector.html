@@ -303,7 +303,14 @@
                 grid-template-columns: 1fr;
             }
         }
-    </style>
+    
+/* Ensure rename/delete controls are always visible and readable */
+.class-card { overflow: visible !important; height: auto !important; }
+.class-actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.class-actions form { width: 100%; }
+.class-actions details { width: 100%; }
+
+</style>
 </head>
 <body>
     <div class="container">
@@ -311,6 +318,7 @@
             <h1>My Classes</h1>
             <p id="teacherName">Welcome back!</p>
             <div class="header-actions">
+                <a class="btn btn-secondary" href="/logout">🚪 Logout</a>
                 <button class="btn btn-primary" onclick="showCreateClassModal()">
                     ➕ Create New Class
                 </button>
@@ -413,13 +421,25 @@
                             <div class="stat-value">${formatDate(classObj.created_at)}</div>
                         </div>
                     </div>
-                    <div class="class-actions" onclick="event.stopPropagation()">
+                    <div class="class-actions" onclick="event.stopPropagation()" onclick="event.stopPropagation()">
                         <button class="class-btn btn-view" onclick="viewClassDashboard(${classObj.id})">
                             📈 View Dashboard
                         </button>
                         <button class="class-btn btn-manage" onclick="manageStudents(${classObj.id})">
                             👥 Manage Students
                         </button>
+
+                        <form method="post" action="/teacher/class/${classObj.id}/delete" onsubmit="return confirm('Delete class \'${classObj.name}\'? This cannot be undone.');" style="width:100%;">
+                            <button class="class-btn btn-danger">🗑️ Delete</button>
+                        </form>
+                        <details style="width:100%;">
+                            <summary class="class-btn">✏️ Rename</summary>
+                            <form method="post" action="/teacher/class/${classObj.id}/rename" style="margin-top:8px; display:flex; gap:8px; width:100%;">
+                                <input type="text" name="new_name" value="${classObj.name}" style="flex:1; min-width:0; padding:8px; border:1px solid #e5e7eb; border-radius:8px;" required>
+                                <button class="class-btn btn-view" style="padding:8px 12px;">Save</button>
+                            </form>
+                        </details>
+    
                     </div>
                 </div>
             `).join('');
