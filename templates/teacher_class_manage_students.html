@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Students</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .section {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 40px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            display: none;
+        }
+
+        .clear-search.visible {
+            display: block;
+        }
+
+        .student-list {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+
+        .student-item {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .student-item:hover {
+            background: #f8f9fa;
+        }
+
+        .student-item:last-child {
+            border-bottom: none;
+        }
+
+        .student-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .student-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 2px;
+        }
+
+        .student-name mark {
+            background: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .student-email {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .student-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-enrolled {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-available {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .selection-info {
+            padding: 12px;
+            background: #e7f3ff;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+            color: #004085;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .enrolled-student {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .enrolled-student:last-child {
+            border-bottom: none;
+        }
+
+        .remove-btn {
+            padding: 6px 12px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .empty-message {
+            padding: 40px;
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="className">Manage Class Students</h1>
+            <p>Add or remove students from your class</p>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="goBack()">← Back to Classes</button>
+                <button class="btn btn-secondary" onclick="viewDashboard()">📊 View Dashboard</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Available Students Section -->
+            <div class="section">
+                <div class="section-title">
+                    <span>➕</span>
+                    <span>Available Students</span>
+                </div>
+
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input 
+                        type="text" 
+                        id="availableSearch" 
+                        class="search-input" 
+                        placeholder="Search available students..."
+                        oninput="filterAvailableStudents()"
+                    >
+                    <button class="clear-search" id="clearAvailable" onclick="clearAvailableSearch()">✕</button>
+                </div>
+
+                <div id="availableSelection" class="selection-info" style="display: none;">
+                    <span id="availableCount">0</span> students selected
+                </div>
+
+                <div class="bulk-actions">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="selectAllAvailable()">Select All</button>
+                    <button class="btn btn-secondary" style="flex: 1;" onclick="deselectAllAvailable()">Deselect</button>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; margin-bottom: 15px;" onclick="addSelectedStudents()">
+                    ➕ Add Selected to Class
+                </button>
+
+                <div id="availableLoading" class="loading">Loading available students...</div>
+                <div id="availableList" class="student-list" style="display: none;"></div>
+                <div id="availableEmpty" class="empty-message" style="display: none;">
+                    No available students found
+                </div>
+            </div>
+
+            <!-- Enrolled Students Section -->
+            <div class="section">
+                <div class="section-title">
+                    <span>👥</span>
+                    <span>Enrolled Students (<span id="enrolledCount">0</span>)</span>
+                </div>
+
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input 
+                        type="text" 
+                        id="enrolledSearch" 
+                        class="search-input" 
+                        placeholder="Search enrolled students..."
+                        oninput="filterEnrolledStudents()"
+                    >
+                    <button class="clear-search" id="clearEnrolled" onclick="clearEnrolledSearch()">✕</button>
+                </div>
+
+                <div id="enrolledLoading" class="loading">Loading enrolled students...</div>
+                <div id="enrolledList" class="student-list" style="display: none;"></div>
+                <div id="enrolledEmpty" class="empty-message" style="display: none;">
+                    No students enrolled yet. Add some from the left!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const classId = getClassIdFromURL();
+        let availableStudents = [];
+        let enrolledStudents = [];
+        let selectedAvailable = new Set();
+        let availableSearchTerm = '';
+        let enrolledSearchTerm = '';
+
+        function getClassIdFromURL() {
+            const path = window.location.pathname;
+            const match = path.match(/\/teacher\/class-manage\/(\d+)/);
+            return match ? match[1] : null;
+        }
+
+        function goBack() {
+            window.location.href = '/teacher/classes';
+        }
+
+        function viewDashboard() {
+            window.location.href = `/teacher/class-dashboard/${classId}`;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!classId) {
+                alert('No class ID provided');
+                goBack();
+                return;
+            }
+            loadData();
+        });
+
+        async function loadData() {
+            await Promise.all([
+                loadClassInfo(),
+                loadAvailableStudents(),
+                loadEnrolledStudents()
+            ]);
+        }
+
+        async function loadClassInfo() {
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}`);
+                const data = await response.json();
+                document.getElementById('className').textContent = `Manage ${data.name} Students`;
+            } catch (error) {
+                console.error('Error loading class info:', error);
+            }
+        }
+
+        async function loadAvailableStudents() {
+            try {
+                const response = await fetch(`/api/teacher/available-students/${classId}`);
+                availableStudents = await response.json();
+                renderAvailableStudents();
+            } catch (error) {
+                console.error('Error loading available students:', error);
+                document.getElementById('availableLoading').innerHTML = 
+                    '<div style="color: #dc3545;">Failed to load students</div>';
+            }
+        }
+
+        async function loadEnrolledStudents() {
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}/students`);
+                enrolledStudents = await response.json();
+                renderEnrolledStudents();
+            } catch (error) {
+                console.error('Error loading enrolled students:', error);
+                document.getElementById('enrolledLoading').innerHTML = 
+                    '<div style="color: #dc3545;">Failed to load students</div>';
+            }
+        }
+
+        function renderAvailableStudents() {
+            document.getElementById('availableLoading').style.display = 'none';
+
+            const filtered = availableStudents.filter(student => {
+                if (!availableSearchTerm) return true;
+                const searchLower = availableSearchTerm.toLowerCase();
+                return student.full_name.toLowerCase().includes(searchLower) ||
+                       student.email.toLowerCase().includes(searchLower);
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('availableList').style.display = 'none';
+                document.getElementById('availableEmpty').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('availableEmpty').style.display = 'none';
+            document.getElementById('availableList').style.display = 'block';
+
+            const list = document.getElementById('availableList');
+            list.innerHTML = filtered.map(student => {
+                const initials = student.full_name.split(' ').map(n => n[0]).join('').toUpperCase();
+                const isSelected = selectedAvailable.has(student.id);
+                
+                let displayName = student.full_name;
+                if (availableSearchTerm) {
+                    const regex = new RegExp(`(${availableSearchTerm})`, 'gi');
+                    displayName = displayName.replace(regex, '<mark>$1</mark>');
+                }
+
+                return `
+                    <div class="student-item" onclick="toggleAvailableStudent(${student.id})">
+                        <input type="checkbox" 
+                               class="student-checkbox" 
+                               id="check-${student.id}"
+                               ${isSelected ? 'checked' : ''}
+                               onchange="event.stopPropagation(); toggleAvailableStudent(${student.id})">
+                        <div class="student-avatar">${initials}</div>
+                        <div class="student-info">
+                            <div class="student-name">${displayName}</div>
+                            <div class="student-email">${student.email}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            updateAvailableSelection();
+        }
+
+        function renderEnrolledStudents() {
+            document.getElementById('enrolledLoading').style.display = 'none';
+            document.getElementById('enrolledCount').textContent = enrolledStudents.length;
+
+            const filtered = enrolledStudents.filter(student => {
+                if (!enrolledSearchTerm) return true;
+                const searchLower = enrolledSearchTerm.toLowerCase();
+                return student.full_name.toLowerCase().includes(searchLower) ||
+                       student.email.toLowerCase().includes(searchLower);
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('enrolledList').style.display = 'none';
+                document.getElementById('enrolledEmpty').style.display = 'block';
+                document.getElementById('enrolledEmpty').textContent = 
+                    enrolledStudents.length === 0 ? 
+                    'No students enrolled yet. Add some from the left!' : 
+                    'No students match your search';
+                return;
+            }
+
+            document.getElementById('enrolledEmpty').style.display = 'none';
+            document.getElementById('enrolledList').style.display = 'block';
+
+            const list = document.getElementById('enrolledList');
+            list.innerHTML = filtered.map(student => {
+                const initials = student.full_name.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                let displayName = student.full_name;
+                if (enrolledSearchTerm) {
+                    const regex = new RegExp(`(${enrolledSearchTerm})`, 'gi');
+                    displayName = displayName.replace(regex, '<mark>$1</mark>');
+                }
+
+                return `
+                    <div class="enrolled-student">
+                        <div class="student-avatar">${initials}</div>
+                        <div class="student-info">
+                            <div class="student-name">${displayName}</div>
+                            <div class="student-email">${student.email}</div>
+                        </div>
+                        <button class="remove-btn" onclick="removeStudent(${student.id}, '${student.full_name}')">
+                            Remove
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleAvailableStudent(studentId) {
+            const checkbox = document.getElementById(`check-${studentId}`);
+            
+            if (selectedAvailable.has(studentId)) {
+                selectedAvailable.delete(studentId);
+                checkbox.checked = false;
+            } else {
+                selectedAvailable.add(studentId);
+                checkbox.checked = true;
+            }
+            
+            updateAvailableSelection();
+        }
+
+        function updateAvailableSelection() {
+            const selectionInfo = document.getElementById('availableSelection');
+            const count = document.getElementById('availableCount');
+            
+            if (selectedAvailable.size > 0) {
+                selectionInfo.style.display = 'block';
+                count.textContent = selectedAvailable.size;
+            } else {
+                selectionInfo.style.display = 'none';
+            }
+        }
+
+        function selectAllAvailable() {
+            const filtered = availableStudents.filter(student => {
+                if (!availableSearchTerm) return true;
+                const searchLower = availableSearchTerm.toLowerCase();
+                return student.full_name.toLowerCase().includes(searchLower) ||
+                       student.email.toLowerCase().includes(searchLower);
+            });
+
+            filtered.forEach(student => selectedAvailable.add(student.id));
+            renderAvailableStudents();
+        }
+
+        function deselectAllAvailable() {
+            selectedAvailable.clear();
+            renderAvailableStudents();
+        }
+
+        function filterAvailableStudents() {
+            const input = document.getElementById('availableSearch');
+            const clearBtn = document.getElementById('clearAvailable');
+            
+            availableSearchTerm = input.value.trim();
+            
+            if (availableSearchTerm) {
+                clearBtn.classList.add('visible');
+            } else {
+                clearBtn.classList.remove('visible');
+            }
+            
+            renderAvailableStudents();
+        }
+
+        function clearAvailableSearch() {
+            document.getElementById('availableSearch').value = '';
+            document.getElementById('clearAvailable').classList.remove('visible');
+            availableSearchTerm = '';
+            renderAvailableStudents();
+        }
+
+        function filterEnrolledStudents() {
+            const input = document.getElementById('enrolledSearch');
+            const clearBtn = document.getElementById('clearEnrolled');
+            
+            enrolledSearchTerm = input.value.trim();
+            
+            if (enrolledSearchTerm) {
+                clearBtn.classList.add('visible');
+            } else {
+                clearBtn.classList.remove('visible');
+            }
+            
+            renderEnrolledStudents();
+        }
+
+        function clearEnrolledSearch() {
+            document.getElementById('enrolledSearch').value = '';
+            document.getElementById('clearEnrolled').classList.remove('visible');
+            enrolledSearchTerm = '';
+            renderEnrolledStudents();
+        }
+
+        async function addSelectedStudents() {
+            if (selectedAvailable.size === 0) {
+                alert('Please select at least one student to add');
+                return;
+            }
+
+            const studentIds = Array.from(selectedAvailable);
+            
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}/enroll-bulk`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ student_ids: studentIds })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to add students');
+                }
+
+                const result = await response.json();
+                
+                alert(`Successfully added ${result.enrolled} student(s) to the class!`);
+                
+                selectedAvailable.clear();
+                await loadData();
+
+            } catch (error) {
+                console.error('Error adding students:', error);
+                alert('Failed to add students. Please try again.');
+            }
+        }
+
+        async function removeStudent(studentId, studentName) {
+            if (!confirm(`Remove ${studentName} from this class?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}/remove-student/${studentId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to remove student');
+                }
+
+                alert(`${studentName} has been removed from the class`);
+                await loadData();
+
+            } catch (error) {
+                console.error('Error removing student:', error);
+                alert('Failed to remove student. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

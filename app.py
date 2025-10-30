@@ -705,7 +705,8 @@ def my_progress():
 @role_required('teacher')
 @approved_required
 def teacher_dashboard():
-    return render_template('teacher_dashboard.html')
+    """Redirect to the new visual class selector"""
+    return redirect(url_for('teacher_classes_page'))
 
 @app.route('/teacher/class-monitor')
 @login_required
@@ -864,6 +865,196 @@ def remove_student(class_id, student_id):
     db.session.commit()
 
     return jsonify({'message': 'Student removed successfully'})
+
+# ==================== NEW ENHANCED TEACHER ROUTES ====================
+
+@app.route('/teacher/classes')
+@login_required
+@role_required('teacher')
+@approved_required
+def teacher_classes_page():
+    """Visual class selector page"""
+    return render_template('teacher_classes_selector.html')
+
+@app.route('/api/teacher/classes', methods=['GET', 'POST'])
+@login_required
+@role_required('teacher')
+@approved_required
+def teacher_classes_api():
+    """Get all classes for teacher or create new class"""
+    teacher_id = session['user_id']
+    
+    if request.method == 'GET':
+        # Get all classes for this teacher
+        classes = Class.query.filter_by(teacher_id=teacher_id).order_by(Class.created_at.desc()).all()
+        teacher = User.query.get(teacher_id)
+        
+        return jsonify({
+            'classes': [c.to_dict() for c in classes],
+            'teacher': teacher.to_dict() if teacher else None
+        })
+    
+    elif request.method == 'POST':
+        # Create new class
+        data = request.json
+        class_name = data.get('name', '').strip()
+        
+        if not class_name:
+            return jsonify({'error': 'Class name is required'}), 400
+        
+        new_class = Class(
+            name=class_name,
+            teacher_id=teacher_id
+        )
+        
+        db.session.add(new_class)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Class created successfully',
+            'class': new_class.to_dict()
+        }), 201
+
+@app.route('/api/teacher/class/<int:class_id>')
+@login_required
+@role_required('teacher')
+@approved_required
+def get_class_info(class_id):
+    """Get basic class information"""
+    class_obj = Class.query.get_or_404(class_id)
+    
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    return jsonify(class_obj.to_dict())
+
+@app.route('/teacher/class-manage/<int:class_id>')
+@login_required
+@role_required('teacher')
+@approved_required
+def class_manage_page(class_id):
+    """Student management page for a class"""
+    class_obj = Class.query.get_or_404(class_id)
+    
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        flash('Unauthorized access to class', 'error')
+        return redirect(url_for('teacher_classes_page'))
+    
+    return render_template('teacher_class_manage_students.html', 
+                         class_id=class_id,
+                         class_name=class_obj.name)
+
+@app.route('/api/teacher/available-students/<int:class_id>')
+@login_required
+@role_required('teacher')
+@approved_required
+def get_available_students(class_id):
+    """Get all students NOT enrolled in this class"""
+    class_obj = Class.query.get_or_404(class_id)
+    
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    # Get IDs of students already enrolled
+    enrolled_ids = db.session.query(ClassEnrollment.student_id)\
+        .filter_by(class_id=class_id)\
+        .all()
+    enrolled_ids = [e[0] for e in enrolled_ids]
+    
+    # Get all students NOT in the enrolled list
+    available_students = User.query\
+        .filter(User.role == 'student')\
+        .filter(~User.id.in_(enrolled_ids))\
+        .order_by(User.full_name)\
+        .all()
+    
+    return jsonify([{
+        'id': s.id,
+        'full_name': s.full_name,
+        'email': s.email
+    } for s in available_students])
+
+@app.route('/api/teacher/class/<int:class_id>/enroll-bulk', methods=['POST'])
+@login_required
+@role_required('teacher')
+@approved_required
+def enroll_students_bulk(class_id):
+    """Enroll multiple students at once"""
+    class_obj = Class.query.get_or_404(class_id)
+    
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.json
+    student_ids = data.get('student_ids', [])
+    
+    if not student_ids:
+        return jsonify({'error': 'No students selected'}), 400
+    
+    enrolled_count = 0
+    already_enrolled = 0
+    
+    for student_id in student_ids:
+        # Check if already enrolled
+        existing = ClassEnrollment.query.filter_by(
+            class_id=class_id,
+            student_id=student_id
+        ).first()
+        
+        if existing:
+            already_enrolled += 1
+            continue
+        
+        # Verify student exists
+        student = User.query.filter_by(id=student_id, role='student').first()
+        if not student:
+            continue
+        
+        # Create enrollment
+        enrollment = ClassEnrollment(
+            class_id=class_id,
+            student_id=student_id
+        )
+        db.session.add(enrollment)
+        enrolled_count += 1
+    
+    db.session.commit()
+    
+    return jsonify({
+        'message': f'Successfully enrolled {enrolled_count} student(s)',
+        'enrolled': enrolled_count,
+        'already_enrolled': already_enrolled
+    })
+
+@app.route('/api/teacher/class/<int:class_id>/students-list')
+@login_required
+@role_required('teacher')
+@approved_required
+def get_enrolled_students_list(class_id):
+    """Get simple list of enrolled students for management page"""
+    class_obj = Class.query.get_or_404(class_id)
+    
+    # Verify teacher owns this class
+    if class_obj.teacher_id != session['user_id']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
+    
+    students_data = []
+    for enrollment in enrollments:
+        student = enrollment.student
+        students_data.append({
+            'id': student.id,
+            'full_name': student.full_name,
+            'email': student.email,
+            'enrolled_at': enrollment.enrolled_at.isoformat()
+        })
+    
+    return jsonify(students_data)
 
 @app.route('/api/teacher/class/<int:class_id>/performance-matrix')
 @login_required
@@ -1070,29 +1261,21 @@ def admin_statistics():
 def class_dashboard(class_id):
     """
     Enhanced Class Performance Dashboard
-    - Compact cells (50% smaller)
-    - Hover tooltips with details and recommendations
-    - Student selection with checkboxes
-    - Export to CSV
+    - Shows ALL students by default
+    - Smart search and filtering
+    - Student selection for export
+    - Hover tooltips with recommendations
     """
     class_obj = Class.query.get_or_404(class_id)
 
     # Verify teacher owns this class
     if class_obj.teacher_id != session['user_id']:
         flash('Unauthorized access to class', 'error')
-        return redirect(url_for('teacher_dashboard'))
+        return redirect(url_for('teacher_classes_page'))
 
-    return render_template('teacher_class_dashboard_enhanced.html',
+    return render_template('teacher_class_dashboard_improved.html',
                          class_id=class_id,
                          class_name=class_obj.name)
-    """
-    DEPRECATED: Redirects to new Class Monitor
-
-    Old dashboard had purple gradient issue.
-    New monitor has better features and cleaner design.
-    """
-    flash('Redirected to improved Class Monitor dashboard!', 'info')
-    return redirect(url_for('class_monitor'))
 
 @app.route('/api/teacher/class/<int:class_id>/matrix-data')
 @login_required
