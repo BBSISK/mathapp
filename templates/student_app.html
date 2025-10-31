@@ -634,33 +634,8 @@
             const container = document.getElementById('difficultyButtonsContainer');
             container.innerHTML = '';
             
-            // Complex Numbers has 5 sections, others have 3 difficulties
-            if (topic === 'complex_numbers') {
-                // 5 sections for Complex Numbers
-                const sections = [
-                    {level: 'section1', title: 'Section 1: The Basics', icon: 'fa-book-open', color: 'bg-pink-400', desc: 'Imaginary unit i, powers of i'},
-                    {level: 'section2', title: 'Section 2: Operations', icon: 'fa-plus-minus', color: 'bg-pink-500', desc: 'Add, subtract, multiply, conjugate'},
-                    {level: 'section3', title: 'Section 3: Division & Quadratics', icon: 'fa-divide', color: 'bg-pink-600', desc: 'Division and complex roots'},
-                    {level: 'section4', title: 'Section 4: Argand & Modulus', icon: 'fa-chart-scatter', color: 'bg-pink-700', desc: 'Plotting and distance'},
-                    {level: 'section5', title: 'Section 5: Transformations', icon: 'fa-arrows-rotate', color: 'bg-pink-800', desc: 'Translation, rotation, scaling'}
-                ];
-                
-                // Use 2-column grid for 5 sections
-                container.className = 'grid md:grid-cols-2 gap-6';
-                
-                sections.forEach(section => {
-                    const button = document.createElement('button');
-                    button.onclick = () => startQuiz(section.level);
-                    button.className = `${section.color} hover:opacity-90 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all`;
-                    button.innerHTML = `
-                        <i class="fas ${section.icon} text-5xl mb-3"></i>
-                        <h3 class="text-xl font-bold mb-2">${section.title}</h3>
-                        <p class="text-white text-opacity-90 text-sm">${section.desc}</p>
-                        <p class="mt-2 text-xs">25 questions</p>
-                    `;
-                    container.appendChild(button);
-                });
-            } else {
+            // All topics now use standard 3 difficulty levels
+            if (true) {  // Keeping structure for future special cases
                 // 3 standard difficulties for other topics
                 const difficulties = [
                     {level: 'beginner', title: 'Beginner', icon: 'fa-seedling', color: 'bg-green-500', desc: 'Start with the basics'},

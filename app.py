@@ -290,7 +290,7 @@ class UserStats(db.Model):
         overall_accuracy = 0
         if self.total_questions_answered > 0:
             overall_accuracy = round((self.total_correct_answers / self.total_questions_answered) * 100, 1)
-        
+
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -331,7 +331,7 @@ class TopicProgress(db.Model):
         accuracy = 0
         if self.total_questions_answered > 0:
             accuracy = round((self.total_correct / self.total_questions_answered) * 100, 1)
-        
+
         return {
             'id': self.id,
             'topic': self.topic,
@@ -394,18 +394,18 @@ def initialize_user_stats(user_id):
 def update_user_stats_after_quiz(user_id, quiz_attempt):
     """Update user stats after completing a quiz"""
     from datetime import date
-    
+
     stats = initialize_user_stats(user_id)
-    
+
     # Update basic stats
     stats.total_quizzes += 1
     stats.total_questions_answered += quiz_attempt.total_questions
     stats.total_correct_answers += quiz_attempt.score
-    
+
     # Check for perfect score
     if quiz_attempt.percentage == 100:
         stats.perfect_scores += 1
-    
+
     # Update streak
     today = date.today()
     if stats.last_quiz_date:
@@ -420,25 +420,25 @@ def update_user_stats_after_quiz(user_id, quiz_attempt):
     else:
         # First quiz ever
         stats.current_streak_days = 1
-    
+
     # Update longest streak
     if stats.current_streak_days > stats.longest_streak_days:
         stats.longest_streak_days = stats.current_streak_days
-    
+
     stats.last_quiz_date = today
-    
+
     # Calculate level (every 100 points = 1 level)
     stats.level = (stats.total_points // 100) + 1
-    
+
     stats.updated_at = datetime.utcnow()
     db.session.commit()
-    
+
     # Update topic progress
     update_topic_progress(user_id, quiz_attempt)
-    
+
     # Check for new badges
     newly_earned = check_and_award_badges(user_id)
-    
+
     return stats, newly_earned
 
 def update_topic_progress(user_id, quiz_attempt):
@@ -448,7 +448,7 @@ def update_topic_progress(user_id, quiz_attempt):
         topic=quiz_attempt.topic,
         difficulty=quiz_attempt.difficulty
     ).first()
-    
+
     if not progress:
         progress = TopicProgress(
             user_id=user_id,
@@ -456,25 +456,25 @@ def update_topic_progress(user_id, quiz_attempt):
             difficulty=quiz_attempt.difficulty
         )
         db.session.add(progress)
-    
+
     progress.attempts += 1
     progress.total_questions_answered += quiz_attempt.total_questions
     progress.total_correct += quiz_attempt.score
-    
+
     # Update best score
     if quiz_attempt.score > progress.best_score:
         progress.best_score = quiz_attempt.score
     if quiz_attempt.percentage > progress.best_percentage:
         progress.best_percentage = quiz_attempt.percentage
-    
+
     progress.last_attempt_at = datetime.utcnow()
-    
+
     # Check for mastery (90%+ accuracy with 5+ attempts)
     if progress.attempts >= 5:
         accuracy = (progress.total_correct / progress.total_questions_answered) * 100
         if accuracy >= 90 and not progress.is_mastered:
             progress.is_mastered = True
-            
+
             # Update user's mastered topics count
             stats = UserStats.query.filter_by(user_id=user_id).first()
             if stats:
@@ -484,38 +484,38 @@ def update_topic_progress(user_id, quiz_attempt):
                     is_mastered=True
                 ).count()
                 stats.topics_mastered = mastered_count
-    
+
     db.session.commit()
 
 def check_and_award_badges(user_id):
     """Check if user has earned any new badges"""
     # Get all badges
     all_badges = Badge.query.all()
-    
+
     # Get already earned badges
     earned_badge_ids = {ub.badge_id for ub in UserBadge.query.filter_by(user_id=user_id).all()}
-    
+
     # Get user stats
     stats = UserStats.query.filter_by(user_id=user_id).first()
     if not stats:
         return []
-    
+
     newly_earned = []
-    
+
     for badge in all_badges:
         # Skip if already earned
         if badge.id in earned_badge_ids:
             continue
-        
+
         # Check if requirements are met
         earned = False
-        
+
         if badge.requirement_type == 'quizzes_completed':
             earned = stats.total_quizzes >= badge.requirement_value
-        
+
         elif badge.requirement_type == 'perfect_scores':
             earned = stats.perfect_scores >= badge.requirement_value
-        
+
         elif badge.requirement_type == 'high_scores':
             # Count quizzes with 90%+
             high_scores = QuizAttempt.query.filter(
@@ -523,13 +523,13 @@ def check_and_award_badges(user_id):
                 QuizAttempt.percentage >= 90
             ).count()
             earned = high_scores >= badge.requirement_value
-        
+
         elif badge.requirement_type == 'streak_days':
             earned = stats.current_streak_days >= badge.requirement_value
-        
+
         elif badge.requirement_type == 'topics_mastered':
             earned = stats.topics_mastered >= badge.requirement_value
-        
+
         if earned:
             # Award the badge
             user_badge = UserBadge(
@@ -538,15 +538,15 @@ def check_and_award_badges(user_id):
                 progress=100
             )
             db.session.add(user_badge)
-            
+
             # Award points
             stats.total_points += badge.points
-            
+
             newly_earned.append(badge.to_dict())
-    
+
     if newly_earned:
         db.session.commit()
-    
+
     return newly_earned
 
 # ==================== ROUTES ====================
@@ -944,7 +944,8 @@ def get_topics():
         'bodmas': {'title': 'BODMAS', 'icon': 'book', 'color': 'bg-green-500'},
         'functions': {'title': 'Functions', 'icon': 'chart', 'color': 'bg-purple-500'},
         'sets': {'title': 'Sets', 'icon': 'layers', 'color': 'bg-orange-500'},
-        'complex_numbers': {'title': 'Complex Numbers', 'icon': 'infinity', 'color': 'bg-pink-500'}
+        'complex_numbers_intro': {'title': 'Complex Numbers Intro', 'icon': 'infinity', 'color': 'bg-pink-500'},
+        'complex_numbers_expanded': {'title': 'Complex Numbers - Expanded', 'icon': 'rotate', 'color': 'bg-fuchsia-600'}
     }
     return jsonify(topics)
 
@@ -986,7 +987,7 @@ def submit_quiz():
 
     db.session.add(attempt)
     db.session.commit()
-    
+
     # Update stats and check for badges
     stats, newly_earned_badges = update_user_stats_after_quiz(session['user_id'], attempt)
 
@@ -1011,29 +1012,29 @@ def my_progress():
 def get_student_badges():
     """Get all badges (earned and available) for the current student"""
     user_id = session['user_id']
-    
+
     # Get all badges
     all_badges = Badge.query.all()
-    
+
     # Get earned badges
     earned_badges = UserBadge.query.filter_by(user_id=user_id).all()
     earned_badge_ids = {ub.badge_id for ub in earned_badges}
-    
+
     # Get user stats for progress on unearned badges
     stats = UserStats.query.filter_by(user_id=user_id).first()
     if not stats:
         stats = initialize_user_stats(user_id)
-    
+
     badges_data = {
         'earned': [],
         'available': [],
         'total_points': stats.total_points,
         'level': stats.level
     }
-    
+
     for badge in all_badges:
         badge_dict = badge.to_dict()
-        
+
         if badge.id in earned_badge_ids:
             # Badge is earned
             user_badge = next(ub for ub in earned_badges if ub.badge_id == badge.id)
@@ -1043,7 +1044,7 @@ def get_student_badges():
         else:
             # Badge is available - calculate progress
             progress = 0
-            
+
             if badge.requirement_type == 'quizzes_completed':
                 progress = min(100, int((stats.total_quizzes / badge.requirement_value) * 100))
             elif badge.requirement_type == 'perfect_scores':
@@ -1058,11 +1059,11 @@ def get_student_badges():
                     QuizAttempt.percentage >= 90
                 ).count()
                 progress = min(100, int((high_scores / badge.requirement_value) * 100))
-            
+
             badge_dict['progress'] = progress
             badge_dict['earned_at'] = None
             badges_data['available'].append(badge_dict)
-    
+
     return jsonify(badges_data)
 
 @app.route('/api/student/stats')
@@ -1071,19 +1072,19 @@ def get_student_badges():
 def get_student_stats():
     """Get detailed statistics for the current student"""
     user_id = session['user_id']
-    
+
     stats = UserStats.query.filter_by(user_id=user_id).first()
     if not stats:
         stats = initialize_user_stats(user_id)
-    
+
     # Get topic progress
     topic_progress = TopicProgress.query.filter_by(user_id=user_id).all()
-    
+
     # Get recent quiz attempts
     recent_attempts = QuizAttempt.query.filter_by(user_id=user_id).order_by(
         QuizAttempt.completed_at.desc()
     ).limit(10).all()
-    
+
     return jsonify({
         'stats': stats.to_dict(),
         'topic_progress': [tp.to_dict() for tp in topic_progress],
@@ -1096,9 +1097,9 @@ def get_student_stats():
 def get_topic_progress(topic):
     """Get progress for a specific topic"""
     user_id = session['user_id']
-    
+
     progress = TopicProgress.query.filter_by(user_id=user_id, topic=topic).all()
-    
+
     return jsonify({
         'topic': topic,
         'progress': [p.to_dict() for p in progress]
@@ -1118,7 +1119,7 @@ def get_class_leaderboard(class_id):
     """Get leaderboard for a class"""
     # Verify user has access to this class
     user = User.query.get(session['user_id'])
-    
+
     if user.role == 'teacher':
         # Verify teacher owns this class
         class_obj = Class.query.filter_by(id=class_id, teacher_id=user.id).first()
@@ -1131,17 +1132,17 @@ def get_class_leaderboard(class_id):
             return jsonify({'error': 'Unauthorized'}), 403
     else:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     # Get all students in class
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
     student_ids = [e.student_id for e in enrollments]
-    
+
     # Get stats for all students
     students_stats = []
     for student_id in student_ids:
         student = User.query.get(student_id)
         stats = UserStats.query.filter_by(user_id=student_id).first()
-        
+
         if stats:
             students_stats.append({
                 'student_name': student.full_name,
@@ -1152,10 +1153,10 @@ def get_class_leaderboard(class_id):
                 'current_streak': stats.current_streak_days,
                 'badges_earned': UserBadge.query.filter_by(user_id=student_id).count()
             })
-    
+
     # Sort by total points
     students_stats.sort(key=lambda x: x['total_points'], reverse=True)
-    
+
     return jsonify({
         'class_id': class_id,
         'leaderboard': students_stats
@@ -1346,33 +1347,33 @@ def teacher_classes_page():
 def teacher_classes_api():
     """Get all classes for teacher or create new class"""
     teacher_id = session['user_id']
-    
+
     if request.method == 'GET':
         # Get all classes for this teacher
         classes = Class.query.filter_by(teacher_id=teacher_id).order_by(Class.created_at.desc()).all()
         teacher = User.query.get(teacher_id)
-        
+
         return jsonify({
             'classes': [c.to_dict() for c in classes],
             'teacher': teacher.to_dict() if teacher else None
         })
-    
+
     elif request.method == 'POST':
         # Create new class
         data = request.json
         class_name = data.get('name', '').strip()
-        
+
         if not class_name:
             return jsonify({'error': 'Class name is required'}), 400
-        
+
         new_class = Class(
             name=class_name,
             teacher_id=teacher_id
         )
-        
+
         db.session.add(new_class)
         db.session.commit()
-        
+
         return jsonify({
             'message': 'Class created successfully',
             'class': new_class.to_dict()
@@ -1385,11 +1386,11 @@ def teacher_classes_api():
 def get_class_info(class_id):
     """Get basic class information"""
     class_obj = Class.query.get_or_404(class_id)
-    
+
     # Verify teacher owns this class
     if class_obj.teacher_id != session['user_id']:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     return jsonify(class_obj.to_dict())
 
 @app.route('/teacher/class-manage/<int:class_id>')
@@ -1399,13 +1400,13 @@ def get_class_info(class_id):
 def class_manage_page(class_id):
     """Student management page for a class"""
     class_obj = Class.query.get_or_404(class_id)
-    
+
     # Verify teacher owns this class
     if class_obj.teacher_id != session['user_id']:
         flash('Unauthorized access to class', 'error')
         return redirect(url_for('teacher_classes_page'))
-    
-    return render_template('teacher_class_manage_students.html', 
+
+    return render_template('teacher_class_manage_students.html',
                          class_id=class_id,
                          class_name=class_obj.name)
 
@@ -1416,24 +1417,24 @@ def class_manage_page(class_id):
 def get_available_students(class_id):
     """Get all students NOT enrolled in this class"""
     class_obj = Class.query.get_or_404(class_id)
-    
+
     # Verify teacher owns this class
     if class_obj.teacher_id != session['user_id']:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     # Get IDs of students already enrolled
     enrolled_ids = db.session.query(ClassEnrollment.student_id)\
         .filter_by(class_id=class_id)\
         .all()
     enrolled_ids = [e[0] for e in enrolled_ids]
-    
+
     # Get all students NOT in the enrolled list
     available_students = User.query\
         .filter(User.role == 'student')\
         .filter(~User.id.in_(enrolled_ids))\
         .order_by(User.full_name)\
         .all()
-    
+
     return jsonify([{
         'id': s.id,
         'full_name': s.full_name,
@@ -1447,36 +1448,36 @@ def get_available_students(class_id):
 def enroll_students_bulk(class_id):
     """Enroll multiple students at once"""
     class_obj = Class.query.get_or_404(class_id)
-    
+
     # Verify teacher owns this class
     if class_obj.teacher_id != session['user_id']:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     data = request.json
     student_ids = data.get('student_ids', [])
-    
+
     if not student_ids:
         return jsonify({'error': 'No students selected'}), 400
-    
+
     enrolled_count = 0
     already_enrolled = 0
-    
+
     for student_id in student_ids:
         # Check if already enrolled
         existing = ClassEnrollment.query.filter_by(
             class_id=class_id,
             student_id=student_id
         ).first()
-        
+
         if existing:
             already_enrolled += 1
             continue
-        
+
         # Verify student exists
         student = User.query.filter_by(id=student_id, role='student').first()
         if not student:
             continue
-        
+
         # Create enrollment
         enrollment = ClassEnrollment(
             class_id=class_id,
@@ -1484,9 +1485,9 @@ def enroll_students_bulk(class_id):
         )
         db.session.add(enrollment)
         enrolled_count += 1
-    
+
     db.session.commit()
-    
+
     return jsonify({
         'message': f'Successfully enrolled {enrolled_count} student(s)',
         'enrolled': enrolled_count,
@@ -1500,13 +1501,13 @@ def enroll_students_bulk(class_id):
 def get_enrolled_students_list(class_id):
     """Get simple list of enrolled students for management page"""
     class_obj = Class.query.get_or_404(class_id)
-    
+
     # Verify teacher owns this class
     if class_obj.teacher_id != session['user_id']:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
-    
+
     students_data = []
     for enrollment in enrollments:
         student = enrollment.student
@@ -1516,7 +1517,7 @@ def get_enrolled_students_list(class_id):
             'email': student.email,
             'enrolled_at': enrollment.enrolled_at.isoformat()
         })
-    
+
     return jsonify(students_data)
 
 @app.route('/api/teacher/class/<int:class_id>/performance-matrix')
@@ -1540,7 +1541,7 @@ def get_class_performance_matrix(class_id):
     students = User.query.filter(User.id.in_(student_ids)).all()
 
     # Get all topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     students_data = []
@@ -1756,7 +1757,7 @@ def get_class_matrix_data(class_id):
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
 
     # All topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     # Build matrix data
