@@ -1,0 +1,312 @@
+<!-- BADGE NOTIFICATION POPUP -->
+<!-- Add this to your quiz page HTML (where students take quizzes) -->
+
+<!-- Add to your <head> section or existing <style> tag -->
+<style>
+.badge-notification-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s;
+}
+
+.badge-notification-overlay.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.badge-notification-content {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: slideUp 0.5s;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.badge-notification-title {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.badge-notification-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.notification-badge {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    border-radius: 15px;
+    padding: 20px;
+    min-width: 150px;
+    box-shadow: 0 10px 30px rgba(253, 203, 110, 0.4);
+    animation: badgePop 0.6s ease-out;
+}
+
+@keyframes badgePop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.notification-badge-icon {
+    font-size: 4em;
+    margin-bottom: 10px;
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.notification-badge-name {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.notification-badge-points {
+    background: #667eea;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.badge-notification-stats {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.badge-notification-stat {
+    display: inline-block;
+    margin: 0 15px;
+    font-size: 1.1em;
+}
+
+.badge-notification-stat strong {
+    color: #667eea;
+    font-size: 1.3em;
+}
+
+.badge-notification-close {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 25px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.badge-notification-close:hover {
+    transform: scale(1.05);
+}
+
+.confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background: #f0f;
+    position: absolute;
+    animation: confetti-fall 3s linear;
+}
+
+@keyframes confetti-fall {
+    to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+</style>
+
+<!-- Add this HTML at the end of your <body>, before closing </body> tag -->
+<div id="badge-notification" class="badge-notification-overlay">
+    <div class="badge-notification-content">
+        <div class="badge-notification-title">🎉 Congratulations!</div>
+        <div id="badge-notification-message"></div>
+        <div id="badge-notification-badges" class="badge-notification-badges"></div>
+        <div id="badge-notification-stats" class="badge-notification-stats"></div>
+        <button class="badge-notification-close" onclick="closeBadgeNotification()">Awesome!</button>
+    </div>
+</div>
+
+<!-- Add this JavaScript -->
+<script>
+// Show badge notification after quiz submission
+function showBadgeNotification(newlyEarnedBadges, stats) {
+    if (!newlyEarnedBadges || newlyEarnedBadges.length === 0) {
+        return; // No new badges, don't show notification
+    }
+
+    const notification = document.getElementById('badge-notification');
+    const message = document.getElementById('badge-notification-message');
+    const badgesContainer = document.getElementById('badge-notification-badges');
+    const statsContainer = document.getElementById('badge-notification-stats');
+
+    // Create confetti effect
+    createConfetti();
+
+    // Set message
+    const badgeCount = newlyEarnedBadges.length;
+    message.innerHTML = `<p style="font-size: 1.2em; color: #666;">You earned ${badgeCount} new badge${badgeCount > 1 ? 's' : ''}!</p>`;
+
+    // Display badges
+    badgesContainer.innerHTML = newlyEarnedBadges.map(badge => {
+        const emoji = getBadgeEmoji(badge.icon);
+        return `
+            <div class="notification-badge">
+                <div class="notification-badge-icon">${emoji}</div>
+                <div class="notification-badge-name">${badge.name}</div>
+                <div class="notification-badge-points">+${badge.points} points</div>
+            </div>
+        `;
+    }).join('');
+
+    // Display stats update
+    if (stats) {
+        const totalPoints = newlyEarnedBadges.reduce((sum, badge) => sum + badge.points, 0);
+        statsContainer.innerHTML = `
+            <div class="badge-notification-stat">
+                Level: <strong>${stats.level}</strong>
+            </div>
+            <div class="badge-notification-stat">
+                Total Points: <strong>${stats.total_points}</strong> <span style="color: #2ecc71;">(+${totalPoints})</span>
+            </div>
+        `;
+    }
+
+    // Show notification
+    notification.classList.add('show');
+}
+
+function closeBadgeNotification() {
+    const notification = document.getElementById('badge-notification');
+    notification.classList.remove('show');
+}
+
+function createConfetti() {
+    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+    const confettiCount = 50;
+
+    for (let i = 0; i < confettiCount; i++) {
+        setTimeout(() => {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * window.innerWidth + 'px';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            confetti.style.animationDelay = Math.random() + 's';
+            document.body.appendChild(confetti);
+
+            setTimeout(() => confetti.remove(), 3000);
+        }, i * 30);
+    }
+}
+
+function getBadgeEmoji(iconClass) {
+    const iconMap = {
+        'fa-star': '⭐', 'fa-book': '📚', 'fa-graduation-cap': '🎓',
+        'fa-heart': '❤️', 'fa-trophy': '🏆', 'fa-bullseye': '🎯',
+        'fa-crown': '👑', 'fa-medal': '🥈', 'fa-gem': '💎',
+        'fa-fire': '🔥', 'fa-bolt': '⚡', 'fa-rocket': '🚀',
+        'fa-certificate': '📜', 'fa-brain': '🧠', 'fa-infinity': '♾️'
+    };
+    return iconMap[iconClass] || '🏅';
+}
+
+// MODIFY YOUR EXISTING QUIZ SUBMISSION CODE
+// Add this to your existing quiz submit function:
+/*
+
+Example of how to modify your existing quiz submission:
+
+async function submitQuiz() {
+    // Your existing quiz submission code...
+    const quizData = {
+        topic: currentTopic,
+        difficulty: currentDifficulty,
+        score: correctAnswers,
+        total_questions: totalQuestions,
+        percentage: percentage,
+        time_taken: timeTaken
+    };
+
+    const response = await fetch('/api/submit-quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(quizData)
+    });
+
+    const result = await response.json();
+
+    // ADD THESE LINES:
+    // Check if new badges were earned
+    if (result.newly_earned_badges && result.newly_earned_badges.length > 0) {
+        showBadgeNotification(result.newly_earned_badges, result.stats);
+    }
+
+    // Your existing code to show quiz results...
+}
+
+*/
+</script>
+
+<!-- USAGE INSTRUCTIONS:
+
+1. Add the CSS to your quiz page <head> section
+2. Add the HTML notification div before </body>
+3. Add the JavaScript
+4. In your quiz submission function, add the code to check for newly_earned_badges
+5. Call showBadgeNotification() when badges are earned
+
+The notification will automatically:
+- Show a popup with confetti
+- Display all newly earned badges
+- Show updated points and level
+- Have an "Awesome!" button to close it
+
+-->

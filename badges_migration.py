@@ -168,33 +168,33 @@ def insert_default_badges():
     
     badges_data = [
         # Getting Started Badges
-        ("First Steps", "Complete your first quiz", "fa-star", "beginner", "quizzes_completed", 1, 10, "yellow"),
-        ("Curious Learner", "Complete 5 quizzes", "fa-book", "beginner", "quizzes_completed", 5, 20, "blue"),
-        ("Dedicated Student", "Complete 10 quizzes", "fa-graduation-cap", "progress", "quizzes_completed", 10, 30, "purple"),
-        ("Math Enthusiast", "Complete 25 quizzes", "fa-heart", "progress", "quizzes_completed", 25, 50, "red"),
-        ("Quiz Master", "Complete 50 quizzes", "fa-trophy", "progress", "quizzes_completed", 50, 100, "gold"),
+        {"name": "First Steps", "description": "Complete your first quiz", "icon": "fa-star", "category": "beginner", "requirement_type": "quizzes_completed", "requirement_value": 1, "points": 10, "color": "yellow"},
+        {"name": "Curious Learner", "description": "Complete 5 quizzes", "icon": "fa-book", "category": "beginner", "requirement_type": "quizzes_completed", "requirement_value": 5, "points": 20, "color": "blue"},
+        {"name": "Dedicated Student", "description": "Complete 10 quizzes", "icon": "fa-graduation-cap", "category": "progress", "requirement_type": "quizzes_completed", "requirement_value": 10, "points": 30, "color": "purple"},
+        {"name": "Math Enthusiast", "description": "Complete 25 quizzes", "icon": "fa-heart", "category": "progress", "requirement_type": "quizzes_completed", "requirement_value": 25, "points": 50, "color": "red"},
+        {"name": "Quiz Master", "description": "Complete 50 quizzes", "icon": "fa-trophy", "category": "progress", "requirement_type": "quizzes_completed", "requirement_value": 50, "points": 100, "color": "gold"},
         
         # Accuracy Badges
-        ("Sharp Shooter", "Get 80%+ on any quiz", "fa-bullseye", "accuracy", "quiz_percentage", 80, 15, "orange"),
-        ("Perfectionist", "Get 100% on any quiz", "fa-crown", "accuracy", "perfect_scores", 1, 25, "gold"),
-        ("Consistent Excellence", "Get 90%+ on 5 quizzes", "fa-medal", "accuracy", "high_scores", 5, 50, "silver"),
-        ("Flawless Five", "Get 100% on 5 quizzes", "fa-gem", "accuracy", "perfect_scores", 5, 100, "diamond"),
+        {"name": "Sharp Shooter", "description": "Get 80%+ on any quiz", "icon": "fa-bullseye", "category": "accuracy", "requirement_type": "quiz_percentage", "requirement_value": 80, "points": 15, "color": "orange"},
+        {"name": "Perfectionist", "description": "Get 100% on any quiz", "icon": "fa-crown", "category": "accuracy", "requirement_type": "perfect_scores", "requirement_value": 1, "points": 25, "color": "gold"},
+        {"name": "Consistent Excellence", "description": "Get 90%+ on 5 quizzes", "icon": "fa-medal", "category": "accuracy", "requirement_type": "high_scores", "requirement_value": 5, "points": 50, "color": "silver"},
+        {"name": "Flawless Five", "description": "Get 100% on 5 quizzes", "icon": "fa-gem", "category": "accuracy", "requirement_type": "perfect_scores", "requirement_value": 5, "points": 100, "color": "diamond"},
         
         # Streak Badges
-        ("Daily Habit", "Practice 3 days in a row", "fa-fire", "streak", "streak_days", 3, 20, "orange"),
-        ("Week Warrior", "Practice 7 days in a row", "fa-bolt", "streak", "streak_days", 7, 40, "yellow"),
-        ("Unstoppable", "Practice 14 days in a row", "fa-rocket", "streak", "streak_days", 14, 75, "red"),
+        {"name": "Daily Habit", "description": "Practice 3 days in a row", "icon": "fa-fire", "category": "streak", "requirement_type": "streak_days", "requirement_value": 3, "points": 20, "color": "orange"},
+        {"name": "Week Warrior", "description": "Practice 7 days in a row", "icon": "fa-bolt", "category": "streak", "requirement_type": "streak_days", "requirement_value": 7, "points": 40, "color": "yellow"},
+        {"name": "Unstoppable", "description": "Practice 14 days in a row", "icon": "fa-rocket", "category": "streak", "requirement_type": "streak_days", "requirement_value": 14, "points": 75, "color": "red"},
         
         # Mastery Badges
-        ("Topic Master", "Master any topic (3 levels)", "fa-certificate", "mastery", "topics_mastered", 1, 30, "green"),
-        ("Subject Expert", "Master 3 different topics", "fa-brain", "mastery", "topics_mastered", 3, 75, "purple"),
-        ("Mathematics Genius", "Master 5 different topics", "fa-infinity", "mastery", "topics_mastered", 5, 150, "rainbow"),
+        {"name": "Topic Master", "description": "Master any topic (3 levels)", "icon": "fa-certificate", "category": "mastery", "requirement_type": "topics_mastered", "requirement_value": 1, "points": 30, "color": "green"},
+        {"name": "Subject Expert", "description": "Master 3 different topics", "icon": "fa-brain", "category": "mastery", "requirement_type": "topics_mastered", "requirement_value": 3, "points": 75, "color": "purple"},
+        {"name": "Mathematics Genius", "description": "Master 5 different topics", "icon": "fa-infinity", "category": "mastery", "requirement_type": "topics_mastered", "requirement_value": 5, "points": 150, "color": "rainbow"},
     ]
     
     for badge in badges_data:
         db.session.execute(text("""
             INSERT INTO badges (name, description, icon, category, requirement_type, requirement_value, points, color)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (:name, :description, :icon, :category, :requirement_type, :requirement_value, :points, :color)
         """), badge)
     
     db.session.commit()

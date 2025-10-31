@@ -1,0 +1,163 @@
+<!-- BADGE WIDGET - Add this to your existing student dashboard page -->
+
+<!-- Add to your <head> section -->
+<style>
+.badge-widget {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    color: white;
+    margin: 20px 0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.badge-widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.badge-widget-title {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.badge-widget-link {
+    background: white;
+    color: #667eea;
+    padding: 8px 20px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.badge-widget-link:hover {
+    transform: scale(1.05);
+}
+
+.badge-widget-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 15px;
+}
+
+.badge-stat {
+    text-align: center;
+    background: rgba(255,255,255,0.2);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.badge-stat-value {
+    font-size: 2em;
+    font-weight: bold;
+    display: block;
+}
+
+.badge-stat-label {
+    font-size: 0.85em;
+    opacity: 0.9;
+}
+
+.recent-badges {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.mini-badge {
+    background: rgba(255,255,255,0.3);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+</style>
+
+<!-- Add this HTML where you want the widget to appear -->
+<div id="badge-widget" class="badge-widget">
+    <div class="badge-widget-header">
+        <div class="badge-widget-title">🏆 Your Progress</div>
+        <a href="/student/badges" class="badge-widget-link">View All →</a>
+    </div>
+    
+    <div class="badge-widget-stats">
+        <div class="badge-stat">
+            <span id="widget-level" class="badge-stat-value">-</span>
+            <span class="badge-stat-label">Level</span>
+        </div>
+        <div class="badge-stat">
+            <span id="widget-points" class="badge-stat-value">-</span>
+            <span class="badge-stat-label">Points</span>
+        </div>
+        <div class="badge-stat">
+            <span id="widget-badges" class="badge-stat-value">-</span>
+            <span class="badge-stat-label">Badges</span>
+        </div>
+        <div class="badge-stat">
+            <span id="widget-streak" class="badge-stat-value">-</span>
+            <span class="badge-stat-label">🔥 Streak</span>
+        </div>
+    </div>
+    
+    <div id="recent-badges" class="recent-badges" style="display: none;">
+        <!-- Recent badges will appear here -->
+    </div>
+</div>
+
+<!-- Add this JavaScript at the bottom of your page, before </body> -->
+<script>
+// Load badge widget data
+async function loadBadgeWidget() {
+    try {
+        const response = await fetch('/api/student/badges');
+        const data = await response.json();
+        
+        const statsResponse = await fetch('/api/student/stats');
+        const statsData = await statsResponse.json();
+        
+        // Update widget
+        document.getElementById('widget-level').textContent = data.level;
+        document.getElementById('widget-points').textContent = data.total_points;
+        document.getElementById('widget-badges').textContent = data.earned.length;
+        document.getElementById('widget-streak').textContent = statsData.stats.current_streak_days;
+        
+        // Show recent badges (last 3 earned)
+        if (data.earned.length > 0) {
+            const recentBadgesContainer = document.getElementById('recent-badges');
+            const recentBadges = data.earned.slice(-3).reverse();
+            
+            recentBadgesContainer.innerHTML = '<div style="width: 100%; margin-bottom: 5px; font-size: 0.9em;">Recent Badges:</div>' +
+                recentBadges.map(badge => {
+                    const emoji = getBadgeEmoji(badge.icon);
+                    return `<div class="mini-badge">${emoji} ${badge.name}</div>`;
+                }).join('');
+            
+            recentBadgesContainer.style.display = 'flex';
+        }
+    } catch (error) {
+        console.error('Error loading badge widget:', error);
+        // Hide widget if there's an error
+        document.getElementById('badge-widget').style.display = 'none';
+    }
+}
+
+function getBadgeEmoji(iconClass) {
+    const iconMap = {
+        'fa-star': '⭐', 'fa-book': '📚', 'fa-graduation-cap': '🎓',
+        'fa-heart': '❤️', 'fa-trophy': '🏆', 'fa-bullseye': '🎯',
+        'fa-crown': '👑', 'fa-medal': '🥈', 'fa-gem': '💎',
+        'fa-fire': '🔥', 'fa-bolt': '⚡', 'fa-rocket': '🚀',
+        'fa-certificate': '📜', 'fa-brain': '🧠', 'fa-infinity': '♾️'
+    };
+    return iconMap[iconClass] || '🏅';
+}
+
+// Load widget when page loads
+loadBadgeWidget();
+</script>

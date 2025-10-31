@@ -97,6 +97,107 @@
             50% { transform: translateY(-5px); }
         }
         
+        /* Badge Widget Styles */
+        .badge-summary-widget {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            margin: 20px auto 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 1200px;
+        }
+
+        .badge-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .badge-summary-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .view-badges-btn {
+            background: white;
+            color: #667eea;
+            padding: 10px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .view-badges-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        }
+
+        .badge-summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        .badge-stat-box {
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            padding: 20px 15px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .badge-stat-box:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-3px);
+        }
+
+        .badge-stat-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .badge-stat-label {
+            font-size: 0.9em;
+            opacity: 0.95;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .recent-badge-mini {
+            display: inline-block;
+            background: rgba(255,255,255,0.25);
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9em;
+            backdrop-filter: blur(5px);
+        }
+
+        .badge-widget-loading {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 640px) {
+            .badge-summary-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .badge-summary-title {
+                font-size: 1.4em;
+            }
+        }
+
         @keyframes pulse {
             0%, 100% { transform: translate(-50%, -50%) scale(1); }
             50% { transform: translate(-50%, -50%) scale(1.1); }
@@ -126,6 +227,46 @@
     </div>
 
     <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Badge Summary Widget -->
+        <div id="badge-widget" class="badge-summary-widget" style="display: none;">
+            <div class="badge-summary-header">
+                <h2 class="badge-summary-title">🏆 Your Progress</h2>
+                <a href="/student/badges" class="view-badges-btn">View All Badges →</a>
+            </div>
+            
+            <div class="badge-summary-stats">
+                <div class="badge-stat-box">
+                    <span id="stat-level" class="badge-stat-value">-</span>
+                    <div class="badge-stat-label">Level</div>
+                </div>
+                <div class="badge-stat-box">
+                    <span id="stat-points" class="badge-stat-value">-</span>
+                    <div class="badge-stat-label">Points</div>
+                </div>
+                <div class="badge-stat-box">
+                    <span id="stat-badges" class="badge-stat-value">-</span>
+                    <div class="badge-stat-label">Badges</div>
+                </div>
+                <div class="badge-stat-box">
+                    <span id="stat-quizzes" class="badge-stat-value">-</span>
+                    <div class="badge-stat-label">Quizzes</div>
+                </div>
+                <div class="badge-stat-box">
+                    <span id="stat-streak" class="badge-stat-value">-</span>
+                    <div class="badge-stat-label">🔥 Streak</div>
+                </div>
+                <div class="badge-stat-box">
+                    <span id="stat-accuracy" class="badge-stat-value">-</span>
+                    <div class="badge-stat-label">Accuracy</div>
+                </div>
+            </div>
+            
+            <div id="recent-badges-container" style="margin-top: 15px; display: none;">
+                <div style="opacity: 0.9; margin-bottom: 8px; font-size: 0.9em;">Recent Badges:</div>
+                <div id="recent-badges"></div>
+            </div>
+        </div>
+
         <!-- Loading Screen -->
         <div id="loadingScreen" class="text-center py-20">
             <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto"></div>
@@ -245,6 +386,7 @@
             await loadCurrentUser();
             await loadTopics();
             await loadProgress();
+            await loadBadgeWidget(); // Load badge widget
         };
 
         function generateNumberLine(questionText) {
@@ -430,6 +572,58 @@
             } catch (error) {
                 console.error('Error loading progress:', error);
             }
+        }
+
+        async function loadBadgeWidget() {
+            try {
+                // Fetch badge and stats data in parallel
+                const [badgesResponse, statsResponse] = await Promise.all([
+                    fetch('/api/student/badges'),
+                    fetch('/api/student/stats')
+                ]);
+                
+                const badgesData = await badgesResponse.json();
+                const statsData = await statsResponse.json();
+                
+                // Update widget values
+                document.getElementById('stat-level').textContent = badgesData.level;
+                document.getElementById('stat-points').textContent = badgesData.total_points;
+                document.getElementById('stat-badges').textContent = badgesData.earned.length + '/' + (badgesData.earned.length + badgesData.available.length);
+                document.getElementById('stat-quizzes').textContent = statsData.stats.total_quizzes;
+                document.getElementById('stat-streak').textContent = statsData.stats.current_streak_days;
+                document.getElementById('stat-accuracy').textContent = statsData.stats.overall_accuracy + '%';
+                
+                // Show recent badges if any
+                if (badgesData.earned.length > 0) {
+                    const recentBadges = badgesData.earned.slice(-3).reverse(); // Last 3 badges
+                    const recentBadgesHtml = recentBadges.map(badge => {
+                        const emoji = getBadgeEmoji(badge.icon);
+                        return `<span class="recent-badge-mini">${emoji} ${badge.name}</span>`;
+                    }).join('');
+                    
+                    document.getElementById('recent-badges').innerHTML = recentBadgesHtml;
+                    document.getElementById('recent-badges-container').style.display = 'block';
+                }
+                
+                // Show the widget
+                document.getElementById('badge-widget').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading badge widget:', error);
+                // Hide widget if there's an error
+                document.getElementById('badge-widget').style.display = 'none';
+            }
+        }
+
+        function getBadgeEmoji(iconClass) {
+            const iconMap = {
+                'fa-star': '⭐', 'fa-book': '📚', 'fa-graduation-cap': '🎓',
+                'fa-heart': '❤️', 'fa-trophy': '🏆', 'fa-bullseye': '🎯',
+                'fa-crown': '👑', 'fa-medal': '🥈', 'fa-gem': '💎',
+                'fa-fire': '🔥', 'fa-bolt': '⚡', 'fa-rocket': '🚀',
+                'fa-certificate': '📜', 'fa-brain': '🧠', 'fa-infinity': '♾️'
+            };
+            return iconMap[iconClass] || '🏅';
         }
 
         function selectTopic(topic, title) {
