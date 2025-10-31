@@ -1105,6 +1105,60 @@ def get_topic_progress(topic):
         'progress': [p.to_dict() for p in progress]
     })
 
+@app.route('/api/student/mastery')
+@login_required
+@approved_required
+def get_student_mastery():
+    """
+    Get student's mastery status for all topics and difficulties.
+    Returns best score for each topic/difficulty combination.
+    Mastery threshold: >80%
+    """
+    user_id = session['user_id']
+
+    # Get all topics
+    topics = [
+        'arithmetic', 'fractions', 'decimals', 'multiplication_division',
+        'bodmas', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded'
+    ]
+    difficulties = ['beginner', 'intermediate', 'advanced']
+
+    mastery_data = {}
+
+    for topic in topics:
+        mastery_data[topic] = {
+            'difficulties': {},
+            'topic_mastered': False
+        }
+
+        mastered_count = 0
+
+        for difficulty in difficulties:
+            # Get best score for this topic/difficulty
+            best_attempt = QuizAttempt.query.filter_by(
+                user_id=user_id,
+                topic=topic,
+                difficulty=difficulty
+            ).order_by(QuizAttempt.percentage.desc()).first()
+
+            if best_attempt and best_attempt.percentage > 80:
+                mastery_data[topic]['difficulties'][difficulty] = {
+                    'mastered': True,
+                    'best_score': round(best_attempt.percentage, 1)
+                }
+                mastered_count += 1
+            else:
+                mastery_data[topic]['difficulties'][difficulty] = {
+                    'mastered': False,
+                    'best_score': round(best_attempt.percentage, 1) if best_attempt else 0
+                }
+
+        # Topic is mastered if all 3 difficulties are mastered
+        mastery_data[topic]['topic_mastered'] = (mastered_count == 3)
+
+    return jsonify(mastery_data)
+
+
 @app.route('/student/badges')
 @login_required
 @approved_required
