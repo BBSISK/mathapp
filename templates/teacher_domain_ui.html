@@ -1,0 +1,343 @@
+<!-- Add this component to teacher_dashboard.html or create as a modal -->
+<!-- This shows teachers their domain access status and lets them request access -->
+
+<div class="card mb-4" id="teacher-domain-access-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-shield-alt"></i> Student Access Permissions
+        </h5>
+        <button class="btn btn-sm btn-outline-primary" onclick="refreshTeacherDomainAccess()">
+            <i class="fas fa-sync"></i> Refresh
+        </button>
+    </div>
+    <div class="card-body">
+        <!-- Access Status -->
+        <div id="teacher-domain-status">
+            <div class="text-center">
+                <i class="fas fa-spinner fa-spin"></i> Loading access information...
+            </div>
+        </div>
+
+        <!-- Assigned Domains -->
+        <div id="teacher-assigned-domains" style="display: none;">
+            <h6 class="border-bottom pb-2">Your Accessible Domains</h6>
+            <div id="assigned-domains-display" class="mb-3">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <!-- Request New Access -->
+        <div id="teacher-request-section" style="display: none;">
+            <h6 class="border-bottom pb-2 mt-3">Request Additional Access</h6>
+            <p class="text-muted small">
+                If you need access to students from other email domains, you can request it here.
+                An administrator will review your request.
+            </p>
+            
+            <div class="form-group">
+                <label>Select Domain:</label>
+                <select class="form-control" id="domain-to-request">
+                    <option value="">-- Select a domain --</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Reason for Request: <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="request-reason" rows="3" 
+                          placeholder="Please explain why you need access to this domain..."></textarea>
+            </div>
+            
+            <button class="btn btn-primary" onclick="submitDomainRequest()">
+                <i class="fas fa-paper-plane"></i> Submit Request
+            </button>
+        </div>
+
+        <!-- Pending Requests -->
+        <div id="teacher-pending-requests" style="display: none;">
+            <h6 class="border-bottom pb-2 mt-4">Pending Requests</h6>
+            <div id="pending-requests-display">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <!-- Request History -->
+        <div id="teacher-request-history" style="display: none;">
+            <button class="btn btn-link btn-sm" onclick="toggleRequestHistory()">
+                <i class="fas fa-history"></i> View Request History
+            </button>
+            <div id="request-history-display" style="display: none;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .domain-access-badge {
+        display: inline-block;
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 15px;
+        padding: 8px 15px;
+        margin: 5px;
+        font-size: 0.95em;
+    }
+    
+    .domain-access-badge i {
+        color: #2196f3;
+    }
+    
+    .pending-request-item {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
+    
+    .approved-request {
+        background: #d4edda;
+        border-left-color: #28a745;
+    }
+    
+    .denied-request {
+        background: #f8d7da;
+        border-left-color: #dc3545;
+    }
+</style>
+
+<script>
+// Teacher Domain Access Management
+
+let teacherDomainData = null;
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    refreshTeacherDomainAccess();
+});
+
+// Refresh domain access information
+async function refreshTeacherDomainAccess() {
+    try {
+        const response = await fetch('/api/teacher/my-domain-access');
+        teacherDomainData = await response.json();
+        
+        renderTeacherDomainAccess(teacherDomainData);
+    } catch (error) {
+        console.error('Error loading domain access:', error);
+        document.getElementById('teacher-domain-status').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> 
+                Failed to load access information. Please try again later.
+            </div>
+        `;
+    }
+}
+
+// Render domain access information
+function renderTeacherDomainAccess(data) {
+    // Show access status
+    const statusHtml = data.has_restrictions
+        ? `<div class="alert alert-warning">
+               <i class="fas fa-lock"></i> 
+               <strong>Limited Access:</strong> You can only see and enroll students from specific email domains.
+               You currently have access to <strong>${data.assigned_domains.length}</strong> domain(s) 
+               covering <strong>${data.accessible_student_count}</strong> students.
+           </div>`
+        : `<div class="alert alert-success">
+               <i class="fas fa-unlock"></i> 
+               <strong>Full Access:</strong> You have unrestricted access to all students in the system.
+           </div>`;
+    
+    document.getElementById('teacher-domain-status').innerHTML = statusHtml;
+    
+    // Show assigned domains if any
+    if (data.assigned_domains.length > 0) {
+        document.getElementById('teacher-assigned-domains').style.display = 'block';
+        document.getElementById('assigned-domains-display').innerHTML = 
+            data.assigned_domains.map(d => `
+                <div class="domain-access-badge">
+                    <i class="fas fa-check-circle"></i> ${d.email_domain}
+                    <small class="text-muted ml-2">
+                        (Granted ${new Date(d.granted_at).toLocaleDateString()})
+                    </small>
+                </div>
+            `).join('');
+    } else if (data.has_restrictions) {
+        document.getElementById('teacher-assigned-domains').style.display = 'block';
+        document.getElementById('assigned-domains-display').innerHTML = `
+            <p class="text-muted">No domains assigned. Please request access from an administrator.</p>
+        `;
+    }
+    
+    // Show request section if domains available
+    if (data.available_to_request && data.available_to_request.length > 0) {
+        document.getElementById('teacher-request-section').style.display = 'block';
+        
+        const select = document.getElementById('domain-to-request');
+        select.innerHTML = '<option value="">-- Select a domain --</option>' +
+            data.available_to_request.map(d => 
+                `<option value="${d.domain}">${d.domain} (${d.student_count} students)</option>`
+            ).join('');
+    }
+    
+    // Show pending requests
+    if (data.pending_requests && data.pending_requests.length > 0) {
+        document.getElementById('teacher-pending-requests').style.display = 'block';
+        document.getElementById('pending-requests-display').innerHTML = 
+            data.pending_requests.map(req => `
+                <div class="pending-request-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${req.email_domain}</strong>
+                            <br><small class="text-muted">
+                                Requested: ${new Date(req.requested_at).toLocaleString()}
+                            </small>
+                            <br><small>Reason: ${req.reason}</small>
+                        </div>
+                        <div>
+                            <span class="badge badge-warning">
+                                <i class="fas fa-clock"></i> Pending
+                            </span>
+                            <button class="btn btn-sm btn-link text-danger" 
+                                    onclick="cancelRequest(${req.id})"
+                                    title="Cancel request">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+    }
+    
+    // Show history button if there are any requests
+    loadRequestHistory();
+}
+
+// Submit domain access request
+async function submitDomainRequest() {
+    const domain = document.getElementById('domain-to-request').value;
+    const reason = document.getElementById('request-reason').value.trim();
+    
+    if (!domain) {
+        alert('Please select a domain');
+        return;
+    }
+    
+    if (!reason) {
+        alert('Please provide a reason for your request');
+        return;
+    }
+    
+    if (reason.length < 10) {
+        alert('Please provide a more detailed reason (at least 10 characters)');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/teacher/request-domain-access', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ domain, reason })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('Request submitted successfully! An administrator will review your request.');
+            
+            // Clear form
+            document.getElementById('domain-to-request').value = '';
+            document.getElementById('request-reason').value = '';
+            
+            // Refresh display
+            refreshTeacherDomainAccess();
+        } else {
+            alert(data.error || 'Failed to submit request');
+        }
+    } catch (error) {
+        console.error('Error submitting request:', error);
+        alert('Failed to submit request. Please try again.');
+    }
+}
+
+// Cancel a pending request
+async function cancelRequest(requestId) {
+    if (!confirm('Cancel this request?')) return;
+    
+    try {
+        const response = await fetch(`/api/teacher/domain-requests/${requestId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            alert('Request cancelled');
+            refreshTeacherDomainAccess();
+        } else {
+            alert('Failed to cancel request');
+        }
+    } catch (error) {
+        console.error('Error cancelling request:', error);
+        alert('Failed to cancel request');
+    }
+}
+
+// Load request history
+async function loadRequestHistory() {
+    try {
+        const response = await fetch('/api/teacher/domain-requests');
+        const data = await response.json();
+        
+        const completedRequests = data.requests.filter(r => r.status !== 'pending');
+        
+        if (completedRequests.length > 0) {
+            document.getElementById('teacher-request-history').style.display = 'block';
+            
+            document.getElementById('request-history-display').innerHTML = 
+                completedRequests.map(req => `
+                    <div class="pending-request-item ${req.status}-request mt-2">
+                        <strong>${req.email_domain}</strong>
+                        <span class="badge badge-${req.status === 'approved' ? 'success' : 'danger'} ml-2">
+                            ${req.status.toUpperCase()}
+                        </span>
+                        <br><small class="text-muted">
+                            Requested: ${new Date(req.requested_at).toLocaleDateString()}
+                            | Reviewed: ${new Date(req.reviewed_at).toLocaleDateString()}
+                        </small>
+                        <br><small>Your reason: ${req.reason}</small>
+                        ${req.admin_notes ? `<br><small><strong>Admin response:</strong> ${req.admin_notes}</small>` : ''}
+                    </div>
+                `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading request history:', error);
+    }
+}
+
+// Toggle request history visibility
+function toggleRequestHistory() {
+    const display = document.getElementById('request-history-display');
+    display.style.display = display.style.display === 'none' ? 'block' : 'none';
+}
+
+// Helper: Show info tooltip
+function showDomainInfo() {
+    alert('Domain Access Control:\n\n' +
+          'Your administrator can restrict which students you can see and enroll based on their email domains. ' +
+          'If you need access to students from a specific domain, submit a request explaining why you need it.');
+}
+</script>
+
+<!-- Add button to header to show info -->
+<script>
+// Add info icon to card header
+document.addEventListener('DOMContentLoaded', function() {
+    const cardHeader = document.querySelector('#teacher-domain-access-card .card-header h5');
+    if (cardHeader) {
+        cardHeader.innerHTML += ' <i class="fas fa-info-circle text-muted" ' +
+                                'onclick="showDomainInfo()" ' +
+                                'style="cursor: pointer; font-size: 0.8em;" ' +
+                                'title="Click for more information"></i>';
+    }
+});
+</script>

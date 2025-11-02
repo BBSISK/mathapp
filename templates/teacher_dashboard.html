@@ -6,6 +6,39 @@
     <title>Teacher Dashboard - Math Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .domain-access-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 15px;
+            padding: 8px 15px;
+            margin: 5px;
+            font-size: 0.95em;
+        }
+        
+        .domain-access-badge i {
+            color: #2196f3;
+        }
+        
+        .pending-request-item {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        
+        .approved-request {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .denied-request {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <!-- Header -->
@@ -33,6 +66,9 @@
                 </button>
                 <button onclick="showTab('progress')" id="progressTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800">
                     <i class="fas fa-chart-bar mr-2"></i>Class Progress
+                </button>
+                <button onclick="showTab('access')" id="accessTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-shield-alt mr-2"></i>Domain Access
                 </button>
             </div>
         </div>
@@ -70,6 +106,82 @@
             </div>
             <div id="progressData"></div>
         </div>
+
+        <!-- Domain Access Tab -->
+        <div id="accessContent" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="flex justify-between items-center p-6 border-b">
+                    <h2 class="text-2xl font-bold">
+                        <i class="fas fa-shield-alt mr-2"></i>Student Access Permissions
+                    </h2>
+                    <button onclick="refreshTeacherDomainAccess()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-sync mr-2"></i>Refresh
+                    </button>
+                </div>
+                <div class="p-6">
+                    <!-- Access Status -->
+                    <div id="teacher-domain-status">
+                        <div class="text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-4xl text-purple-600"></i>
+                            <p class="mt-4 text-gray-600">Loading access information...</p>
+                        </div>
+                    </div>
+
+                    <!-- Assigned Domains -->
+                    <div id="teacher-assigned-domains" style="display: none;">
+                        <h3 class="text-lg font-semibold border-b pb-2 mb-4">Your Accessible Domains</h3>
+                        <div id="assigned-domains-display" class="mb-6">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Request New Access -->
+                    <div id="teacher-request-section" style="display: none;">
+                        <h3 class="text-lg font-semibold border-b pb-2 mb-4 mt-6">Request Additional Access</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            If you need access to students from other email domains, you can request it here.
+                            An administrator will review your request.
+                        </p>
+                        
+                        <div class="mb-4">
+                            <label class="block font-semibold mb-2">Select Domain:</label>
+                            <select class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" id="domain-to-request">
+                                <option value="">-- Select a domain --</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block font-semibold mb-2">Reason for Request: <span class="text-red-600">*</span></label>
+                            <textarea class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" 
+                                      id="request-reason" rows="3" 
+                                      placeholder="Please explain why you need access to this domain..."></textarea>
+                        </div>
+                        
+                        <button onclick="submitDomainRequest()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
+                            <i class="fas fa-paper-plane mr-2"></i>Submit Request
+                        </button>
+                    </div>
+
+                    <!-- Pending Requests -->
+                    <div id="teacher-pending-requests" style="display: none;">
+                        <h3 class="text-lg font-semibold border-b pb-2 mb-4 mt-6">Pending Requests</h3>
+                        <div id="pending-requests-display">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Request History -->
+                    <div id="teacher-request-history" style="display: none;">
+                        <button onclick="toggleRequestHistory()" class="text-purple-600 hover:text-purple-700 mt-4">
+                            <i class="fas fa-history mr-2"></i>View Request History
+                        </button>
+                        <div id="request-history-display" style="display: none;" class="mt-4">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Create Class Modal -->
@@ -101,9 +213,11 @@
             <div id="classDetailsContent"></div>
         </div>
     </div>
+
     <script>
         let currentClass = null;
         let classes = [];
+        let teacherDomainData = null;
 
         window.onload = async function() {
             await loadTeacherName();
@@ -164,8 +278,15 @@
                 el.classList.add('text-gray-600');
             });
 
-            document.getElementById(tab + 'Content').classList.remove('hidden');
-            document.getElementById(tab + 'Tab').classList.add('border-purple-600', 'text-gray-800');
+            document.getElementById(`${tab}Content`).classList.remove('hidden');
+            const tabButton = document.getElementById(`${tab}Tab`);
+            tabButton.classList.remove('text-gray-600');
+            tabButton.classList.add('border-purple-600', 'text-gray-800');
+
+            // Load domain access when switching to access tab
+            if (tab === 'access') {
+                refreshTeacherDomainAccess();
+            }
         }
 
         function showCreateClassModal() {
@@ -180,8 +301,8 @@
         }
 
         async function createClass() {
-            const name = document.getElementById('newClassName').value.trim();
-            if (!name) {
+            const className = document.getElementById('newClassName').value.trim();
+            if (!className) {
                 alert('Please enter a class name');
                 return;
             }
@@ -190,7 +311,7 @@
                 const response = await fetch('/api/teacher/create-class', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ name })
+                    body: JSON.stringify({ name: className })
                 });
 
                 if (response.ok) {
@@ -207,19 +328,15 @@
         }
 
         async function showClassDetails(classId) {
-            currentClass = classId;
-            const classObj = classes.find(c => c.id === classId);
-
-            document.getElementById('classDetailsTitle').textContent = classObj.name;
-            document.getElementById('classDetailsModal').classList.remove('hidden');
-            document.getElementById('classDetailsModal').classList.add('flex');
-
             try {
                 const response = await fetch(`/api/teacher/class/${classId}/students`);
-                const students = await response.json();
+                const data = await response.json();
+
+                const cls = classes.find(c => c.id === classId);
+                document.getElementById('classDetailsTitle').textContent = cls.name;
 
                 const content = document.getElementById('classDetailsContent');
-                if (students.length === 0) {
+                if (data.students.length === 0) {
                     content.innerHTML = '<p class="text-gray-600">No students enrolled yet.</p>';
                 } else {
                     content.innerHTML = `
@@ -229,22 +346,18 @@
                                     <tr class="bg-gray-100">
                                         <th class="px-4 py-2 text-left">Name</th>
                                         <th class="px-4 py-2 text-left">Email</th>
-                                        <th class="px-4 py-2 text-center">Quizzes</th>
-                                        <th class="px-4 py-2 text-center">Avg Score</th>
                                         <th class="px-4 py-2 text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${students.map(s => `
+                                    ${data.students.map(s => `
                                         <tr class="border-b">
                                             <td class="px-4 py-3">${s.full_name}</td>
                                             <td class="px-4 py-3">${s.email}</td>
-                                            <td class="px-4 py-3 text-center">${s.total_quizzes}</td>
-                                            <td class="px-4 py-3 text-center">${s.average_score.toFixed(1)}%</td>
                                             <td class="px-4 py-3 text-center">
                                                 <button onclick="removeStudent(${classId}, ${s.id})"
-                                                        class="text-red-600 hover:text-red-800">
-                                                    <i class="fas fa-trash"></i>
+                                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                                    Remove
                                                 </button>
                                             </td>
                                         </tr>
@@ -254,6 +367,9 @@
                         </div>
                     `;
                 }
+
+                document.getElementById('classDetailsModal').classList.remove('hidden');
+                document.getElementById('classDetailsModal').classList.add('flex');
             } catch (error) {
                 console.error('Error loading class details:', error);
             }
@@ -265,10 +381,10 @@
         }
 
         // Student search with debouncing
-        let searchTimeout;
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('studentSearch');
             if (searchInput) {
+                let searchTimeout;
                 searchInput.addEventListener('input', function(e) {
                     clearTimeout(searchTimeout);
                     searchTimeout = setTimeout(() => searchStudents(e.target.value), 300);
@@ -418,6 +534,214 @@
             } catch (error) {
                 console.error('Error loading class progress:', error);
             }
+        }
+
+        // ===== DOMAIN ACCESS MANAGEMENT =====
+
+        // Refresh domain access information
+        async function refreshTeacherDomainAccess() {
+            try {
+                const response = await fetch('/api/teacher/my-domain-access');
+                teacherDomainData = await response.json();
+                
+                renderTeacherDomainAccess(teacherDomainData);
+            } catch (error) {
+                console.error('Error loading domain access:', error);
+                document.getElementById('teacher-domain-status').innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> 
+                        Failed to load access information. Please try again later.
+                    </div>
+                `;
+            }
+        }
+
+        // Render domain access information
+        function renderTeacherDomainAccess(data) {
+            // Show access status
+            const statusHtml = data.has_restrictions
+                ? `<div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-6">
+                       <i class="fas fa-lock mr-2"></i> 
+                       <strong>Limited Access:</strong> You can only see and enroll students from specific email domains.
+                       You currently have access to <strong>${data.assigned_domains.length}</strong> domain(s) 
+                       covering <strong>${data.accessible_student_count}</strong> students.
+                   </div>`
+                : `<div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded mb-6">
+                       <i class="fas fa-unlock mr-2"></i> 
+                       <strong>Full Access:</strong> You have unrestricted access to all students in the system.
+                   </div>`;
+            
+            document.getElementById('teacher-domain-status').innerHTML = statusHtml;
+            
+            // Show assigned domains if any
+            if (data.assigned_domains.length > 0) {
+                document.getElementById('teacher-assigned-domains').style.display = 'block';
+                document.getElementById('assigned-domains-display').innerHTML = 
+                    data.assigned_domains.map(d => `
+                        <div class="domain-access-badge">
+                            <i class="fas fa-check-circle"></i> ${d.email_domain}
+                            <small class="text-gray-600 ml-2">
+                                (Granted ${new Date(d.granted_at).toLocaleDateString()})
+                            </small>
+                        </div>
+                    `).join('');
+            } else if (data.has_restrictions) {
+                document.getElementById('teacher-assigned-domains').style.display = 'block';
+                document.getElementById('assigned-domains-display').innerHTML = `
+                    <p class="text-gray-600">No domains assigned. Please request access from an administrator.</p>
+                `;
+            }
+            
+            // Show request section if domains available
+            if (data.available_to_request && data.available_to_request.length > 0) {
+                document.getElementById('teacher-request-section').style.display = 'block';
+                
+                const select = document.getElementById('domain-to-request');
+                select.innerHTML = '<option value="">-- Select a domain --</option>' +
+                    data.available_to_request.map(d => 
+                        `<option value="${d.domain}">${d.domain} (${d.student_count} students)</option>`
+                    ).join('');
+            }
+            
+            // Show pending requests
+            if (data.pending_requests && data.pending_requests.length > 0) {
+                document.getElementById('teacher-pending-requests').style.display = 'block';
+                document.getElementById('pending-requests-display').innerHTML = 
+                    data.pending_requests.map(req => `
+                        <div class="pending-request-item">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <strong>${req.email_domain}</strong>
+                                    <br><small class="text-gray-600">
+                                        Requested: ${new Date(req.requested_at).toLocaleString()}
+                                    </small>
+                                    <br><small>Reason: ${req.reason}</small>
+                                </div>
+                                <div>
+                                    <span class="bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-sm">
+                                        <i class="fas fa-clock"></i> Pending
+                                    </span>
+                                    <button onclick="cancelRequest(${req.id})"
+                                            class="text-red-600 hover:text-red-800 ml-2"
+                                            title="Cancel request">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+            }
+            
+            // Show history button if there are any requests
+            loadRequestHistory();
+        }
+
+        // Submit domain access request
+        async function submitDomainRequest() {
+            const domain = document.getElementById('domain-to-request').value;
+            const reason = document.getElementById('request-reason').value.trim();
+            
+            if (!domain) {
+                alert('Please select a domain');
+                return;
+            }
+            
+            if (!reason) {
+                alert('Please provide a reason for your request');
+                return;
+            }
+            
+            if (reason.length < 10) {
+                alert('Please provide a more detailed reason (at least 10 characters)');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/teacher/request-domain-access', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ domain, reason })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Request submitted successfully! An administrator will review your request.');
+                    
+                    // Clear form
+                    document.getElementById('domain-to-request').value = '';
+                    document.getElementById('request-reason').value = '';
+                    
+                    // Refresh display
+                    refreshTeacherDomainAccess();
+                } else {
+                    alert(data.error || 'Failed to submit request');
+                }
+            } catch (error) {
+                console.error('Error submitting request:', error);
+                alert('Failed to submit request. Please try again.');
+            }
+        }
+
+        // Cancel a pending request
+        async function cancelRequest(requestId) {
+            if (!confirm('Cancel this request?')) return;
+            
+            try {
+                const response = await fetch(`/api/teacher/domain-requests/${requestId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('Request cancelled');
+                    refreshTeacherDomainAccess();
+                } else {
+                    alert('Failed to cancel request');
+                }
+            } catch (error) {
+                console.error('Error cancelling request:', error);
+                alert('Failed to cancel request');
+            }
+        }
+
+        // Load request history
+        async function loadRequestHistory() {
+            try {
+                const response = await fetch('/api/teacher/domain-requests');
+                const data = await response.json();
+                
+                const completedRequests = data.requests.filter(r => r.status !== 'pending');
+                
+                if (completedRequests.length > 0) {
+                    document.getElementById('teacher-request-history').style.display = 'block';
+                    
+                    document.getElementById('request-history-display').innerHTML = 
+                        completedRequests.map(req => `
+                            <div class="pending-request-item ${req.status}-request mt-2">
+                                <strong>${req.email_domain}</strong>
+                                <span class="px-2 py-1 rounded text-sm ml-2 ${
+                                    req.status === 'approved' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                                }">
+                                    ${req.status.toUpperCase()}
+                                </span>
+                                <br><small class="text-gray-600">
+                                    Requested: ${new Date(req.requested_at).toLocaleDateString()}
+                                    | Reviewed: ${new Date(req.reviewed_at).toLocaleDateString()}
+                                </small>
+                                <br><small>Your reason: ${req.reason}</small>
+                                ${req.admin_notes ? `<br><small><strong>Admin response:</strong> ${req.admin_notes}</small>` : ''}
+                            </div>
+                        `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading request history:', error);
+            }
+        }
+
+        // Toggle request history visibility
+        function toggleRequestHistory() {
+            const display = document.getElementById('request-history-display');
+            display.style.display = display.style.display === 'none' ? 'block' : 'none';
         }
 
         async function logout() {

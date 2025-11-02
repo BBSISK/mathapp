@@ -1539,32 +1539,16 @@ def enroll_student(class_id):
 @role_required('teacher')
 @approved_required
 def class_students(class_id):
-    """Get students in class - FILTERED BY DOMAIN ACCESS"""
     class_obj = Class.query.get_or_404(class_id)
-    teacher_id = session['user_id']
 
-    if class_obj.teacher_id != teacher_id:
+    if class_obj.teacher_id != session['user_id']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
 
-    # Filter by domain access
-    accessible_domains = get_teacher_accessible_domains(teacher_id)
-    if accessible_domains is not None:
-        filtered_enrollments = []
-        for enrollment in enrollments:
-            student = enrollment.student
-            if student:
-                student_domain = extract_domain(student.email)
-                if student_domain in accessible_domains:
-                    filtered_enrollments.append(enrollment)
-        enrollments = filtered_enrollments
-
     students_data = []
     for enrollment in enrollments:
         student = enrollment.student
-        if not student:  # Safety check
-            continue
         attempts = QuizAttempt.query.filter_by(user_id=student.id).all()
 
         students_data.append({

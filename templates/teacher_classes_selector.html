@@ -83,6 +83,17 @@
             background: #e9ecef;
         }
 
+        .btn-access {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-access:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
         .classes-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -165,6 +176,16 @@
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .class-actions form {
+            width: 100%;
+        }
+
+        .class-actions details {
+            width: 100%;
         }
 
         .class-btn {
@@ -242,6 +263,8 @@
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
         }
 
         .modal.active {
@@ -251,18 +274,23 @@
         .modal-content {
             background: white;
             border-radius: 15px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
+            width: 100%;
+            max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
 
         .modal-header {
             font-size: 24px;
             font-weight: 700;
             color: #2d3748;
-            margin-bottom: 20px;
+            padding: 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .modal-body {
+            padding: 25px;
         }
 
         .form-group {
@@ -271,22 +299,21 @@
 
         .form-label {
             display: block;
-            font-size: 14px;
             font-weight: 600;
-            color: #495057;
+            color: #2d3748;
             margin-bottom: 8px;
         }
 
-        .form-input {
+        .form-input, .form-select, .form-textarea {
             width: 100%;
             padding: 12px;
-            border: 2px solid #dee2e6;
+            border: 2px solid #e9ecef;
             border-radius: 8px;
             font-size: 14px;
             transition: all 0.3s;
         }
 
-        .form-input:focus {
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -298,19 +325,127 @@
             margin-top: 25px;
         }
 
+        /* Domain Access Specific Styles */
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .domain-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 15px;
+            padding: 8px 15px;
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        .domain-section {
+            margin: 25px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .domain-section h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .request-item {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .request-item.approved {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .request-item.denied {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .request-domain {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .request-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .status-approved {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .status-denied {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .text-muted {
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
         @media (max-width: 768px) {
             .classes-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .modal-content {
+                max-width: 100%;
+            }
         }
-    
-/* Ensure rename/delete controls are always visible and readable */
-.class-card { overflow: visible !important; height: auto !important; }
-.class-actions { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
-.class-actions form { width: 100%; }
-.class-actions details { width: 100%; }
-
-</style>
+    </style>
 </head>
 <body>
     <div class="container">
@@ -321,6 +456,9 @@
                 <a class="btn btn-secondary" href="/logout">🚪 Logout</a>
                 <button class="btn btn-primary" onclick="showCreateClassModal()">
                     ➕ Create New Class
+                </button>
+                <button class="btn btn-access" onclick="showDomainAccessModal()">
+                    🛡️ Domain Access
                 </button>
                 <button class="btn btn-secondary" onclick="refreshClasses()">
                     🔄 Refresh
@@ -348,21 +486,98 @@
         <div class="modal-content">
             <div class="modal-header">Create New Class</div>
             <form onsubmit="createClass(event)">
-                <div class="form-group">
-                    <label class="form-label">Class Name</label>
-                    <input type="text" id="className" class="form-input" placeholder="e.g., Math 101 - Section A" required>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Class Name</label>
+                        <input type="text" id="className" class="form-input" placeholder="e.g., Math 101 - Section A" required>
+                    </div>
                 </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Create Class</button>
-                    <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="hideCreateClassModal()">Cancel</button>
+                <div class="modal-body">
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">Create Class</button>
+                        <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="hideCreateClassModal()">Cancel</button>
+                    </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Domain Access Modal -->
+    <div id="domainAccessModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                🛡️ Student Access Permissions
+            </div>
+            <div class="modal-body">
+                <!-- Loading State -->
+                <div id="domainLoading" style="text-align: center; padding: 20px;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">⏳</div>
+                    <div>Loading access information...</div>
+                </div>
+
+                <!-- Main Content (hidden until loaded) -->
+                <div id="domainContent" style="display: none;">
+                    <!-- Access Status -->
+                    <div id="domainStatus"></div>
+
+                    <!-- Assigned Domains -->
+                    <div id="assignedDomainsSection" style="display: none;" class="domain-section">
+                        <h3>Your Accessible Domains</h3>
+                        <div id="assignedDomainsList"></div>
+                    </div>
+
+                    <!-- Request Form -->
+                    <div id="requestFormSection" style="display: none;" class="domain-section">
+                        <h3>Request Additional Access</h3>
+                        <p class="text-muted" style="margin-bottom: 15px;">
+                            If you need access to students from other email domains, you can request it here.
+                            An administrator will review your request.
+                        </p>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Select Domain:</label>
+                            <select class="form-select" id="domainToRequest">
+                                <option value="">-- Select a domain --</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Reason for Request: <span style="color: #dc3545;">*</span></label>
+                            <textarea class="form-textarea" id="requestReason" rows="3" 
+                                      placeholder="Please explain why you need access to this domain..." required></textarea>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="submitDomainRequest()">
+                            📤 Submit Request
+                        </button>
+                    </div>
+
+                    <!-- Pending Requests -->
+                    <div id="pendingRequestsSection" style="display: none;" class="domain-section">
+                        <h3>Pending Requests</h3>
+                        <div id="pendingRequestsList"></div>
+                    </div>
+
+                    <!-- Request History -->
+                    <div id="historySection" style="display: none;" class="domain-section">
+                        <h3>Request History</h3>
+                        <div id="historyList"></div>
+                    </div>
+                </div>
+
+                <!-- Error State -->
+                <div id="domainError" style="display: none;"></div>
+            </div>
+            <div class="modal-body">
+                <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="hideDomainAccessModal()">Close</button>
+            </div>
         </div>
     </div>
 
     <script>
         let classes = [];
         let teacherInfo = null;
+        let domainData = null;
 
         window.addEventListener('DOMContentLoaded', () => {
             loadClasses();
@@ -421,7 +636,7 @@
                             <div class="stat-value">${formatDate(classObj.created_at)}</div>
                         </div>
                     </div>
-                    <div class="class-actions" onclick="event.stopPropagation()" onclick="event.stopPropagation()">
+                    <div class="class-actions" onclick="event.stopPropagation()">
                         <button class="class-btn btn-view" onclick="viewClassDashboard(${classObj.id})">
                             📈 View Dashboard
                         </button>
@@ -429,7 +644,7 @@
                             👥 Manage Students
                         </button>
 
-                        <form method="post" action="/teacher/class/${classObj.id}/delete" onsubmit="return confirm('Delete class \'${classObj.name}\'? This cannot be undone.');" style="width:100%;">
+                        <form method="post" action="/teacher/class/${classObj.id}/delete" onsubmit="return confirm('Delete class \\'${classObj.name}\\'? This cannot be undone.');" style="width:100%;">
                             <button class="class-btn btn-danger">🗑️ Delete</button>
                         </form>
                         <details style="width:100%;">
@@ -439,7 +654,7 @@
                                 <button class="class-btn btn-view" style="padding:8px 12px;">Save</button>
                             </form>
                         </details>
-    
+
                     </div>
                 </div>
             `).join('');
@@ -517,6 +732,225 @@
             }
         }
 
+        // ===== DOMAIN ACCESS FUNCTIONS =====
+
+        async function showDomainAccessModal() {
+            document.getElementById('domainAccessModal').classList.add('active');
+            document.getElementById('domainLoading').style.display = 'block';
+            document.getElementById('domainContent').style.display = 'none';
+            document.getElementById('domainError').style.display = 'none';
+            
+            await loadDomainAccess();
+        }
+
+        function hideDomainAccessModal() {
+            document.getElementById('domainAccessModal').classList.remove('active');
+        }
+
+        async function loadDomainAccess() {
+            try {
+                const response = await fetch('/api/teacher/my-domain-access');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load domain access');
+                }
+
+                domainData = await response.json();
+                renderDomainAccess();
+
+            } catch (error) {
+                console.error('Error loading domain access:', error);
+                document.getElementById('domainLoading').style.display = 'none';
+                document.getElementById('domainError').style.display = 'block';
+                document.getElementById('domainError').innerHTML = `
+                    <div class="alert alert-danger">
+                        ❌ Failed to load access information. Please try again later.
+                    </div>
+                `;
+            }
+        }
+
+        function renderDomainAccess() {
+            document.getElementById('domainLoading').style.display = 'none';
+            document.getElementById('domainContent').style.display = 'block';
+
+            // Render status
+            const statusHtml = domainData.has_restrictions
+                ? `<div class="alert alert-warning">
+                       🔒 <strong>Limited Access:</strong> You can only see and enroll students from specific email domains.
+                       You currently have access to <strong>${domainData.assigned_domains.length}</strong> domain(s) 
+                       covering <strong>${domainData.accessible_student_count}</strong> students.
+                   </div>`
+                : `<div class="alert alert-success">
+                       🔓 <strong>Full Access:</strong> You have unrestricted access to all students in the system.
+                   </div>`;
+            
+            document.getElementById('domainStatus').innerHTML = statusHtml;
+
+            // Show assigned domains
+            if (domainData.assigned_domains && domainData.assigned_domains.length > 0) {
+                document.getElementById('assignedDomainsSection').style.display = 'block';
+                document.getElementById('assignedDomainsList').innerHTML = 
+                    domainData.assigned_domains.map(d => `
+                        <div class="domain-badge">
+                            ✓ ${d.email_domain}
+                            <small class="text-muted" style="margin-left: 8px;">
+                                (Granted ${new Date(d.granted_at).toLocaleDateString()})
+                            </small>
+                        </div>
+                    `).join('');
+            } else if (domainData.has_restrictions) {
+                document.getElementById('assignedDomainsSection').style.display = 'block';
+                document.getElementById('assignedDomainsList').innerHTML = `
+                    <p class="text-muted">No domains assigned. Please request access from an administrator.</p>
+                `;
+            }
+
+            // Show request form if domains available
+            if (domainData.available_to_request && domainData.available_to_request.length > 0) {
+                document.getElementById('requestFormSection').style.display = 'block';
+                
+                const select = document.getElementById('domainToRequest');
+                select.innerHTML = '<option value="">-- Select a domain --</option>' +
+                    domainData.available_to_request.map(d => 
+                        `<option value="${d.domain}">${d.domain} (${d.student_count} students)</option>`
+                    ).join('');
+            }
+
+            // Show pending requests
+            if (domainData.pending_requests && domainData.pending_requests.length > 0) {
+                document.getElementById('pendingRequestsSection').style.display = 'block';
+                document.getElementById('pendingRequestsList').innerHTML = 
+                    domainData.pending_requests.map(req => `
+                        <div class="request-item">
+                            <div class="request-header">
+                                <div class="request-domain">${req.email_domain}</div>
+                                <div>
+                                    <span class="request-status status-pending">⏳ Pending</span>
+                                    <button class="btn btn-secondary btn-small" onclick="cancelRequest(${req.id})" style="margin-left: 8px;">
+                                        ✖ Cancel
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="text-muted">
+                                Requested: ${new Date(req.requested_at).toLocaleString()}
+                            </div>
+                            <div style="margin-top: 8px;">
+                                <strong>Reason:</strong> ${req.reason}
+                            </div>
+                        </div>
+                    `).join('');
+            }
+
+            // Load and show history
+            loadRequestHistory();
+        }
+
+        async function submitDomainRequest() {
+            const domain = document.getElementById('domainToRequest').value;
+            const reason = document.getElementById('requestReason').value.trim();
+            
+            if (!domain) {
+                alert('Please select a domain');
+                return;
+            }
+            
+            if (!reason) {
+                alert('Please provide a reason for your request');
+                return;
+            }
+            
+            if (reason.length < 10) {
+                alert('Please provide a more detailed reason (at least 10 characters)');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/teacher/request-domain-access', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ domain, reason })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Request submitted successfully! An administrator will review your request.');
+                    
+                    // Clear form
+                    document.getElementById('domainToRequest').value = '';
+                    document.getElementById('requestReason').value = '';
+                    
+                    // Reload
+                    await loadDomainAccess();
+                } else {
+                    alert(data.error || 'Failed to submit request');
+                }
+            } catch (error) {
+                console.error('Error submitting request:', error);
+                alert('Failed to submit request. Please try again.');
+            }
+        }
+
+        async function cancelRequest(requestId) {
+            if (!confirm('Cancel this request?')) return;
+            
+            try {
+                const response = await fetch(`/api/teacher/domain-requests/${requestId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('Request cancelled');
+                    await loadDomainAccess();
+                } else {
+                    alert('Failed to cancel request');
+                }
+            } catch (error) {
+                console.error('Error cancelling request:', error);
+                alert('Failed to cancel request');
+            }
+        }
+
+        async function loadRequestHistory() {
+            try {
+                const response = await fetch('/api/teacher/domain-requests');
+                const data = await response.json();
+                
+                const completedRequests = data.requests.filter(r => r.status !== 'pending');
+                
+                if (completedRequests.length > 0) {
+                    document.getElementById('historySection').style.display = 'block';
+                    
+                    document.getElementById('historyList').innerHTML = 
+                        completedRequests.map(req => `
+                            <div class="request-item ${req.status}">
+                                <div class="request-header">
+                                    <div class="request-domain">${req.email_domain}</div>
+                                    <span class="request-status status-${req.status}">
+                                        ${req.status === 'approved' ? '✓ Approved' : '✖ Denied'}
+                                    </span>
+                                </div>
+                                <div class="text-muted">
+                                    Requested: ${new Date(req.requested_at).toLocaleDateString()}
+                                    | Reviewed: ${new Date(req.reviewed_at).toLocaleDateString()}
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    <strong>Your reason:</strong> ${req.reason}
+                                </div>
+                                ${req.admin_notes ? `
+                                    <div style="margin-top: 8px;">
+                                        <strong>Admin response:</strong> ${req.admin_notes}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading request history:', error);
+            }
+        }
+
         // Close modal when clicking outside
         document.getElementById('createClassModal').addEventListener('click', (e) => {
             if (e.target.id === 'createClassModal') {
@@ -524,10 +958,17 @@
             }
         });
 
+        document.getElementById('domainAccessModal').addEventListener('click', (e) => {
+            if (e.target.id === 'domainAccessModal') {
+                hideDomainAccessModal();
+            }
+        });
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 hideCreateClassModal();
+                hideDomainAccessModal();
             }
         });
     </script>

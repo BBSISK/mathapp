@@ -1,0 +1,660 @@
+<!-- Add this as a new tab in your admin_dashboard.html -->
+<!-- Place this inside the tab content area -->
+
+<div id="domain-management-tab" class="tab-content" style="display: none;">
+    <h2>📧 Email Domain Management</h2>
+    <p class="text-muted">Control which email domains teachers can access for student enrollment and management.</p>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5><i class="fas fa-globe"></i> Total Domains</h5>
+                    <h2 id="total-domains-count">0</h2>
+                    <small>Unique email domains in system</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5><i class="fas fa-clock"></i> Pending Requests</h5>
+                    <h2 id="pending-requests-count">0</h2>
+                    <small>Teachers requesting access</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5><i class="fas fa-shield-alt"></i> Restricted Teachers</h5>
+                    <h2 id="restricted-teachers-count">0</h2>
+                    <small>Teachers with domain limits</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="domains-overview-tab" data-toggle="tab" href="#domains-overview" role="tab">
+                <i class="fas fa-list"></i> Domains Overview
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="teacher-access-tab" data-toggle="tab" href="#teacher-access" role="tab">
+                <i class="fas fa-user-shield"></i> Teacher Access
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="access-requests-tab" data-toggle="tab" href="#access-requests" role="tab">
+                <i class="fas fa-inbox"></i> Access Requests
+                <span id="requests-badge" class="badge badge-warning ml-1">0</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Domains Overview Tab -->
+        <div class="tab-pane fade show active" id="domains-overview" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-globe"></i> All Email Domains</h5>
+                    <button class="btn btn-sm btn-primary" onclick="refreshDomains()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Domain</th>
+                                    <th>Students</th>
+                                    <th>Teachers</th>
+                                    <th>Teachers with Access</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="domains-table-body">
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading domains...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher Access Tab -->
+        <div class="tab-pane fade" id="teacher-access" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-shield"></i> Manage Teacher Domain Access</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Teacher Selection -->
+                    <div class="form-group">
+                        <label>Select Teacher:</label>
+                        <select class="form-control" id="teacher-select" onchange="loadTeacherDomains()">
+                            <option value="">-- Select a teacher --</option>
+                        </select>
+                    </div>
+
+                    <div id="teacher-domains-container" style="display: none;">
+                        <hr>
+                        
+                        <!-- Teacher Info -->
+                        <div class="alert alert-info">
+                            <h6 id="teacher-info-name"></h6>
+                            <p id="teacher-info-email" class="mb-0 text-muted small"></p>
+                        </div>
+
+                        <!-- Access Status -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6>Access Status</h6>
+                                        <p id="teacher-access-status" class="mb-0"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6>Accessible Students</h6>
+                                        <p id="teacher-student-count" class="mb-0"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Assigned Domains -->
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="fas fa-check-circle text-success"></i> Assigned Domains</h6>
+                                <button class="btn btn-sm btn-warning" onclick="removeAllRestrictions()">
+                                    <i class="fas fa-unlock"></i> Remove All Restrictions
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="assigned-domains-list">
+                                    <p class="text-muted">No domains assigned</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Add Domain -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-plus-circle"></i> Assign New Domain</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label>Select Domain:</label>
+                                    <select class="form-control" id="domain-to-assign">
+                                        <option value="">-- Select a domain --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Notes (optional):</label>
+                                    <textarea class="form-control" id="assign-notes" rows="2" 
+                                              placeholder="Optional notes about this assignment..."></textarea>
+                                </div>
+                                <button class="btn btn-success" onclick="assignDomain()">
+                                    <i class="fas fa-plus"></i> Assign Domain
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Access Requests Tab -->
+        <div class="tab-pane fade" id="access-requests" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-inbox"></i> Domain Access Requests</h5>
+                    <div>
+                        <select class="form-control form-control-sm" id="request-status-filter" 
+                                onchange="loadAccessRequests()">
+                            <option value="pending">Pending Only</option>
+                            <option value="all">All Requests</option>
+                            <option value="approved">Approved</option>
+                            <option value="denied">Denied</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="access-requests-container">
+                        <div class="text-center">
+                            <i class="fas fa-spinner fa-spin"></i> Loading requests...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Domain Details -->
+<div class="modal fade" id="domainDetailsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Domain Details: <span id="modal-domain-name"></span></h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="domain-details-content">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .domain-tag {
+        display: inline-block;
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 15px;
+        padding: 5px 12px;
+        margin: 3px;
+        font-size: 0.9em;
+    }
+    
+    .domain-tag .remove-btn {
+        color: #f44336;
+        margin-left: 8px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    
+    .domain-tag .remove-btn:hover {
+        color: #d32f2f;
+    }
+    
+    .request-card {
+        border-left: 4px solid #ffc107;
+        margin-bottom: 15px;
+    }
+    
+    .request-card.approved {
+        border-left-color: #4caf50;
+    }
+    
+    .request-card.denied {
+        border-left-color: #f44336;
+    }
+</style>
+
+<script>
+// Domain Management JavaScript
+
+let currentTeacherId = null;
+let allDomains = [];
+
+// Initialize when tab is shown
+document.getElementById('domain-management-tab').addEventListener('shown.bs.tab', function () {
+    refreshDomains();
+    loadTeachersList();
+    loadAccessRequests();
+});
+
+// Refresh all domains
+async function refreshDomains() {
+    try {
+        const response = await fetch('/api/admin/domains');
+        const data = await response.json();
+        
+        allDomains = data.domains;
+        document.getElementById('total-domains-count').textContent = data.total_domains;
+        
+        renderDomainsTable(data.domains);
+        updateRestrictedTeachersCount();
+    } catch (error) {
+        console.error('Error loading domains:', error);
+        alert('Failed to load domains');
+    }
+}
+
+// Render domains table
+function renderDomainsTable(domains) {
+    const tbody = document.getElementById('domains-table-body');
+    
+    if (domains.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No domains found</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = domains.map(domain => `
+        <tr>
+            <td><strong>${domain.domain}</strong></td>
+            <td>
+                <span class="badge badge-primary">${domain.student_count}</span>
+            </td>
+            <td>
+                <span class="badge badge-info">${domain.teacher_count}</span>
+            </td>
+            <td>
+                ${domain.teachers_with_access.length === 0 
+                    ? '<span class="text-muted">No restrictions</span>'
+                    : domain.teachers_with_access.map(t => 
+                        `<span class="badge badge-secondary" title="${t.email}">${t.name}</span>`
+                      ).join(' ')}
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" 
+                        onclick="showDomainDetails('${domain.domain}')">
+                    <i class="fas fa-info-circle"></i> Details
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Load teachers list
+async function loadTeachersList() {
+    try {
+        const response = await fetch('/api/admin/all-users?role=teacher');
+        const teachers = await response.json();
+        
+        const select = document.getElementById('teacher-select');
+        select.innerHTML = '<option value="">-- Select a teacher --</option>' +
+            teachers
+                .filter(t => t.is_approved)
+                .map(t => `<option value="${t.id}">${t.full_name} (${t.email})</option>`)
+                .join('');
+    } catch (error) {
+        console.error('Error loading teachers:', error);
+    }
+}
+
+// Load teacher's domains
+async function loadTeacherDomains() {
+    const teacherId = document.getElementById('teacher-select').value;
+    
+    if (!teacherId) {
+        document.getElementById('teacher-domains-container').style.display = 'none';
+        return;
+    }
+    
+    currentTeacherId = teacherId;
+    
+    try {
+        const response = await fetch(`/api/admin/teacher/${teacherId}/domains`);
+        const data = await response.json();
+        
+        // Show container
+        document.getElementById('teacher-domains-container').style.display = 'block';
+        
+        // Update teacher info
+        document.getElementById('teacher-info-name').textContent = data.teacher.full_name;
+        document.getElementById('teacher-info-email').textContent = data.teacher.email;
+        
+        // Update status
+        const hasRestrictions = data.statistics.has_restrictions;
+        document.getElementById('teacher-access-status').innerHTML = hasRestrictions
+            ? '<span class="badge badge-warning"><i class="fas fa-lock"></i> Restricted Access</span>'
+            : '<span class="badge badge-success"><i class="fas fa-unlock"></i> Full Access (No Restrictions)</span>';
+        
+        document.getElementById('teacher-student-count').textContent = 
+            `${data.statistics.accessible_student_count} students`;
+        
+        // Render assigned domains
+        renderAssignedDomains(data.assigned_domains);
+        
+        // Populate available domains dropdown
+        populateAvailableDomains(data.assigned_domains, data.available_domains);
+        
+    } catch (error) {
+        console.error('Error loading teacher domains:', error);
+        alert('Failed to load teacher domains');
+    }
+}
+
+// Render assigned domains
+function renderAssignedDomains(domains) {
+    const container = document.getElementById('assigned-domains-list');
+    
+    if (domains.length === 0) {
+        container.innerHTML = '<p class="text-muted">No domains assigned. This teacher has full access to all students.</p>';
+        return;
+    }
+    
+    container.innerHTML = domains.map(d => `
+        <div class="domain-tag">
+            <i class="fas fa-shield-alt"></i> ${d.email_domain}
+            <span class="remove-btn" onclick="revokeDomain('${d.email_domain}')" 
+                  title="Remove access">×</span>
+        </div>
+    `).join('');
+}
+
+// Populate available domains dropdown
+function populateAvailableDomains(assigned, available) {
+    const assignedDomains = assigned.map(d => d.email_domain);
+    const select = document.getElementById('domain-to-assign');
+    
+    const availableOptions = available
+        .filter(d => !assignedDomains.includes(d.domain))
+        .map(d => `<option value="${d.domain}">${d.domain} (${d.student_count} students)</option>`)
+        .join('');
+    
+    select.innerHTML = '<option value="">-- Select a domain --</option>' + availableOptions;
+}
+
+// Assign domain to teacher
+async function assignDomain() {
+    const domain = document.getElementById('domain-to-assign').value;
+    const notes = document.getElementById('assign-notes').value;
+    
+    if (!domain) {
+        alert('Please select a domain');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/teacher/${currentTeacherId}/domains`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ domain, notes })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('Domain access granted successfully');
+            loadTeacherDomains();
+            document.getElementById('assign-notes').value = '';
+        } else {
+            alert(data.error || 'Failed to assign domain');
+        }
+    } catch (error) {
+        console.error('Error assigning domain:', error);
+        alert('Failed to assign domain');
+    }
+}
+
+// Revoke domain from teacher
+async function revokeDomain(domain) {
+    if (!confirm(`Remove access to ${domain}?`)) return;
+    
+    try {
+        const response = await fetch(
+            `/api/admin/teacher/${currentTeacherId}/domains/${encodeURIComponent(domain)}`,
+            { method: 'DELETE' }
+        );
+        
+        if (response.ok) {
+            alert('Domain access revoked successfully');
+            loadTeacherDomains();
+            refreshDomains();
+        } else {
+            alert('Failed to revoke domain access');
+        }
+    } catch (error) {
+        console.error('Error revoking domain:', error);
+        alert('Failed to revoke domain access');
+    }
+}
+
+// Remove all restrictions
+async function removeAllRestrictions() {
+    if (!confirm('Remove ALL domain restrictions? This teacher will have full access to all students.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/teacher/${currentTeacherId}/remove-all-restrictions`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            alert('All restrictions removed. Teacher now has full access.');
+            loadTeacherDomains();
+            refreshDomains();
+        } else {
+            alert('Failed to remove restrictions');
+        }
+    } catch (error) {
+        console.error('Error removing restrictions:', error);
+        alert('Failed to remove restrictions');
+    }
+}
+
+// Load access requests
+async function loadAccessRequests() {
+    const status = document.getElementById('request-status-filter').value;
+    
+    try {
+        const response = await fetch(`/api/admin/domain-requests?status=${status}`);
+        const data = await response.json();
+        
+        document.getElementById('pending-requests-count').textContent = 
+            data.requests.filter(r => r.status === 'pending').length;
+        document.getElementById('requests-badge').textContent = 
+            data.requests.filter(r => r.status === 'pending').length;
+        
+        renderAccessRequests(data.requests);
+    } catch (error) {
+        console.error('Error loading requests:', error);
+    }
+}
+
+// Render access requests
+function renderAccessRequests(requests) {
+    const container = document.getElementById('access-requests-container');
+    
+    if (requests.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">No requests found</p>';
+        return;
+    }
+    
+    container.innerHTML = requests.map(req => `
+        <div class="card request-card ${req.status}">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6>
+                            ${req.teacher_name}
+                            <small class="text-muted">(${req.teacher_email})</small>
+                        </h6>
+                        <p class="mb-1">
+                            <strong>Domain:</strong> <span class="badge badge-info">${req.email_domain}</span>
+                        </p>
+                        <p class="mb-1"><strong>Reason:</strong> ${req.reason}</p>
+                        <small class="text-muted">
+                            Requested: ${new Date(req.requested_at).toLocaleString()}
+                        </small>
+                        ${req.status !== 'pending' ? `
+                            <br><small class="text-muted">
+                                ${req.status === 'approved' ? 'Approved' : 'Denied'} by ${req.reviewed_by} 
+                                on ${new Date(req.reviewed_at).toLocaleString()}
+                            </small>
+                        ` : ''}
+                        ${req.admin_notes ? `<br><small><strong>Admin Notes:</strong> ${req.admin_notes}</small>` : ''}
+                    </div>
+                    <div class="col-md-4 text-right">
+                        ${req.status === 'pending' ? `
+                            <button class="btn btn-success btn-sm mb-2" 
+                                    onclick="approveRequest(${req.id})">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-danger btn-sm mb-2" 
+                                    onclick="denyRequest(${req.id})">
+                                <i class="fas fa-times"></i> Deny
+                            </button>
+                        ` : `
+                            <span class="badge badge-${req.status === 'approved' ? 'success' : 'danger'}">
+                                ${req.status.toUpperCase()}
+                            </span>
+                        `}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Approve request
+async function approveRequest(requestId) {
+    const notes = prompt('Optional notes for approval:');
+    
+    try {
+        const response = await fetch(`/api/admin/domain-requests/${requestId}/approve`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ admin_notes: notes || '' })
+        });
+        
+        if (response.ok) {
+            alert('Request approved successfully');
+            loadAccessRequests();
+            refreshDomains();
+        } else {
+            const data = await response.json();
+            alert(data.error || 'Failed to approve request');
+        }
+    } catch (error) {
+        console.error('Error approving request:', error);
+        alert('Failed to approve request');
+    }
+}
+
+// Deny request
+async function denyRequest(requestId) {
+    const notes = prompt('Please provide a reason for denial:');
+    
+    if (!notes) {
+        alert('Reason is required for denial');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/domain-requests/${requestId}/deny`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ admin_notes: notes })
+        });
+        
+        if (response.ok) {
+            alert('Request denied');
+            loadAccessRequests();
+        } else {
+            const data = await response.json();
+            alert(data.error || 'Failed to deny request');
+        }
+    } catch (error) {
+        console.error('Error denying request:', error);
+        alert('Failed to deny request');
+    }
+}
+
+// Show domain details modal
+function showDomainDetails(domain) {
+    document.getElementById('modal-domain-name').textContent = domain;
+    const domainData = allDomains.find(d => d.domain === domain);
+    
+    if (!domainData) return;
+    
+    const content = document.getElementById('domain-details-content');
+    content.innerHTML = `
+        <h6>Statistics</h6>
+        <ul>
+            <li>Students: ${domainData.student_count}</li>
+            <li>Teachers: ${domainData.teacher_count}</li>
+            <li>Teachers with Access: ${domainData.teachers_with_access.length}</li>
+        </ul>
+        ${domainData.teachers_with_access.length > 0 ? `
+            <h6>Teachers with Access:</h6>
+            <ul>
+                ${domainData.teachers_with_access.map(t => 
+                    `<li>${t.name} (${t.email})</li>`
+                ).join('')}
+            </ul>
+        ` : '<p class="text-muted">No access restrictions for this domain</p>'}
+    `;
+    
+    $('#domainDetailsModal').modal('show');
+}
+
+// Update restricted teachers count
+function updateRestrictedTeachersCount() {
+    // This is a simple count - in production you'd fetch from backend
+    const restrictedTeachers = new Set();
+    allDomains.forEach(d => {
+        d.teachers_with_access.forEach(t => restrictedTeachers.add(t.id));
+    });
+    document.getElementById('restricted-teachers-count').textContent = restrictedTeachers.size;
+}
+</script>
