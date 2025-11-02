@@ -1157,6 +1157,7 @@ def get_topics():
         'bodmas': {'title': 'BODMAS', 'icon': 'book', 'color': 'bg-green-500'},
         'functions': {'title': 'Functions', 'icon': 'chart', 'color': 'bg-purple-500'},
         'sets': {'title': 'Sets', 'icon': 'layers', 'color': 'bg-orange-500'},
+        'probability': {'title': 'Probability', 'icon': 'dice', 'color': 'bg-yellow-500'},
         'complex_numbers_intro': {'title': 'Complex Numbers Intro', 'icon': 'infinity', 'color': 'bg-pink-500'},
         'complex_numbers_expanded': {'title': 'Complex Numbers - Expanded', 'icon': 'rotate', 'color': 'bg-fuchsia-600'}
     }
@@ -1332,7 +1333,7 @@ def get_student_mastery():
     # Get all topics
     topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'bodmas', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded'
+        'bodmas', 'functions', 'sets', 'probability', 'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     difficulties = ['beginner', 'intermediate', 'advanced']
 
@@ -1816,7 +1817,7 @@ def get_class_performance_matrix(class_id):
     students = User.query.filter(User.id.in_(student_ids)).all()
 
     # Get all topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'probability', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     students_data = []
@@ -2296,7 +2297,7 @@ def get_class_matrix_data(class_id):
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
 
     # All topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'probability', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     # Build matrix data
