@@ -1189,6 +1189,7 @@ def get_topics():
         'bodmas': {'title': 'BODMAS', 'icon': 'book', 'color': 'bg-green-500'},
         'functions': {'title': 'Functions', 'icon': 'chart', 'color': 'bg-purple-500'},
         'sets': {'title': 'Sets', 'icon': 'layers', 'color': 'bg-orange-500'},
+        'surds': {'title': 'Surds', 'icon': 'radical', 'color': 'bg-amber-600'},
         'complex_numbers_intro': {'title': 'Complex Numbers Intro', 'icon': 'infinity', 'color': 'bg-pink-500'},
         'complex_numbers_expanded': {'title': 'Complex Numbers - Expanded', 'icon': 'rotate', 'color': 'bg-fuchsia-600'}
     }
@@ -1226,7 +1227,7 @@ def submit_quiz():
     # Validate topic and difficulty
     valid_topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'bodmas', 'functions', 'sets', 'probability',
+        'bodmas', 'functions', 'sets', 'probability', 'surds',
         'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     valid_difficulties = ['beginner', 'intermediate', 'advanced']
@@ -1382,7 +1383,7 @@ def get_student_mastery():
     # Get all topics - MUST match topics in get_topics() API
     topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'bodmas', 'functions', 'sets', 'probability',
+        'bodmas', 'functions', 'sets', 'probability', 'surds',
         'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     difficulties = ['beginner', 'intermediate', 'advanced']
@@ -1867,7 +1868,7 @@ def get_class_performance_matrix(class_id):
     students = User.query.filter(User.id.in_(student_ids)).all()
 
     # Get all topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'probability', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'probability', 'functions', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     students_data = []
@@ -2347,7 +2348,7 @@ def get_class_matrix_data(class_id):
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
 
     # All topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'probability', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'probability', 'functions', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     # Build matrix data
