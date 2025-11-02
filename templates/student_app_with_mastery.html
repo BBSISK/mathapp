@@ -497,55 +497,34 @@
             await loadBadgeWidget(); // Load badge widget
         };
 
-        function generateNumberLine(questionText) {
-            // Parse the question to extract numbers and operation
-            const additionMatch = questionText.match(/(\d+)\s*\+\s*(\d+)/);
-            const subtractionMatch = questionText.match(/(\d+)\s*-\s*(\d+)/);
+        // Generate BLANK number line (for questions - no solution shown)
+        function generateBlankNumberLine(questionText) {
+            const match = questionText.match(/(\d+)\s*([+\-])\s*(\d+)/);
+            if (!match) return null;
             
-            if (!additionMatch && !subtractionMatch) {
-                return ''; // Not an addition or subtraction question
-            }
+            const num1 = parseInt(match[1]);
+            const num2 = parseInt(match[3]);
+            const operation = match[2] === '+' ? 'addition' : 'subtraction';
+            const result = operation === 'addition' ? num1 + num2 : num1 - num2;
             
-            let num1, num2, operation, result;
-            
-            if (additionMatch) {
-                num1 = parseInt(additionMatch[1]);
-                num2 = parseInt(additionMatch[2]);
-                operation = 'addition';
-                result = num1 + num2;
-            } else {
-                num1 = parseInt(subtractionMatch[1]);
-                num2 = parseInt(subtractionMatch[2]);
-                operation = 'subtraction';
-                result = num1 - num2;
-            }
-            
-            // Determine range for number line - show relevant section
-            // For larger numbers, show a focused range around the operation
+            // Determine range
             let minNum, maxNum, stepSize;
-            
             if (Math.max(num1, num2, result) > 30) {
-                // For larger numbers, show a window around the operation
-                // Show numbers with appropriate stepping
                 if (num2 <= 10) {
-                    // Small jump, show individual numbers
                     minNum = Math.max(0, Math.min(num1, result) - 3);
                     maxNum = Math.max(num1, result) + 3;
                     stepSize = 1;
                 } else if (num2 <= 20) {
-                    // Medium jump, maybe show every other number
                     minNum = Math.max(0, Math.min(num1, result) - 5);
                     maxNum = Math.max(num1, result) + 5;
                     stepSize = 2;
                 } else {
-                    // Large jump, show every 5 or 10
                     const padding = Math.ceil(num2 * 0.2);
                     minNum = Math.max(0, Math.floor((Math.min(num1, result) - padding) / 5) * 5);
                     maxNum = Math.ceil((Math.max(num1, result) + padding) / 5) * 5;
                     stepSize = (maxNum - minNum > 50) ? 10 : 5;
                 }
             } else {
-                // Small numbers - show all
                 minNum = Math.max(0, Math.min(num1, result) - 2);
                 maxNum = Math.max(num1, result) + 2;
                 stepSize = 1;
@@ -553,61 +532,111 @@
             
             const range = maxNum - minNum;
             
-            // Generate number line HTML
+            // Generate BLANK number line (no solution)
             let html = '<div class="number-line-container">';
-            html += '<div class="number-line">';
+            html += '<div class="number-line"><div class="number-line-base"></div>';
             
-            // Base line
-            html += '<div class="number-line-base"></div>';
-            
-            // Add ticks and labels with appropriate stepping
             for (let i = minNum; i <= maxNum; i += stepSize) {
                 const position = ((i - minNum) / range) * 100;
                 html += `<div class="number-line-tick" style="left: ${position}%"></div>`;
                 html += `<div class="number-line-label" style="left: ${position}%">${i}</div>`;
             }
             
-            // Also add tick for start number if not already included
-            if (num1 % stepSize !== 0 && num1 >= minNum && num1 <= maxNum) {
-                const position = ((num1 - minNum) / range) * 100;
-                html += `<div class="number-line-tick" style="left: ${position}%; height: 15px;"></div>`;
-                html += `<div class="number-line-label" style="left: ${position}%; font-weight: bold;">${num1}</div>`;
-            }
-            
-            // Add visualization based on operation
-            const startPos = ((num1 - minNum) / range) * 100;
-            
-            // Start dot (green) - show where we begin
-            html += `<div class="number-line-start-dot" style="left: ${startPos}%"></div>`;
-            
-            if (operation === 'addition') {
-                // Arc showing the addition movement (but not ending at answer)
-                const arcWidth = ((num2) / range) * 100;
-                html += `<div class="number-line-arc" style="left: ${startPos}%; width: ${arcWidth}%"></div>`;
-                
-                // Arrow pointing right
-                const arrowPos = startPos + arcWidth / 2;
-                html += `<div class="number-line-arrow" style="left: ${arrowPos}%; top: 5%;">→</div>`;
-                
-                html += '</div>';
-                html += `<div class="number-line-instruction">🟢 Start at ${num1}, jump forward ${num2} spaces →</div>`;
-            } else {
-                // Arc showing the subtraction movement (but not ending at answer)
-                const arcWidth = ((num2) / range) * 100;
-                // Position arc going backwards from start
-                html += `<div class="number-line-arc" style="left: ${startPos - arcWidth}%; width: ${arcWidth}%; border-color: #f56565;"></div>`;
-                
-                // Arrow pointing left
-                const arrowPos = startPos - arcWidth / 2;
-                html += `<div class="number-line-arrow" style="left: ${arrowPos}%; top: 5%; color: #f56565;">←</div>`;
-                
-                html += '</div>';
-                html += `<div class="number-line-instruction">🟢 Start at ${num1}, jump back ${num2} spaces ←</div>`;
-            }
-            
+            html += '</div>';
+            html += `<div class="number-line-instruction">💡 Use the number line to help solve: ${questionText}</div>`;
             html += '</div>';
             
             return html;
+        }
+
+        // Generate SOLUTION number line (for explanations - shows complete solution)
+        function generateSolutionNumberLine(questionText) {
+            const match = questionText.match(/(\d+)\s*([+\-])\s*(\d+)/);
+            if (!match) return null;
+            
+            const num1 = parseInt(match[1]);
+            const num2 = parseInt(match[3]);
+            const operation = match[2] === '+' ? 'addition' : 'subtraction';
+            const result = operation === 'addition' ? num1 + num2 : num1 - num2;
+            
+            // Same range logic as blank version
+            let minNum, maxNum, stepSize;
+            if (Math.max(num1, num2, result) > 30) {
+                if (num2 <= 10) {
+                    minNum = Math.max(0, Math.min(num1, result) - 3);
+                    maxNum = Math.max(num1, result) + 3;
+                    stepSize = 1;
+                } else if (num2 <= 20) {
+                    minNum = Math.max(0, Math.min(num1, result) - 5);
+                    maxNum = Math.max(num1, result) + 5;
+                    stepSize = 2;
+                } else {
+                    const padding = Math.ceil(num2 * 0.2);
+                    minNum = Math.max(0, Math.floor((Math.min(num1, result) - padding) / 5) * 5);
+                    maxNum = Math.ceil((Math.max(num1, result) + padding) / 5) * 5;
+                    stepSize = (maxNum - minNum > 50) ? 10 : 5;
+                }
+            } else {
+                minNum = Math.max(0, Math.min(num1, result) - 2);
+                maxNum = Math.max(num1, result) + 2;
+                stepSize = 1;
+            }
+            
+            const range = maxNum - minNum;
+            const startPos = ((num1 - minNum) / range) * 100;
+            const endPos = ((result - minNum) / range) * 100;
+            
+            // Generate SOLUTION number line (with answer)
+            let html = '<div class="number-line-container" style="margin-top:16px;background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%);">';
+            html += '<div class="number-line"><div class="number-line-base"></div>';
+            
+            // Ticks and labels
+            for (let i = minNum; i <= maxNum; i += stepSize) {
+                const position = ((i - minNum) / range) * 100;
+                html += `<div class="number-line-tick" style="left:${position}%"></div>`;
+                html += `<div class="number-line-label" style="left:${position}%">${i}</div>`;
+            }
+            
+            // Special ticks for start and end
+            if (num1 % stepSize !== 0 && num1 >= minNum && num1 <= maxNum) {
+                const position = ((num1 - minNum) / range) * 100;
+                html += `<div class="number-line-tick" style="left:${position}%;height:15px"></div>`;
+                html += `<div class="number-line-label" style="left:${position}%;font-weight:bold">${num1}</div>`;
+            }
+            if (result % stepSize !== 0 && result >= minNum && result <= maxNum) {
+                const position = ((result - minNum) / range) * 100;
+                html += `<div class="number-line-tick" style="left:${position}%;height:15px"></div>`;
+                html += `<div class="number-line-label" style="left:${position}%;font-weight:bold;color:#48bb78">${result}</div>`;
+            }
+            
+            // Dots
+            html += `<div class="number-line-start-dot" style="left:${startPos}%"></div>`;
+            html += `<div class="number-line-end-dot" style="left:${endPos}%"></div>`;
+            
+            // Arc and arrow
+            if (operation === 'addition') {
+                const arcWidth = ((num2) / range) * 100;
+                html += `<div class="number-line-arc" style="left:${startPos}%;width:${arcWidth}%"></div>`;
+                const arrowPos = startPos + arcWidth / 2;
+                html += `<div class="number-line-arrow" style="left:${arrowPos}%;top:5%">→</div>`;
+                html += '</div>';
+                html += `<div class="number-line-instruction" style="background:rgba(72,187,120,0.1);border-left:4px solid #48bb78;padding:12px">`;
+                html += `✅ <strong>Solution:</strong> Start at <strong>${num1}</strong> (🟢), add <strong>${num2}</strong> by jumping forward → to reach <strong>${result}</strong> (🔴)`;
+                html += '</div>';
+            } else {
+                const arcWidth = ((num2) / range) * 100;
+                html += `<div class="number-line-arc" style="left:${startPos - arcWidth}%;width:${arcWidth}%;border-color:#f56565"></div>`;
+                const arrowPos = startPos - arcWidth / 2;
+                html += `<div class="number-line-arrow" style="left:${arrowPos}%;top:5%;color:#f56565">←</div>`;
+                html += '</div>';
+                html += `<div class="number-line-instruction" style="background:rgba(72,187,120,0.1);border-left:4px solid #48bb78;padding:12px">`;
+                html += `✅ <strong>Solution:</strong> Start at <strong>${num1}</strong> (🟢), subtract <strong>${num2}</strong> by jumping back ← to reach <strong>${result}</strong> (🔴)`;
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            return html;
+        }
         }
 
         async function loadCurrentUser() {
@@ -842,7 +871,7 @@
             // Add number line ONLY for arithmetic questions (addition/subtraction)
             // Do NOT show number line for complex numbers or other topics
             if (currentTopic === 'arithmetic') {
-                const numberLineHtml = generateNumberLine(question.question);
+                const numberLineHtml = generateBlankNumberLine(question.question);
                 if (numberLineHtml) {
                     const numberLineDiv = document.createElement('div');
                     numberLineDiv.innerHTML = numberLineHtml;
@@ -917,6 +946,12 @@
             // Keep the flag button enabled and clickable (it's the last child)
             // No need to disable it - students should be able to report issues after seeing the answer
             
+            // Generate solution number line for arithmetic questions
+            let solutionNumberLine = '';
+            if (currentTopic === 'arithmetic') {
+                solutionNumberLine = generateSolutionNumberLine(question.question) || '';
+            }
+            
             const feedback = document.getElementById('feedbackContainer');
             feedback.className = correct ? 'mb-6 p-6 rounded-xl bg-green-50 border-2 border-green-200' : 'mb-6 p-6 rounded-xl bg-blue-50 border-2 border-blue-200';
             feedback.innerHTML = `
@@ -927,6 +962,7 @@
                             ${correct ? '🎉 Correct!' : '📖 Let\'s learn from this!'}
                         </p>
                         <p class="text-gray-700">${question.explanation}</p>
+                        ${solutionNumberLine}
                     </div>
                 </div>
             `;

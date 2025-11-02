@@ -313,21 +313,21 @@ class UserStats(db.Model):
 class TeacherDomainAccess(db.Model):
     """Tracks which email domains a teacher can access"""
     __tablename__ = 'teacher_domain_access'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     email_domain = db.Column(db.String(100), nullable=False)
     granted_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     granted_at = db.Column(db.DateTime, default=datetime.utcnow)
     notes = db.Column(db.Text)
-    
+
     # Relationships
     teacher = db.relationship('User', foreign_keys=[teacher_id], backref='domain_access')
     granter = db.relationship('User', foreign_keys=[granted_by], backref='domains_granted')
-    
+
     # Unique constraint: one teacher can only have one record per domain
     __table_args__ = (db.UniqueConstraint('teacher_id', 'email_domain', name='unique_teacher_domain'),)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -343,7 +343,7 @@ class TeacherDomainAccess(db.Model):
 class DomainAccessRequest(db.Model):
     """Tracks teacher requests for domain access"""
     __tablename__ = 'domain_access_requests'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     email_domain = db.Column(db.String(100), nullable=False)
@@ -353,11 +353,11 @@ class DomainAccessRequest(db.Model):
     reviewed_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     reviewed_at = db.Column(db.DateTime)
     admin_notes = db.Column(db.Text)
-    
+
     # Relationships
     teacher = db.relationship('User', foreign_keys=[teacher_id], backref='domain_requests')
     reviewer = db.relationship('User', foreign_keys=[reviewed_by], backref='domain_requests_reviewed')
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -900,7 +900,7 @@ def extract_domain(email):
 def get_all_domains_in_system():
     """Get all unique email domains from both students and teachers"""
     domains = {}
-    
+
     # Get student domains
     students = User.query.filter_by(role='student').all()
     for student in students:
@@ -914,7 +914,7 @@ def get_all_domains_in_system():
                     'teachers_with_access': []
                 }
             domains[domain]['student_count'] += 1
-    
+
     # Get teacher domains
     teachers = User.query.filter_by(role='teacher').all()
     for teacher in teachers:
@@ -928,7 +928,7 @@ def get_all_domains_in_system():
                     'teachers_with_access': []
                 }
             domains[domain]['teacher_count'] += 1
-    
+
     # Get teachers with access to each domain
     for domain_name in domains.keys():
         access_records = TeacherDomainAccess.query.filter_by(email_domain=domain_name).all()
@@ -938,69 +938,69 @@ def get_all_domains_in_system():
                 'name': record.teacher.full_name,
                 'email': record.teacher.email
             })
-    
+
     return list(domains.values())
 
 def teacher_has_domain_access(teacher_id, domain):
     """Check if a teacher has access to a specific domain"""
     if not domain:
         return True
-    
+
     # Check if teacher has any domain restrictions
     has_any_restrictions = TeacherDomainAccess.query.filter_by(teacher_id=teacher_id).first()
-    
+
     # If teacher has NO restrictions at all, they can see ALL students (backward compatible)
     if not has_any_restrictions:
         return True
-    
+
     # If teacher has restrictions, check if they have access to THIS specific domain
     access = TeacherDomainAccess.query.filter_by(
         teacher_id=teacher_id,
         email_domain=domain
     ).first()
-    
+
     return access is not None
 
 def get_teacher_accessible_domains(teacher_id):
     """Get all domains a teacher has access to"""
     # Check if teacher has any restrictions
     restrictions = TeacherDomainAccess.query.filter_by(teacher_id=teacher_id).all()
-    
+
     if not restrictions:
         # No restrictions = access to all domains
         return None  # None means "all domains"
-    
+
     # Return list of accessible domains
     return [r.email_domain for r in restrictions]
 
 def filter_students_by_domain_access(students_query, teacher_id):
     """Filter a SQLAlchemy query of students based on teacher's domain access"""
     accessible_domains = get_teacher_accessible_domains(teacher_id)
-    
+
     # If None, teacher has access to all domains
     if accessible_domains is None:
         return students_query
-    
+
     # If empty list, teacher has no access to any domains
     if not accessible_domains:
         return students_query.filter(User.id == -1)
-    
+
     # Filter students by accessible domains
     filtered_students = []
     for student in students_query.all():
         student_domain = extract_domain(student.email)
         if student_domain in accessible_domains:
             filtered_students.append(student.id)
-    
+
     if not filtered_students:
         return students_query.filter(User.id == -1)
-    
+
     return students_query.filter(User.id.in_(filtered_students))
 
 def get_teacher_domain_statistics(teacher_id):
     """Get statistics about a teacher's domain access"""
     accessible_domains = get_teacher_accessible_domains(teacher_id)
-    
+
     if accessible_domains is None:
         # Teacher has access to all
         total_students = User.query.filter_by(role='student').count()
@@ -1009,27 +1009,27 @@ def get_teacher_domain_statistics(teacher_id):
             domain = extract_domain(student.email)
             if domain:
                 all_domains.add(domain)
-        
+
         return {
             'has_restrictions': False,
             'accessible_domains': list(all_domains),
             'accessible_student_count': total_students,
             'restricted_domains': []
         }
-    
+
     # Count students in accessible domains
     accessible_count = 0
     all_domains = set()
-    
+
     for student in User.query.filter_by(role='student').all():
         domain = extract_domain(student.email)
         if domain:
             all_domains.add(domain)
             if domain in accessible_domains:
                 accessible_count += 1
-    
+
     restricted_domains = list(all_domains - set(accessible_domains))
-    
+
     return {
         'has_restrictions': True,
         'accessible_domains': accessible_domains,
@@ -1136,28 +1136,28 @@ def change_password():
     current_password = data.get('current_password', '')
     new_password = data.get('new_password', '')
     confirm_password = data.get('confirm_password', '')
-    
+
     # Validation
     if not current_password or not new_password or not confirm_password:
         return jsonify({'error': 'All fields are required'}), 400
-    
+
     if new_password != confirm_password:
         return jsonify({'error': 'New passwords do not match'}), 400
-    
+
     if len(new_password) < 6:
         return jsonify({'error': 'Password must be at least 6 characters long'}), 400
-    
+
     # Get current user
     user = User.query.get(session['user_id'])
-    
+
     # Verify current password
     if not user.check_password(current_password):
         return jsonify({'error': 'Current password is incorrect'}), 401
-    
+
     # Update password
     user.set_password(new_password)
     db.session.commit()
-    
+
     return jsonify({'message': 'Password changed successfully'}), 200
 
 @app.route('/api/current-user')
@@ -1218,11 +1218,11 @@ def get_questions(topic, difficulty):
 def submit_quiz():
     """Submit quiz and update stats/badges"""
     data = request.json
-    
+
     # Normalize topic and difficulty to lowercase
     topic = data.get('topic', '').lower().strip()
     difficulty = data.get('difficulty', '').lower().strip()
-    
+
     # Validate topic and difficulty
     valid_topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
@@ -1230,10 +1230,10 @@ def submit_quiz():
         'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     valid_difficulties = ['beginner', 'intermediate', 'advanced']
-    
+
     if topic not in valid_topics:
         return jsonify({'error': f'Invalid topic: {topic}'}), 400
-    
+
     if difficulty not in valid_difficulties:
         return jsonify({'error': f'Invalid difficulty: {difficulty}'}), 400
 
@@ -1382,7 +1382,7 @@ def get_student_mastery():
     # Get all topics - MUST match topics in get_topics() API
     topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'bodmas', 'functions', 'sets', 'probability', 
+        'bodmas', 'functions', 'sets', 'probability',
         'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     difficulties = ['beginner', 'intermediate', 'advanced']
@@ -1867,7 +1867,7 @@ def get_class_performance_matrix(class_id):
     students = User.query.filter(User.id.in_(student_ids)).all()
 
     # Get all topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'probability', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     students_data = []
@@ -2327,7 +2327,7 @@ def class_dashboard(class_id):
         flash('Unauthorized access to class', 'error')
         return redirect(url_for('teacher_classes_page'))
 
-    return render_template('teacher_class_dashboard_improved.html',
+    return render_template('teacher_class_dashboard_v2.html',
                          class_id=class_id,
                          class_name=class_obj.name)
 
@@ -2347,7 +2347,7 @@ def get_class_matrix_data(class_id):
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
 
     # All topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'probability', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     # Build matrix data

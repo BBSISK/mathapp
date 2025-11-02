@@ -451,6 +451,9 @@
         <div class="header">
             <h1 id="className">Class Performance Dashboard</h1>
             <p id="teacherName"></p>
+            <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; margin-top: 10px; display: inline-block;">
+                <strong>🆕 Version 2.3 - ALTERNATE BUTTON LAYOUT</strong> ✅
+            </div>
             <div class="header-controls">
                 <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh Data</button>
                 <button class="btn btn-primary" onclick="openColumnSelector()">📋 Select Columns</button>
@@ -467,9 +470,14 @@
                     <p style="margin: 10px 0 0 0; opacity: 0.9;">Choose which topics and difficulty levels you want to see in the dashboard</p>
                 </div>
                 <div style="padding: 30px;">
-                    <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" onclick="selectAllColumns()">✓ Select All</button>
-                        <button class="btn btn-secondary" onclick="deselectAllColumns()">✗ Deselect All</button>
+                    <div style="margin-bottom: 20px;">
+                        <!-- Buttons in separate divs to prevent flexbox issues -->
+                        <div style="display: inline-block; margin-right: 15px;">
+                            <button class="btn btn-primary" onclick="selectAllColumns()" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px;">✓ Select All</button>
+                        </div>
+                        <div style="display: inline-block;">
+                            <button onclick="deselectAllColumns()" style="background: #dc3545; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px;">✗ Deselect All</button>
+                        </div>
                     </div>
                     <div id="columnSelectorContent" style="max-height: 500px; overflow-y: auto;">
                         <!-- Populated dynamically -->
@@ -1036,8 +1044,11 @@
             const names = {
                 'arithmetic': 'Arithmetic',
                 'fractions': 'Fractions',
+                'decimals': 'Decimals',
+                'percentages': 'Percentages',
                 'multiplication_division': 'Mult/Div',
                 'bodmas': 'BODMAS',
+                'probability': 'Probability',
                 'functions': 'Functions',
                 'sets': 'Sets',
                 'complex_numbers_intro': 'Complex Intro',
