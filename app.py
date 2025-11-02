@@ -1128,6 +1128,38 @@ def logout():
     session.clear()
     return jsonify({'message': 'Logged out successfully'}), 200
 
+@app.route('/api/change-password', methods=['POST'])
+@login_required
+def change_password():
+    """Allow users to change their own password"""
+    data = request.json
+    current_password = data.get('current_password', '')
+    new_password = data.get('new_password', '')
+    confirm_password = data.get('confirm_password', '')
+    
+    # Validation
+    if not current_password or not new_password or not confirm_password:
+        return jsonify({'error': 'All fields are required'}), 400
+    
+    if new_password != confirm_password:
+        return jsonify({'error': 'New passwords do not match'}), 400
+    
+    if len(new_password) < 6:
+        return jsonify({'error': 'Password must be at least 6 characters long'}), 400
+    
+    # Get current user
+    user = User.query.get(session['user_id'])
+    
+    # Verify current password
+    if not user.check_password(current_password):
+        return jsonify({'error': 'Current password is incorrect'}), 401
+    
+    # Update password
+    user.set_password(new_password)
+    db.session.commit()
+    
+    return jsonify({'message': 'Password changed successfully'}), 200
+
 @app.route('/api/current-user')
 @login_required
 def current_user():
@@ -1157,7 +1189,6 @@ def get_topics():
         'bodmas': {'title': 'BODMAS', 'icon': 'book', 'color': 'bg-green-500'},
         'functions': {'title': 'Functions', 'icon': 'chart', 'color': 'bg-purple-500'},
         'sets': {'title': 'Sets', 'icon': 'layers', 'color': 'bg-orange-500'},
-        'probability': {'title': 'Probability', 'icon': 'dice', 'color': 'bg-yellow-500'},
         'complex_numbers_intro': {'title': 'Complex Numbers Intro', 'icon': 'infinity', 'color': 'bg-pink-500'},
         'complex_numbers_expanded': {'title': 'Complex Numbers - Expanded', 'icon': 'rotate', 'color': 'bg-fuchsia-600'}
     }
@@ -1187,12 +1218,30 @@ def get_questions(topic, difficulty):
 def submit_quiz():
     """Submit quiz and update stats/badges"""
     data = request.json
+    
+    # Normalize topic and difficulty to lowercase
+    topic = data.get('topic', '').lower().strip()
+    difficulty = data.get('difficulty', '').lower().strip()
+    
+    # Validate topic and difficulty
+    valid_topics = [
+        'arithmetic', 'fractions', 'decimals', 'multiplication_division',
+        'bodmas', 'functions', 'sets', 'probability',
+        'complex_numbers_intro', 'complex_numbers_expanded'
+    ]
+    valid_difficulties = ['beginner', 'intermediate', 'advanced']
+    
+    if topic not in valid_topics:
+        return jsonify({'error': f'Invalid topic: {topic}'}), 400
+    
+    if difficulty not in valid_difficulties:
+        return jsonify({'error': f'Invalid difficulty: {difficulty}'}), 400
 
     # Create quiz attempt
     attempt = QuizAttempt(
         user_id=session['user_id'],
-        topic=data.get('topic'),
-        difficulty=data.get('difficulty'),
+        topic=topic,
+        difficulty=difficulty,
         score=data.get('score'),
         total_questions=data.get('total_questions'),
         percentage=data.get('percentage'),
@@ -1330,10 +1379,11 @@ def get_student_mastery():
     """
     user_id = session['user_id']
 
-    # Get all topics
+    # Get all topics - MUST match topics in get_topics() API
     topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'bodmas', 'functions', 'sets', 'probability', 'complex_numbers_intro', 'complex_numbers_expanded'
+        'bodmas', 'functions', 'sets', 'probability', 
+        'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     difficulties = ['beginner', 'intermediate', 'advanced']
 
@@ -1817,7 +1867,7 @@ def get_class_performance_matrix(class_id):
     students = User.query.filter(User.id.in_(student_ids)).all()
 
     # Get all topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'probability', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     students_data = []
@@ -2297,7 +2347,7 @@ def get_class_matrix_data(class_id):
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
 
     # All topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'probability', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'functions', 'sets', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     # Build matrix data

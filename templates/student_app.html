@@ -271,6 +271,171 @@
             position: relative;
         }
 
+        /* Learning Path Styles */
+        .learning-path-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .learning-path-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 10s infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
+        }
+
+        .path-header {
+            text-align: center;
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .path-number {
+            display: inline-block;
+            background: rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .path-title {
+            color: white;
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .path-description {
+            color: rgba(255,255,255,0.9);
+            font-size: 16px;
+        }
+
+        .path-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .flow-topic-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 20px;
+            min-width: 140px;
+            max-width: 160px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            border: 3px solid transparent;
+        }
+
+        .flow-topic-card:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+            border-color: #667eea;
+        }
+
+        .flow-topic-card.mastered {
+            border-color: #48bb78;
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+        }
+
+        .flow-topic-card .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .flow-topic-card .title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .flow-topic-card .mastery-star {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #48bb78;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            animation: starPulse 2s infinite;
+        }
+
+        @keyframes starPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .flow-arrow {
+            color: white;
+            font-size: 32px;
+            opacity: 0.6;
+            animation: arrowFloat 2s ease-in-out infinite;
+        }
+
+        @keyframes arrowFloat {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(8px); }
+        }
+
+        .flow-topic-card .progress-ring {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .path-flow {
+                flex-direction: column;
+            }
+            
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+            
+            .flow-topic-card {
+                width: 100%;
+                max-width: 280px;
+            }
+        }
+
         .best-score-display {
             margin-top: 8px;
             padding: 4px 8px;
@@ -313,6 +478,9 @@
             <h1 class="text-2xl font-bold text-gray-800">🎓 Math Master</h1>
             <div class="flex items-center gap-4">
                 <span class="text-gray-700" id="userName"></span>
+                <button onclick="openPasswordModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all">
+                    <i class="fas fa-key mr-2"></i>Change Password
+                </button>
                 <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all">
                     <i class="fas fa-sign-out-alt mr-2"></i>Logout
                 </button>
@@ -369,12 +537,35 @@
 
         <!-- Topic Selection Screen -->
         <div id="topicScreen" class="hidden">
-            <div class="text-center mb-8">
-                <h2 class="text-4xl font-bold text-gray-800 mb-4">Choose a Topic</h2>
-                <p class="text-xl text-gray-600">Select what you'd like to practice today</p>
+            <div class="text-center mb-12">
+                <h2 class="text-5xl font-bold text-gray-800 mb-4">🚀 Your Learning Journey</h2>
+                <p class="text-xl text-gray-600">Choose your path and master mathematics!</p>
             </div>
             
-            <div class="grid md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8" id="topicsGrid"></div>
+            <!-- Learning Paths Container -->
+            <div class="space-y-12" id="learningPathsContainer">
+                
+                <!-- Path 1: Number Skills Journey -->
+                <div class="learning-path-card">
+                    <div class="path-header">
+                        <div class="path-number">Path 1</div>
+                        <h3 class="path-title">📊 Number Skills Journey</h3>
+                        <p class="path-description">Master the fundamentals of numbers and operations</p>
+                    </div>
+                    <div class="path-flow" id="path1Flow"></div>
+                </div>
+
+                <!-- Path 2: Advanced Topics Journey -->
+                <div class="learning-path-card">
+                    <div class="path-header">
+                        <div class="path-number">Path 2</div>
+                        <h3 class="path-title">🎯 Advanced Topics Journey</h3>
+                        <p class="path-description">Explore functions and complex numbers</p>
+                    </div>
+                    <div class="path-flow" id="path2Flow"></div>
+                </div>
+                
+            </div>
 
             <!-- Progress Summary -->
             <div class="bg-white rounded-2xl p-6 shadow-lg">
@@ -625,34 +816,107 @@
                 const response = await fetch('/api/topics');
                 const topics = await response.json();
                 
-                const grid = document.getElementById('topicsGrid');
-                grid.innerHTML = '';
+                // Define the learning paths
+                const path1Topics = [
+                    'arithmetic',
+                    'multiplication_division', 
+                    'bodmas',
+                    'fractions',
+                    'decimals',
+                    'probability',
+                    'sets'
+                ];
                 
-                for (const [key, topic] of Object.entries(topics)) {
-                    const iconClass = iconMap[topic.icon] || 'fa-book';
-                    const card = document.createElement('button');
-                    card.onclick = () => selectTopic(key, topic.title);
-                    card.className = `topic-card ${topic.color} text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-200`;
-                    
-                    // Check if topic is fully mastered (all 3 difficulties > 80%)
-                    const topicMastered = masteryData[key]?.topic_mastered || false;
-                    const masteryBadge = topicMastered ? 
-                        '<div class="mastery-badge" title="All difficulties mastered!">⭐</div>' : '';
-                    
-                    card.innerHTML = `
-                        ${masteryBadge}
-                        <i class="fas ${iconClass} text-6xl mb-4"></i>
-                        <h2 class="text-2xl font-bold mb-2">${topic.title}</h2>
-                        <p class="text-white text-opacity-90">25 questions per quiz</p>
-                    `;
-                    grid.appendChild(card);
-                }
+                const path2Topics = [
+                    'functions',
+                    'complex_numbers_intro',
+                    'complex_numbers_expanded'
+                ];
+                
+                // Render Path 1
+                const path1Flow = document.getElementById('path1Flow');
+                path1Flow.innerHTML = '';
+                path1Topics.forEach((topicKey, index) => {
+                    if (topics[topicKey]) {
+                        const topic = topics[topicKey];
+                        const iconClass = iconMap[topic.icon] || 'fa-book';
+                        const topicMastered = masteryData[topicKey]?.topic_mastered || false;
+                        
+                        const card = document.createElement('div');
+                        card.className = `flow-topic-card ${topicMastered ? 'mastered' : ''}`;
+                        card.onclick = () => selectTopic(topicKey, topic.title);
+                        
+                        card.innerHTML = `
+                            ${topicMastered ? '<div class="mastery-star">⭐</div>' : ''}
+                            <i class="fas ${iconClass} icon" style="color: ${getIconColor(topicKey)}"></i>
+                            <div class="title">${topic.title}</div>
+                        `;
+                        
+                        path1Flow.appendChild(card);
+                        
+                        // Add arrow between topics (except after last one)
+                        if (index < path1Topics.length - 1) {
+                            const arrow = document.createElement('div');
+                            arrow.className = 'flow-arrow';
+                            arrow.innerHTML = '→';
+                            path1Flow.appendChild(arrow);
+                        }
+                    }
+                });
+                
+                // Render Path 2
+                const path2Flow = document.getElementById('path2Flow');
+                path2Flow.innerHTML = '';
+                path2Topics.forEach((topicKey, index) => {
+                    if (topics[topicKey]) {
+                        const topic = topics[topicKey];
+                        const iconClass = iconMap[topic.icon] || 'fa-book';
+                        const topicMastered = masteryData[topicKey]?.topic_mastered || false;
+                        
+                        const card = document.createElement('div');
+                        card.className = `flow-topic-card ${topicMastered ? 'mastered' : ''}`;
+                        card.onclick = () => selectTopic(topicKey, topic.title);
+                        
+                        card.innerHTML = `
+                            ${topicMastered ? '<div class="mastery-star">⭐</div>' : ''}
+                            <i class="fas ${iconClass} icon" style="color: ${getIconColor(topicKey)}"></i>
+                            <div class="title">${topic.title}</div>
+                        `;
+                        
+                        path2Flow.appendChild(card);
+                        
+                        // Add arrow between topics (except after last one)
+                        if (index < path2Topics.length - 1) {
+                            const arrow = document.createElement('div');
+                            arrow.className = 'flow-arrow';
+                            arrow.innerHTML = '→';
+                            path2Flow.appendChild(arrow);
+                        }
+                    }
+                });
                 
                 document.getElementById('loadingScreen').classList.add('hidden');
                 document.getElementById('topicScreen').classList.remove('hidden');
             } catch (error) {
                 console.error('Error loading topics:', error);
             }
+        }
+        
+        // Helper function to get consistent icon colors
+        function getIconColor(topicKey) {
+            const colors = {
+                'arithmetic': '#ef4444',
+                'multiplication_division': '#3b82f6',
+                'bodmas': '#10b981',
+                'fractions': '#f59e0b',
+                'decimals': '#14b8a6',
+                'probability': '#eab308',
+                'sets': '#f97316',
+                'functions': '#8b5cf6',
+                'complex_numbers_intro': '#ec4899',
+                'complex_numbers_expanded': '#d946ef'
+            };
+            return colors[topicKey] || '#6b7280';
         }
 
         async function loadProgress() {
@@ -1126,5 +1390,365 @@
             </form>
         </div>
     </div>
+    <!-- Password Change Modal -->
+    <div id="passwordModal" class="password-modal hidden">
+        <div class="password-modal-content">
+            <div class="password-modal-header">
+                <h2><i class="fas fa-key mr-2"></i>Change Password</h2>
+                <button onclick="closePasswordModal()" class="close-btn">&times;</button>
+            </div>
+            <form id="passwordForm" onsubmit="changePassword(event)" class="password-form">
+                <div class="form-group">
+                    <label for="currentPassword">
+                        <i class="fas fa-lock mr-2"></i>Current Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="currentPassword" 
+                        required
+                        minlength="6"
+                        class="form-input"
+                        placeholder="Enter current password"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">
+                        <i class="fas fa-key mr-2"></i>New Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="newPassword" 
+                        required
+                        minlength="6"
+                        class="form-input"
+                        placeholder="Enter new password (min 6 characters)"
+                    >
+                    <small class="form-hint">Minimum 6 characters</small>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">
+                        <i class="fas fa-check-circle mr-2"></i>Confirm New Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        required
+                        minlength="6"
+                        class="form-input"
+                        placeholder="Confirm new password"
+                    >
+                </div>
+                <div id="passwordError" class="error-message hidden"></div>
+                <div id="passwordSuccess" class="success-message hidden"></div>
+                <div class="form-actions">
+                    <button type="button" onclick="closePasswordModal()" class="btn-cancel">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-check mr-2"></i>Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Password Modal Styles */
+        .password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+        }
+
+        .password-modal.hidden {
+            display: none;
+        }
+
+        .password-modal-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .password-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .password-modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 32px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .password-form {
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-hint {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-message::before {
+            content: "⚠️";
+            font-size: 18px;
+        }
+
+        .success-message {
+            background: #efe;
+            border: 2px solid #cfc;
+            color: #3c3;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .success-message::before {
+            content: "✓";
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .error-message.hidden,
+        .success-message.hidden {
+            display: none;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .btn-cancel,
+        .btn-submit {
+            flex: 1;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-cancel {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-cancel:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+    </style>
+
+    <script>
+        // Password Modal Functions
+        function openPasswordModal() {
+            document.getElementById('passwordModal').classList.remove('hidden');
+            document.getElementById('currentPassword').focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+            document.getElementById('passwordForm').reset();
+            document.getElementById('passwordError').classList.add('hidden');
+            document.getElementById('passwordSuccess').classList.add('hidden');
+        }
+
+        async function changePassword(event) {
+            event.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            const errorDiv = document.getElementById('passwordError');
+            const successDiv = document.getElementById('passwordSuccess');
+            
+            // Clear previous messages
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+            
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                errorDiv.textContent = 'New passwords do not match';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            // Validate password length
+            if (newPassword.length < 6) {
+                errorDiv.textContent = 'Password must be at least 6 characters long';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword,
+                        confirm_password: confirmPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    successDiv.textContent = data.message;
+                    successDiv.classList.remove('hidden');
+                    document.getElementById('passwordForm').reset();
+                    
+                    // Auto-close after 2 seconds
+                    setTimeout(() => {
+                        closePasswordModal();
+                    }, 2000);
+                } else {
+                    errorDiv.textContent = data.error || 'Failed to change password';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                errorDiv.textContent = 'An error occurred. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('passwordModal');
+            if (event.target === modal) {
+                closePasswordModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('passwordModal');
+                if (!modal.classList.contains('hidden')) {
+                    closePasswordModal();
+                }
+            }
+        });
+    </script>
+
 </body>
 </html>
