@@ -451,18 +451,7 @@ def initialize_user_stats(user_id):
     """Create initial stats record for a user if it doesn't exist"""
     stats = UserStats.query.filter_by(user_id=user_id).first()
     if not stats:
-        stats = UserStats(
-            user_id=user_id,
-            total_quizzes=0,
-            total_questions_answered=0,
-            total_correct_answers=0,
-            current_streak_days=0,
-            longest_streak_days=0,
-            total_points=0,
-            level=1,
-            topics_mastered=0,
-            perfect_scores=0
-        )
+        stats = UserStats(user_id=user_id)
         db.session.add(stats)
         db.session.commit()
     return stats
@@ -481,12 +470,6 @@ def update_user_stats_after_quiz(user_id, quiz_attempt):
     # Check for perfect score
     if quiz_attempt.percentage == 100:
         stats.perfect_scores += 1
-
-    # Award points for quiz completion (base points + performance bonus)
-    base_points = 5  # Base points for completing any quiz
-    performance_bonus = int(quiz_attempt.percentage / 10)  # 0-10 points based on score
-    quiz_points = base_points + performance_bonus
-    stats.total_points += quiz_points
 
     # Update streak
     today = date.today()
@@ -535,13 +518,7 @@ def update_topic_progress(user_id, quiz_attempt):
         progress = TopicProgress(
             user_id=user_id,
             topic=quiz_attempt.topic,
-            difficulty=quiz_attempt.difficulty,
-            attempts=0,
-            best_score=0,
-            best_percentage=0,
-            total_questions_answered=0,
-            total_correct=0,
-            is_mastered=False
+            difficulty=quiz_attempt.difficulty
         )
         db.session.add(progress)
 
@@ -1191,13 +1168,6 @@ def current_user():
 
 # ==================== STUDENT ROUTES ====================
 
-@app.route('/student')
-@login_required
-@approved_required
-def student_redirect():
-    """Redirect /student to /app for backwards compatibility"""
-    return redirect(url_for('student_app'))
-
 @app.route('/app')
 @login_required
 @approved_required
@@ -1216,10 +1186,8 @@ def get_topics():
         'fractions': {'title': 'Fractions', 'icon': 'divide', 'color': 'bg-blue-500'},
         'decimals': {'title': 'Decimals', 'icon': 'percent', 'color': 'bg-teal-500'},
         'multiplication_division': {'title': 'Multiplication & Division', 'icon': 'x', 'color': 'bg-indigo-500'},
-        'number_systems': {'title': 'Number Systems', 'icon': 'hash', 'color': 'bg-cyan-500'},
         'bodmas': {'title': 'BODMAS', 'icon': 'book', 'color': 'bg-green-500'},
         'functions': {'title': 'Functions', 'icon': 'chart', 'color': 'bg-purple-500'},
-        'probability': {'title': 'Probability', 'icon': 'dice', 'color': 'bg-emerald-500'},
         'sets': {'title': 'Sets', 'icon': 'layers', 'color': 'bg-orange-500'},
         'surds': {'title': 'Surds', 'icon': 'radical', 'color': 'bg-amber-600'},
         'complex_numbers_intro': {'title': 'Complex Numbers Intro', 'icon': 'infinity', 'color': 'bg-pink-500'},
@@ -1259,7 +1227,6 @@ def submit_quiz():
     # Validate topic and difficulty
     valid_topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'number_systems',
         'bodmas', 'functions', 'sets', 'probability', 'surds',
         'complex_numbers_intro', 'complex_numbers_expanded'
     ]
@@ -1416,8 +1383,8 @@ def get_student_mastery():
     # Get all topics - MUST match topics in get_topics() API
     topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'number_systems', 'bodmas', 'functions', 'probability', 'sets', 
-        'surds', 'complex_numbers_intro', 'complex_numbers_expanded'
+        'bodmas', 'functions', 'sets', 'probability', 'surds',
+        'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     difficulties = ['beginner', 'intermediate', 'advanced']
 
@@ -1901,7 +1868,7 @@ def get_class_performance_matrix(class_id):
     students = User.query.filter(User.id.in_(student_ids)).all()
 
     # Get all topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'number_systems', 'bodmas', 'probability', 'functions', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'probability', 'functions', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     students_data = []
@@ -2381,7 +2348,7 @@ def get_class_matrix_data(class_id):
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
 
     # All topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'number_systems', 'bodmas', 'probability', 'functions', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'bodmas', 'probability', 'functions', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     # Build matrix data
@@ -2389,15 +2356,9 @@ def get_class_matrix_data(class_id):
 
     for enrollment in enrollments:
         student = enrollment.student
-        
-        # Get student stats
-        stats = UserStats.query.filter_by(user_id=student.id).first()
-        
         student_data = {
             'student_id': student.id,
             'student_name': student.full_name,
-            'total_points': stats.total_points if stats else 0,
-            'level': stats.level if stats else 1,
             'modules': {}
         }
 
@@ -2781,66 +2742,6 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print("Default admin created: admin@mathmaster.com / admin123")
-
-        # Create default badges if they don't exist
-        if Badge.query.count() == 0:
-            default_badges = [
-                # Beginner badges
-                Badge(name='First Steps', description='Complete your first quiz', icon='fa-star', 
-                      category='beginner', requirement_type='quizzes_completed', requirement_value=1, 
-                      points=10, color='yellow'),
-                Badge(name='Curious Learner', description='Complete 5 quizzes', icon='fa-book', 
-                      category='progress', requirement_type='quizzes_completed', requirement_value=5, 
-                      points=20, color='blue'),
-                Badge(name='Dedicated Student', description='Complete 10 quizzes', icon='fa-graduation-cap', 
-                      category='progress', requirement_type='quizzes_completed', requirement_value=10, 
-                      points=30, color='purple'),
-                Badge(name='Math Enthusiast', description='Complete 25 quizzes', icon='fa-heart', 
-                      category='progress', requirement_type='quizzes_completed', requirement_value=25, 
-                      points=50, color='red'),
-                Badge(name='Quiz Master', description='Complete 50 quizzes', icon='fa-trophy', 
-                      category='progress', requirement_type='quizzes_completed', requirement_value=50, 
-                      points=100, color='gold'),
-                
-                # Streak badges
-                Badge(name='Week Warrior', description='Practice 7 days in a row', icon='fa-bolt', 
-                      category='streak', requirement_type='streak_days', requirement_value=7, 
-                      points=40, color='orange'),
-                Badge(name='Unstoppable', description='Practice 14 days in a row', icon='fa-rocket', 
-                      category='streak', requirement_type='streak_days', requirement_value=14, 
-                      points=75, color='red'),
-                
-                # Mastery badges
-                Badge(name='Topic Master', description='Master any topic (all 3 difficulties)', icon='fa-certificate', 
-                      category='mastery', requirement_type='topics_mastered', requirement_value=1, 
-                      points=30, color='green'),
-                Badge(name='Subject Expert', description='Master 3 different topics', icon='fa-brain', 
-                      category='mastery', requirement_type='topics_mastered', requirement_value=3, 
-                      points=75, color='purple'),
-                Badge(name='Mathematics Genius', description='Master 5 different topics', icon='fa-infinity', 
-                      category='mastery', requirement_type='topics_mastered', requirement_value=5, 
-                      points=150, color='gold'),
-                
-                # Accuracy badges
-                Badge(name='Perfect Score', description='Get 100% on a quiz', icon='fa-gem', 
-                      category='accuracy', requirement_type='perfect_scores', requirement_value=1, 
-                      points=15, color='cyan'),
-                Badge(name='Perfectionist', description='Get 5 perfect scores', icon='fa-star', 
-                      category='accuracy', requirement_type='perfect_scores', requirement_value=5, 
-                      points=50, color='gold'),
-                Badge(name='High Achiever', description='Score 90%+ on 10 quizzes', icon='fa-bullseye', 
-                      category='accuracy', requirement_type='high_scores', requirement_value=10, 
-                      points=40, color='green'),
-                Badge(name='Excellence Personified', description='Score 90%+ on 25 quizzes', icon='fa-crown', 
-                      category='accuracy', requirement_type='high_scores', requirement_value=25, 
-                      points=100, color='gold'),
-            ]
-            
-            for badge in default_badges:
-                db.session.add(badge)
-            
-            db.session.commit()
-            print(f"✅ Created {len(default_badges)} default badges")
 
     app.run(debug=True)
 

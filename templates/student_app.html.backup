@@ -665,7 +665,6 @@
             'divide': 'fa-divide',
             'book': 'fa-book',
             'chart': 'fa-chart-line',
-            'dice': 'fa-dice',
             'layers': 'fa-layer-group'
         };
 
@@ -848,8 +847,7 @@
                 // Define the learning paths
                 const path1Topics = [
                     'arithmetic',
-                    'multiplication_division',
-                    'number_systems',
+                    'multiplication_division', 
                     'bodmas',
                     'fractions',
                     'decimals',
@@ -938,7 +936,6 @@
             const colors = {
                 'arithmetic': '#ef4444',
                 'multiplication_division': '#3b82f6',
-                'number_systems': '#06b6d4',
                 'bodmas': '#10b981',
                 'fractions': '#f59e0b',
                 'decimals': '#14b8a6',

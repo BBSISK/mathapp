@@ -100,7 +100,6 @@
                             <option value="fractions">Fractions</option>
                             <option value="decimals">Decimals</option>
                             <option value="multiplication_division">Multiplication & Division</option>
-                            <option value="number_systems">Number Systems</option>
                             <option value="bodmas">BODMAS</option>
                             <option value="functions">Functions</option>
                             <option value="surds">Surds</option>
@@ -215,7 +214,6 @@
                             <option value="fractions">Fractions</option>
                             <option value="decimals">Decimals</option>
                             <option value="multiplication_division">Multiplication & Division</option>
-                            <option value="number_systems">Number Systems</option>
                             <option value="bodmas">BODMAS</option>
                             <option value="functions">Functions</option>
                             <option value="surds">Surds</option>
@@ -2048,7 +2046,6 @@ function updateRestrictedTeachersCount() {
                     'fractions': 'fa-divide',
                     'decimals': 'fa-percent',
                     'multiplication_division': 'fa-times',
-                    'number_systems': 'fa-hashtag',
                     'bodmas': 'fa-list-ol',
                     'functions': 'fa-chart-line',
                     'surds': 'fa-square-root-alt',

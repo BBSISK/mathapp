@@ -220,34 +220,34 @@
             white-space: nowrap;
         }
 
-        /* FROZEN COLUMN 1: Student Name */
-        .matrix-table thead th.col-student {
-            position: sticky !important;
-            left: 0 !important;
-            z-index: 11 !important;
-            background: #764ba2 !important;
-            min-width: 200px !important;
-            width: 200px !important;
+        /* Frozen column 1: Student Name */
+        .matrix-table thead th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 11;
+            background: #764ba2;
+            min-width: 200px;
+            width: 200px;
         }
 
-        /* FROZEN COLUMN 2: Points */
-        .matrix-table thead th.col-points {
-            position: sticky !important;
-            left: 200px !important;
-            z-index: 11 !important;
-            background: #8b5fbf !important;
-            min-width: 80px !important;
-            width: 80px !important;
+        /* Frozen column 2: Points */
+        .matrix-table thead th:nth-child(2) {
+            position: sticky;
+            left: 200px;
+            z-index: 11;
+            background: #8b5fbf;
+            min-width: 80px;
+            width: 80px;
         }
 
-        /* FROZEN COLUMN 3: Level */
-        .matrix-table thead th.col-level {
-            position: sticky !important;
-            left: 280px !important;
-            z-index: 11 !important;
-            background: #9d73d1 !important;
-            min-width: 70px !important;
-            width: 70px !important;
+        /* Frozen column 3: Level */
+        .matrix-table thead th:nth-child(3) {
+            position: sticky;
+            left: 280px;
+            z-index: 11;
+            background: #9d73d1;
+            min-width: 70px;
+            width: 70px;
         }
 
         .matrix-table tbody td {
@@ -259,55 +259,55 @@
             min-width: 60px;
         }
 
-        /* FROZEN BODY CELL 1: Student */
+        /* Frozen column 1: Student cell */
         .student-cell {
-            position: sticky !important;
-            left: 0 !important;
-            background: white !important;
-            z-index: 5 !important;
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 5;
             text-align: left !important;
             padding: 8px 12px !important;
             font-weight: 600;
-            border-right: 2px solid #dee2e6 !important;
+            border-right: 2px solid #dee2e6;
             white-space: nowrap;
-            min-width: 200px !important;
-            width: 200px !important;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
+            min-width: 200px;
+            width: 200px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
         }
 
-        /* FROZEN BODY CELL 2: Points */
-        .points-cell {
-            position: sticky !important;
-            left: 200px !important;
-            background: white !important;
-            z-index: 5 !important;
-            font-weight: 700 !important;
-            font-size: 14px !important;
-            color: #667eea !important;
-            border-right: 1px solid #dee2e6 !important;
-            min-width: 80px !important;
-            width: 80px !important;
-        }
-
-        /* FROZEN BODY CELL 3: Level */
-        .level-cell {
-            position: sticky !important;
-            left: 280px !important;
-            background: white !important;
-            z-index: 5 !important;
-            font-weight: 700 !important;
-            font-size: 14px !important;
-            color: #764ba2 !important;
-            border-right: 2px solid #dee2e6 !important;
-            min-width: 70px !important;
-            width: 70px !important;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
-        }
-
-        .student-cell-inner {
+        .student-cell-content {
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        /* Frozen column 2: Points cell */
+        .points-cell {
+            position: sticky;
+            left: 200px;
+            background: white;
+            z-index: 5;
+            font-weight: 700;
+            font-size: 14px;
+            color: #667eea;
+            border-right: 1px solid #dee2e6;
+            min-width: 80px;
+            width: 80px;
+        }
+
+        /* Frozen column 3: Level cell */
+        .level-cell {
+            position: sticky;
+            left: 280px;
+            background: white;
+            z-index: 5;
+            font-weight: 700;
+            font-size: 14px;
+            color: #764ba2;
+            border-right: 2px solid #dee2e6;
+            min-width: 70px;
+            width: 70px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
         }
 
         .student-checkbox {
@@ -674,9 +674,9 @@
             }
             
             let html = '<table class="matrix-table"><thead><tr>';
-            html += '<th class="col-student">Student Name</th>';
-            html += '<th class="col-points">Points</th>';
-            html += '<th class="col-level">Level</th>';
+            html += '<th>Student Name</th>';
+            html += '<th>Points</th>';
+            html += '<th>Level</th>';
             
             const topics = data.topics;
             const difficulties = data.difficulties;
@@ -699,8 +699,8 @@
                             class="${selectedStudents.has(student.student_id) ? 'selected' : ''}" 
                             data-student-name="${student.student_name.toLowerCase()}">`;
                 
-                html += `<td class="student-cell" style="position: sticky !important; left: 0 !important; background: white !important; z-index: 5 !important;">
-                    <div class="student-cell-inner">
+                html += `<td class="student-cell">
+                    <div class="student-cell-content">
                         <input type="checkbox" class="student-checkbox" 
                                id="checkbox-${student.student_id}"
                                onchange="toggleStudent(${student.student_id})"
@@ -711,11 +711,11 @@
                 
                 // Add Points column
                 const points = student.total_points || 0;
-                html += `<td class="points-cell" style="position: sticky !important; left: 200px !important; background: white !important; z-index: 5 !important;">${points}</td>`;
+                html += `<td class="points-cell">${points}</td>`;
                 
                 // Add Level column
                 const level = student.level || 1;
-                html += `<td class="level-cell" style="position: sticky !important; left: 280px !important; background: white !important; z-index: 5 !important;">${level}</td>`;
+                html += `<td class="level-cell">${level}</td>`;
                 
                 topics.forEach(topic => {
                     difficulties.forEach(diff => {
@@ -769,9 +769,6 @@
             
             html += '</tbody></table>';
             container.innerHTML = html;
-            
-            // Verification message
-            console.log('✅ Dashboard V4 loaded with frozen columns: Student Name (0px), Points (200px), Level (280px)');
         }
 
         // NEW: Search functionality
