@@ -6,10 +6,11 @@ from datetime import datetime
 import os
 import random
 import re
+import config
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mathquiz.db'
+app.secret_key = config.SECRET_KEY
+app.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -2842,7 +2843,7 @@ if __name__ == '__main__':
             db.session.commit()
             print(f"✅ Created {len(default_badges)} default badges")
 
-    app.run(debug=True)
+    app.run(debug=config.FLASK_DEBUG)
 
 
 # ============================================================
