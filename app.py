@@ -1213,19 +1213,109 @@ def student_app():
 @approved_required
 def get_topics():
     topics = {
-        'arithmetic': {'title': 'Arithmetic', 'icon': 'calculator', 'color': 'bg-red-500'},
-        'fractions': {'title': 'Fractions', 'icon': 'divide', 'color': 'bg-blue-500'},
-        'decimals': {'title': 'Decimals', 'icon': 'percent', 'color': 'bg-teal-500'},
-        'multiplication_division': {'title': 'Multiplication & Division', 'icon': 'x', 'color': 'bg-indigo-500'},
-        'number_systems': {'title': 'Number Systems', 'icon': 'hash', 'color': 'bg-cyan-500'},
-        'bodmas': {'title': 'BODMAS', 'icon': 'book', 'color': 'bg-green-500'},
-        'functions': {'title': 'Functions', 'icon': 'chart', 'color': 'bg-purple-500'},
-        'probability': {'title': 'Probability', 'icon': 'dice', 'color': 'bg-emerald-500'},
-        'sets': {'title': 'Sets', 'icon': 'layers', 'color': 'bg-orange-500'},
-        'surds': {'title': 'Surds', 'icon': 'radical', 'color': 'bg-amber-600'},
-        'complex_numbers_intro': {'title': 'Complex Numbers Intro', 'icon': 'infinity', 'color': 'bg-pink-500'},
-        'complex_numbers_expanded': {'title': 'Complex Numbers - Expanded', 'icon': 'rotate', 'color': 'bg-fuchsia-600'}
+        'arithmetic': {
+            'title': 'Arithmetic',
+            'icon': 'calculator',
+            'color': 'bg-red-500',
+            'description': 'Master addition, subtraction, multiplication and division with whole numbers',
+            'examples': 'e.g., 23 + 45, 100 - 67, 12 × 8',
+            'skills': ['Basic operations', 'Mental math', 'Number sense']
+        },
+        'fractions': {
+            'title': 'Fractions',
+            'icon': 'divide',
+            'color': 'bg-blue-500',
+            'description': 'Learn to work with parts of numbers and convert between fractions',
+            'examples': 'e.g., 1/2 + 1/4, 3/5 × 2/3',
+            'skills': ['Adding fractions', 'Simplifying', 'Mixed numbers']
+        },
+        'decimals': {
+            'title': 'Decimals',
+            'icon': 'percent',
+            'color': 'bg-teal-500',
+            'description': 'Understand decimal notation and perform calculations with decimal numbers',
+            'examples': 'e.g., 2.5 + 3.7, 0.25 × 4',
+            'skills': ['Decimal operations', 'Place value', 'Rounding']
+        },
+        'multiplication_division': {
+            'title': 'Multiplication & Division',
+            'icon': 'x',
+            'color': 'bg-indigo-500',
+            'description': 'Practice multiplication tables and division, including negative numbers',
+            'examples': 'e.g., 12 × 15, 144 ÷ 12, -6 × 7',
+            'skills': ['Times tables', 'Long division', 'Negative numbers']
+        },
+        'number_systems': {
+            'title': 'Number Systems',
+            'icon': 'hash',
+            'color': 'bg-cyan-500',
+            'description': 'Explore binary, octal, and hexadecimal number systems',
+            'examples': 'e.g., 1010₂ = 10₁₀, FF₁₆ = 255₁₀',
+            'skills': ['Binary conversion', 'Hexadecimal', 'Base systems']
+        },
+        'bodmas': {
+            'title': 'BODMAS',
+            'icon': 'book',
+            'color': 'bg-green-500',
+            'description': 'Master the order of operations: Brackets, Orders, Division, Multiplication, Addition, Subtraction',
+            'examples': 'e.g., 2 + 3 × 4, (5 + 3) ÷ 2',
+            'skills': ['Order of operations', 'Brackets', 'Complex expressions']
+        },
+        'functions': {
+            'title': 'Functions',
+            'icon': 'chart',
+            'color': 'bg-purple-500',
+            'description': 'Understand function notation and evaluate functions',
+            'examples': 'e.g., f(x) = 2x + 1, find f(5)',
+            'skills': ['Function notation', 'Evaluation', 'Composition']
+        },
+        'probability': {
+            'title': 'Probability',
+            'icon': 'dice',
+            'color': 'bg-emerald-500',
+            'description': 'Calculate the likelihood of events using probability theory',
+            'examples': 'e.g., P(heads) = 1/2, P(rolling a 6)',
+            'skills': ['Basic probability', 'Fractions', 'Event outcomes']
+        },
+        'sets': {
+            'title': 'Sets',
+            'icon': 'layers',
+            'color': 'bg-orange-500',
+            'description': 'Learn about collections of objects and set operations',
+            'examples': 'e.g., A ∪ B, A ∩ B, A ⊆ B',
+            'skills': ['Union & intersection', 'Venn diagrams', 'Set notation']
+        },
+        'surds': {
+            'title': 'Surds',
+            'icon': 'radical',
+            'color': 'bg-amber-600',
+            'description': 'Work with square roots and simplify surd expressions',
+            'examples': 'e.g., √50 = 5√2, √12 + √27',
+            'skills': ['Simplifying surds', 'Operations', 'Rationalizing']
+        },
+        'complex_numbers_intro': {
+            'title': 'Complex Numbers Intro',
+            'icon': 'infinity',
+            'color': 'bg-pink-500',
+            'description': 'Introduction to imaginary numbers and basic complex number operations',
+            'examples': 'e.g., i² = -1, 3 + 4i',
+            'skills': ['Imaginary unit', 'Basic operations', 'Real & imaginary parts']
+        },
+        'complex_numbers_expanded': {
+            'title': 'Complex Numbers - Expanded',
+            'icon': 'rotate',
+            'color': 'bg-fuchsia-600',
+            'description': 'Advanced complex number operations including multiplication and division',
+            'examples': 'e.g., (2+3i)(4-i), conjugates',
+            'skills': ['Complex multiplication', 'Conjugates', 'Modulus']
+        }
     }
+
+    # Add question count statistics for each topic
+    for topic_key in topics.keys():
+        topic_questions = Question.query.filter_by(topic=topic_key).count()
+        topics[topic_key]['question_count'] = topic_questions
+
     return jsonify(topics)
 
 @app.route('/api/questions/<topic>/<difficulty>')

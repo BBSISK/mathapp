@@ -872,17 +872,21 @@
                         const topic = topics[topicKey];
                         const iconClass = iconMap[topic.icon] || 'fa-book';
                         const topicMastered = masteryData[topicKey]?.topic_mastered || false;
-                        
+
                         const card = document.createElement('div');
                         card.className = `flow-topic-card ${topicMastered ? 'mastered' : ''}`;
                         card.onclick = () => selectTopic(topicKey, topic.title);
-                        
+                        card.title = `${topic.description || ''}\n${topic.examples || ''}\n${topic.question_count || 0} questions available`;
+
                         card.innerHTML = `
                             ${topicMastered ? '<div class="mastery-star">⭐</div>' : ''}
                             <i class="fas ${iconClass} icon" style="color: ${getIconColor(topicKey)}"></i>
                             <div class="title">${topic.title}</div>
+                            ${topic.description ? `<div style="font-size: 0.7em; color: #666; margin-top: 5px; line-height: 1.2;">${topic.description}</div>` : ''}
+                            ${topic.examples ? `<div style="font-size: 0.65em; color: #888; margin-top: 3px; font-style: italic;">${topic.examples}</div>` : ''}
+                            ${topic.question_count ? `<div style="font-size: 0.6em; color: #999; margin-top: 5px;">📊 ${topic.question_count} questions</div>` : ''}
                         `;
-                        
+
                         path1Flow.appendChild(card);
                         
                         // Add arrow between topics (except after last one)
@@ -903,17 +907,21 @@
                         const topic = topics[topicKey];
                         const iconClass = iconMap[topic.icon] || 'fa-book';
                         const topicMastered = masteryData[topicKey]?.topic_mastered || false;
-                        
+
                         const card = document.createElement('div');
                         card.className = `flow-topic-card ${topicMastered ? 'mastered' : ''}`;
                         card.onclick = () => selectTopic(topicKey, topic.title);
-                        
+                        card.title = `${topic.description || ''}\n${topic.examples || ''}\n${topic.question_count || 0} questions available`;
+
                         card.innerHTML = `
                             ${topicMastered ? '<div class="mastery-star">⭐</div>' : ''}
                             <i class="fas ${iconClass} icon" style="color: ${getIconColor(topicKey)}"></i>
                             <div class="title">${topic.title}</div>
+                            ${topic.description ? `<div style="font-size: 0.7em; color: #666; margin-top: 5px; line-height: 1.2;">${topic.description}</div>` : ''}
+                            ${topic.examples ? `<div style="font-size: 0.65em; color: #888; margin-top: 3px; font-style: italic;">${topic.examples}</div>` : ''}
+                            ${topic.question_count ? `<div style="font-size: 0.6em; color: #999; margin-top: 5px;">📊 ${topic.question_count} questions</div>` : ''}
                         `;
-                        
+
                         path2Flow.appendChild(card);
                         
                         // Add arrow between topics (except after last one)
