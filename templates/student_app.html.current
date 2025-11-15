@@ -14,13 +14,13 @@
             border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-
+        
         .number-line {
             position: relative;
             margin: 30px 20px;
             height: 80px;
         }
-
+        
         .number-line-base {
             position: absolute;
             top: 50%;
@@ -30,7 +30,7 @@
             background: #4a5568;
             transform: translateY(-50%);
         }
-
+        
         .number-line-tick {
             position: absolute;
             top: 50%;
@@ -39,7 +39,7 @@
             background: #4a5568;
             transform: translate(-50%, -50%);
         }
-
+        
         .number-line-label {
             position: absolute;
             top: 70%;
@@ -48,7 +48,7 @@
             font-weight: bold;
             color: #2d3748;
         }
-
+        
         .number-line-arc {
             position: absolute;
             top: 15%;
@@ -57,14 +57,14 @@
             border-radius: 50px 50px 0 0;
             height: 25px;
         }
-
+        
         .number-line-arrow {
             position: absolute;
             font-size: 24px;
             color: #667eea;
             animation: bounce 0.8s infinite;
         }
-
+        
         .number-line-start-dot {
             position: absolute;
             top: 50%;
@@ -77,7 +77,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             z-index: 10;
         }
-
+        
         .number-line-end-dot {
             position: absolute;
             top: 50%;
@@ -91,12 +91,12 @@
             z-index: 10;
             animation: pulse 1s infinite;
         }
-
+        
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-5px); }
         }
-
+        
         /* Badge Widget Styles */
         .badge-summary-widget {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -202,7 +202,7 @@
             0%, 100% { transform: translate(-50%, -50%) scale(1); }
             50% { transform: translate(-50%, -50%) scale(1.1); }
         }
-
+        
         .number-line-instruction {
             text-align: center;
             color: #4a5568;
@@ -328,11 +328,12 @@
         }
 
         .path-flow {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 12px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            padding: 20px 0;
+            max-width: 1400px;
+            margin: 0 auto;
             position: relative;
             z-index: 1;
         }
@@ -340,15 +341,19 @@
         .flow-topic-card {
             background: white;
             border-radius: 16px;
-            padding: 24px 20px;
-            min-width: 140px;
-            max-width: 160px;
+            padding: 20px 16px;
+            min-width: 200px;
+            max-width: 280px;
+            width: 100%;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             position: relative;
             border: 3px solid transparent;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .flow-topic-card:hover {
@@ -369,11 +374,35 @@
         }
 
         .flow-topic-card .title {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 700;
             color: #2d3748;
-            margin-bottom: 8px;
             line-height: 1.3;
+        }
+
+        .flow-topic-card .topic-description {
+            font-size: 12px;
+            color: #4a5568;
+            line-height: 1.4;
+            margin: 4px 0;
+            text-align: center;
+        }
+
+        .flow-topic-card .topic-examples {
+            font-size: 11px;
+            color: #718096;
+            font-style: italic;
+            line-height: 1.3;
+            margin: 2px 0;
+        }
+
+        .flow-topic-card .topic-stats {
+            font-size: 10px;
+            color: #a0aec0;
+            font-weight: 600;
+            margin-top: 4px;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
         }
 
         .flow-topic-card .mastery-star {
@@ -399,10 +428,7 @@
         }
 
         .flow-arrow {
-            color: white;
-            font-size: 32px;
-            opacity: 0.6;
-            animation: arrowFloat 2s ease-in-out infinite;
+            display: none; /* Hidden in grid layout */
         }
 
         @keyframes arrowFloat {
@@ -425,11 +451,11 @@
             .path-flow {
                 flex-direction: column;
             }
-
+            
             .flow-arrow {
                 transform: rotate(90deg);
             }
-
+            
             .flow-topic-card {
                 width: 100%;
                 max-width: 280px;
@@ -469,237 +495,9 @@
                 opacity: 1;
             }
         }
-
-        /* ==================== GUEST MODE STYLES ==================== */
-        .guest-banner {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-            color: white;
-            padding: 16px;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 3px solid #2f855a;
-        }
-
-        .guest-banner-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .guest-banner-text {
-            flex: 1;
-            min-width: 250px;
-        }
-
-        .guest-banner h3 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .guest-banner p {
-            margin: 0;
-            font-size: 14px;
-            opacity: 0.95;
-        }
-
-        .guest-banner-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .guest-register-btn {
-            background: white;
-            color: #38a169;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .guest-register-btn:hover {
-            background: #f7fafc;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .guest-login-btn {
-            background: transparent;
-            color: white;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-            border: 2px solid white;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .guest-login-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        @media (max-width: 640px) {
-            .guest-banner-content {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .guest-banner-actions {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        /* Guest Result Modal Styles */
-        .guest-result-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.75);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            padding: 20px;
-        }
-
-        .guest-result-modal {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
-
-        .guest-result-modal h2 {
-            color: #2d3748;
-            font-size: 28px;
-            margin-bottom: 16px;
-        }
-
-        .guest-result-modal .score-display {
-            font-size: 48px;
-            font-weight: bold;
-            color: #667eea;
-            margin: 20px 0;
-        }
-
-        .guest-result-modal .message {
-            color: #4a5568;
-            font-size: 16px;
-            margin-bottom: 24px;
-            line-height: 1.6;
-        }
-
-        .guest-result-modal .benefits {
-            background: #f7fafc;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-        }
-
-        .guest-result-modal .benefits h3 {
-            color: #2d3748;
-            font-size: 18px;
-            margin-bottom: 12px;
-        }
-
-        .guest-result-modal .benefits ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .guest-result-modal .benefits li {
-            color: #4a5568;
-            padding: 6px 0;
-            display: flex;
-            align-items: center;
-            font-size: 14px;
-        }
-
-        .guest-result-modal .benefits li::before {
-            content: '✓';
-            color: #48bb78;
-            font-weight: bold;
-            margin-right: 10px;
-            font-size: 18px;
-        }
-
-        .guest-result-modal .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .guest-result-modal .primary-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .guest-result-modal .primary-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .guest-result-modal .secondary-btn {
-            background: #e2e8f0;
-            color: #2d3748;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .guest-result-modal .secondary-btn:hover {
-            background: #cbd5e0;
-        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 min-h-screen">
-    <!-- Guest Mode Banner (shown only for guest users) -->
-    <div id="guestBanner" class="guest-banner" style="display: none;">
-        <div class="guest-banner-content">
-            <div class="guest-banner-text">
-                <h3>🎯 Guest Mode - Try Unlimited Quizzes!</h3>
-                <p>Register to save your progress, earn badges, and track your learning journey</p>
-            </div>
-            <div class="guest-banner-actions">
-                <a href="/register" class="guest-register-btn">Create Free Account</a>
-                <a href="/" class="guest-login-btn">Login</a>
-            </div>
-        </div>
-    </div>
-
     <!-- Header with User Info -->
     <div class="bg-white shadow-md">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -723,7 +521,7 @@
                 <h2 class="badge-summary-title">🏆 Your Progress</h2>
                 <a href="/student/badges" class="view-badges-btn">View All Badges →</a>
             </div>
-
+            
             <div class="badge-summary-stats">
                 <div class="badge-stat-box">
                     <span id="stat-level" class="badge-stat-value">-</span>
@@ -750,7 +548,7 @@
                     <div class="badge-stat-label">Accuracy</div>
                 </div>
             </div>
-
+            
             <div id="recent-badges-container" style="margin-top: 15px; display: none;">
                 <div style="opacity: 0.9; margin-bottom: 8px; font-size: 0.9em;">Recent Badges:</div>
                 <div id="recent-badges"></div>
@@ -769,10 +567,30 @@
                 <h2 class="text-5xl font-bold text-gray-800 mb-4">🚀 Your Learning Journey</h2>
                 <p class="text-xl text-gray-600">Choose your path and master mathematics!</p>
             </div>
-
-            <!-- Learning Paths Container (Dynamically generated by Junior Cycle strands) -->
+            
+            <!-- Learning Paths Container -->
             <div class="space-y-12" id="learningPathsContainer">
-                <!-- Strand cards will be generated dynamically based on database strands -->
+                
+                <!-- Path 1: Number Skills Journey -->
+                <div class="learning-path-card">
+                    <div class="path-header">
+                        <div class="path-number">Path 1</div>
+                        <h3 class="path-title">📊 Number Skills Journey</h3>
+                        <p class="path-description">Master the fundamentals of numbers and operations</p>
+                    </div>
+                    <div class="path-flow" id="path1Flow"></div>
+                </div>
+
+                <!-- Path 2: Advanced Topics Journey -->
+                <div class="learning-path-card">
+                    <div class="path-header">
+                        <div class="path-number">Path 2</div>
+                        <h3 class="path-title">🎯 Advanced Topics Journey</h3>
+                        <p class="path-description">Explore functions, surds, and complex numbers</p>
+                    </div>
+                    <div class="path-flow" id="path2Flow"></div>
+                </div>
+                
             </div>
 
             <!-- Progress Summary -->
@@ -788,12 +606,12 @@
                 <button onclick="backToTopics()" class="mb-6 bg-white text-gray-700 px-6 py-2 rounded-lg shadow hover:shadow-md transition-all">
                     ← Back to Topics
                 </button>
-
+                
                 <div class="text-center mb-12">
                     <h2 id="selectedTopicTitle" class="text-4xl font-bold text-gray-800 mb-4"></h2>
                     <p class="text-xl text-gray-600">Select your level</p>
                 </div>
-
+                
                 <div id="difficultyButtonsContainer" class="grid md:grid-cols-3 gap-6">
                     <!-- Difficulty buttons will be generated dynamically -->
                 </div>
@@ -825,7 +643,7 @@
                 </div>
 
                 <div class="mb-8">
-                    <h3 id="questionText" class="text-3xl font-semibold text-gray-800 mb-6" style="white-space: pre-wrap; line-height: 1.8;"></h3>
+                    <h3 id="questionText" class="text-3xl font-semibold text-gray-800 mb-6"></h3>
                     <div id="optionsContainer" class="space-y-3"></div>
                 </div>
 
@@ -845,7 +663,7 @@
                 <div id="percentage" class="text-6xl font-bold text-purple-600 mb-4"></div>
                 <p id="scoreText" class="text-2xl text-gray-700 mb-8"></p>
                 <div id="performanceMessage" class="text-xl font-semibold mb-6"></div>
-
+                
                 <div class="space-y-4">
                     <button onclick="retryQuiz()" class="w-full bg-purple-600 text-white py-4 rounded-xl font-semibold hover:bg-purple-700 transition-colors">
                         Try Again
@@ -901,12 +719,12 @@
         function generateBlankNumberLine(questionText) {
             const match = questionText.match(/(\d+)\s*([+\-])\s*(\d+)/);
             if (!match) return null;
-
+            
             const num1 = parseInt(match[1]);
             const num2 = parseInt(match[3]);
             const operation = match[2] === '+' ? 'addition' : 'subtraction';
             const result = operation === 'addition' ? num1 + num2 : num1 - num2;
-
+            
             // Determine range
             let minNum, maxNum, stepSize;
             if (Math.max(num1, num2, result) > 30) {
@@ -929,23 +747,23 @@
                 maxNum = Math.max(num1, result) + 2;
                 stepSize = 1;
             }
-
+            
             const range = maxNum - minNum;
-
+            
             // Generate BLANK number line (no solution)
             let html = '<div class="number-line-container">';
             html += '<div class="number-line"><div class="number-line-base"></div>';
-
+            
             for (let i = minNum; i <= maxNum; i += stepSize) {
                 const position = ((i - minNum) / range) * 100;
                 html += `<div class="number-line-tick" style="left: ${position}%"></div>`;
                 html += `<div class="number-line-label" style="left: ${position}%">${i}</div>`;
             }
-
+            
             html += '</div>';
             html += `<div class="number-line-instruction">💡 Use the number line to help solve: ${questionText}</div>`;
             html += '</div>';
-
+            
             return html;
         }
 
@@ -953,12 +771,12 @@
         function generateSolutionNumberLine(questionText) {
             const match = questionText.match(/(\d+)\s*([+\-])\s*(\d+)/);
             if (!match) return null;
-
+            
             const num1 = parseInt(match[1]);
             const num2 = parseInt(match[3]);
             const operation = match[2] === '+' ? 'addition' : 'subtraction';
             const result = operation === 'addition' ? num1 + num2 : num1 - num2;
-
+            
             // Same range logic as blank version
             let minNum, maxNum, stepSize;
             if (Math.max(num1, num2, result) > 30) {
@@ -981,22 +799,22 @@
                 maxNum = Math.max(num1, result) + 2;
                 stepSize = 1;
             }
-
+            
             const range = maxNum - minNum;
             const startPos = ((num1 - minNum) / range) * 100;
             const endPos = ((result - minNum) / range) * 100;
-
+            
             // Generate SOLUTION number line (with answer)
             let html = '<div class="number-line-container" style="margin-top:16px;background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%);">';
             html += '<div class="number-line"><div class="number-line-base"></div>';
-
+            
             // Ticks and labels
             for (let i = minNum; i <= maxNum; i += stepSize) {
                 const position = ((i - minNum) / range) * 100;
                 html += `<div class="number-line-tick" style="left:${position}%"></div>`;
                 html += `<div class="number-line-label" style="left:${position}%">${i}</div>`;
             }
-
+            
             // Special ticks for start and end
             if (num1 % stepSize !== 0 && num1 >= minNum && num1 <= maxNum) {
                 const position = ((num1 - minNum) / range) * 100;
@@ -1008,11 +826,11 @@
                 html += `<div class="number-line-tick" style="left:${position}%;height:15px"></div>`;
                 html += `<div class="number-line-label" style="left:${position}%;font-weight:bold;color:#48bb78">${result}</div>`;
             }
-
+            
             // Dots
             html += `<div class="number-line-start-dot" style="left:${startPos}%"></div>`;
             html += `<div class="number-line-end-dot" style="left:${endPos}%"></div>`;
-
+            
             // Arc and arrow
             if (operation === 'addition') {
                 const arcWidth = ((num2) / range) * 100;
@@ -1033,7 +851,7 @@
                 html += `✅ <strong>Solution:</strong> Start at <strong>${num1}</strong> (🟢), subtract <strong>${num2}</strong> by jumping back ← to reach <strong>${result}</strong> (🔴)`;
                 html += '</div>';
             }
-
+            
             html += '</div>';
             return html;
         }
@@ -1042,31 +860,7 @@
             try {
                 const response = await fetch('/api/current-user');
                 const user = await response.json();
-                
-                // Check if user is a guest
-                if (user.is_guest) {
-                    document.getElementById('userName').textContent = 'Guest User';
-                    
-                    // Show guest banner
-                    const guestBanner = document.getElementById('guestBanner');
-                    if (guestBanner) {
-                        guestBanner.style.display = 'block';
-                    }
-                    
-                    // Hide features not available for guests
-                    const changePasswordBtn = document.querySelector('button[onclick="openPasswordModal()"]');
-                    if (changePasswordBtn) {
-                        changePasswordBtn.style.display = 'none';
-                    }
-                    
-                    // Hide badge widget for guests
-                    const badgeWidget = document.getElementById('badge-widget');
-                    if (badgeWidget) {
-                        badgeWidget.style.display = 'none';
-                    }
-                } else {
-                    document.getElementById('userName').textContent = user.full_name;
-                }
+                document.getElementById('userName').textContent = user.full_name;
             } catch (error) {
                 console.error('Error loading user:', error);
             }
@@ -1075,104 +869,104 @@
         async function loadTopics() {
             try {
                 const response = await fetch('/api/topics');
-                const data = await response.json();
-                topics = data.topics;
-                const strands = data.strands || {};
-                const strandInfo = data.strand_info || {};
+                const topics = await response.json();
+                
+                // Define the learning paths
+                const path1Topics = [
+                    'arithmetic',
+                    'multiplication_division',
+                    'number_systems',
+                    'bodmas',
+                    'fractions',
+                    'decimals',
+                    'probability',
+                    'sets'
+                ];
+                
+                const path2Topics = [
+                    'functions',
+                    'surds',
+                    'complex_numbers_intro',
+                    'complex_numbers_expanded'
+                ];
+                
+                // Render Path 1
+                const path1Flow = document.getElementById('path1Flow');
+                path1Flow.innerHTML = '';
+                path1Topics.forEach((topicKey, index) => {
+                    if (topics[topicKey]) {
+                        const topic = topics[topicKey];
+                        const iconClass = iconMap[topic.icon] || 'fa-book';
+                        const topicMastered = masteryData[topicKey]?.topic_mastered || false;
 
-                // Get mastery data
-                const masteryResponse = await fetch('/api/student/mastery');
-                masteryData = await masteryResponse.json();
+                        const card = document.createElement('div');
+                        card.className = `flow-topic-card ${topicMastered ? 'mastered' : ''}`;
+                        card.onclick = () => selectTopic(topicKey, topic.title);
+                        card.title = `${topic.description || ''}\n${topic.examples || ''}\n${topic.question_count || 0} questions available`;
 
-                // Icon mapping
-                const iconMap = {
-                    'calculator': 'fa-calculator',
-                    'divide': 'fa-divide',
-                    'percent': 'fa-percent',
-                    'x': 'fa-xmark',
-                    'hash': 'fa-hashtag',
-                    'book': 'fa-book',
-                    'chart': 'fa-chart-line',
-                    'dice': 'fa-dice',
-                    'layers': 'fa-layer-group',
-                    'radical': 'fa-square-root-alt',
-                    'infinity': 'fa-infinity',
-                    'rotate': 'fa-rotate'
-                };
+                        card.innerHTML = `
+                            ${topicMastered ? '<div class="mastery-star">⭐</div>' : ''}
+                            <i class="fas ${iconClass} icon" style="color: ${getIconColor(topicKey)}"></i>
+                            <div class="title">${topic.title}</div>
+                            ${topic.description ? `<div class="topic-description">${topic.description}</div>` : ''}
+                            ${topic.examples ? `<div class="topic-examples">${topic.examples}</div>` : ''}
+                            ${topic.question_count ? `<div class="topic-stats">📊 ${topic.question_count} questions</div>` : ''}
+                        `;
 
-                // Clear and build strands dynamically
-                const container = document.getElementById('learningPathsContainer');
-                container.innerHTML = '';
-
-                // Iterate through strands in order
-                Object.entries(strands).forEach(([strandName, strandTopics], strandIndex) => {
-                    const info = strandInfo[strandName] || {
-                        icon: '📚',
-                        color: '#667eea',
-                        description: 'Learn and master these topics'
-                    };
-
-                    // Create strand card
-                    const strandCard = document.createElement('div');
-                    strandCard.className = 'learning-path-card';
-                    strandCard.style.borderTop = `4px solid ${info.color}`;
-
-                    // Strand header
-                    const header = document.createElement('div');
-                    header.className = 'path-header';
-                    header.innerHTML = `
-                        <div class="path-number" style="background: ${info.color}">${strandName.includes('Senior Cycle') ? 'Senior Cycle' : (strandName.includes('Senior Cycle') ? 'Senior Cycle' : 'Junior Cycle')}</div>
-                        <h3 class="path-title">${info.icon} ${strandName}</h3>
-                        <p class="path-description">${info.description}</p>
-                    `;
-                    strandCard.appendChild(header);
-
-                    // Topics flow container
-                    const flow = document.createElement('div');
-                    flow.className = 'path-flow';
-
-                    strandTopics.forEach((topicKey, index) => {
-                        if (topics[topicKey]) {
-                            const topic = topics[topicKey];
-                            const iconClass = iconMap[topic.icon] || 'fa-book';
-                            const topicMastered = masteryData[topicKey]?.topic_mastered || false;
-
-                            const card = document.createElement('div');
-                            card.className = `flow-topic-card ${topicMastered ? 'mastered' : ''}`;
-                            card.onclick = () => selectTopic(topicKey, topic.title);
-
-                            card.innerHTML = `
-                                ${topicMastered ? '<div class="mastery-star">⭐</div>' : ''}
-                                <i class="fas ${iconClass} icon" style="color: ${info.color}"></i>
-                                <div class="title">${topic.title}</div>
-                            `;
-
-                            flow.appendChild(card);
-
-                            // Add arrow between topics (except after last one)
-                            if (index < strandTopics.length - 1) {
-                                const arrow = document.createElement('div');
-                                arrow.className = 'flow-arrow';
-                                arrow.innerHTML = '→';
-                                flow.appendChild(arrow);
-                            }
+                        path1Flow.appendChild(card);
+                        
+                        // Add arrow between topics (except after last one)
+                        if (index < path1Topics.length - 1) {
+                            const arrow = document.createElement('div');
+                            arrow.className = 'flow-arrow';
+                            arrow.innerHTML = '→';
+                            path1Flow.appendChild(arrow);
                         }
-                    });
-
-                    strandCard.appendChild(flow);
-                    container.appendChild(strandCard);
+                    }
                 });
+                
+                // Render Path 2
+                const path2Flow = document.getElementById('path2Flow');
+                path2Flow.innerHTML = '';
+                path2Topics.forEach((topicKey, index) => {
+                    if (topics[topicKey]) {
+                        const topic = topics[topicKey];
+                        const iconClass = iconMap[topic.icon] || 'fa-book';
+                        const topicMastered = masteryData[topicKey]?.topic_mastered || false;
 
-                // Show verification in console
-                console.log('✅ Student dashboard loaded successfully');
+                        const card = document.createElement('div');
+                        card.className = `flow-topic-card ${topicMastered ? 'mastered' : ''}`;
+                        card.onclick = () => selectTopic(topicKey, topic.title);
+                        card.title = `${topic.description || ''}\n${topic.examples || ''}\n${topic.question_count || 0} questions available`;
 
+                        card.innerHTML = `
+                            ${topicMastered ? '<div class="mastery-star">⭐</div>' : ''}
+                            <i class="fas ${iconClass} icon" style="color: ${getIconColor(topicKey)}"></i>
+                            <div class="title">${topic.title}</div>
+                            ${topic.description ? `<div class="topic-description">${topic.description}</div>` : ''}
+                            ${topic.examples ? `<div class="topic-examples">${topic.examples}</div>` : ''}
+                            ${topic.question_count ? `<div class="topic-stats">📊 ${topic.question_count} questions</div>` : ''}
+                        `;
+
+                        path2Flow.appendChild(card);
+                        
+                        // Add arrow between topics (except after last one)
+                        if (index < path2Topics.length - 1) {
+                            const arrow = document.createElement('div');
+                            arrow.className = 'flow-arrow';
+                            arrow.innerHTML = '→';
+                            path2Flow.appendChild(arrow);
+                        }
+                    }
+                });
+                
                 document.getElementById('loadingScreen').classList.add('hidden');
                 document.getElementById('topicScreen').classList.remove('hidden');
             } catch (error) {
                 console.error('Error loading topics:', error);
             }
         }
-
+        
         // Helper function to get consistent icon colors
         function getIconColor(topicKey) {
             const colors = {
@@ -1183,11 +977,8 @@
                 'fractions': '#f59e0b',
                 'decimals': '#14b8a6',
                 'probability': '#eab308',
-                'descriptive_statistics': '#06b6d4',
-                'patterns': '#8b5cf6',
                 'sets': '#f97316',
                 'functions': '#8b5cf6',
-                'surds': '#a855f7',
                 'complex_numbers_intro': '#ec4899',
                 'complex_numbers_expanded': '#d946ef'
             };
@@ -1198,14 +989,14 @@
             try {
                 const response = await fetch('/api/my-progress');
                 const attempts = await response.json();
-
+                
                 const summary = document.getElementById('progressSummary');
                 if (attempts.length === 0) {
                     summary.innerHTML = '<p>No quizzes completed yet. Start learning!</p>';
                 } else {
                     const total = attempts.length;
                     const avgScore = (attempts.reduce((sum, a) => sum + a.percentage, 0) / total).toFixed(1);
-
+                    
                     summary.innerHTML = `
                         <div class="grid grid-cols-3 gap-4 text-center">
                             <div>
@@ -1235,10 +1026,10 @@
                     fetch('/api/student/badges'),
                     fetch('/api/student/stats')
                 ]);
-
+                
                 const badgesData = await badgesResponse.json();
                 const statsData = await statsResponse.json();
-
+                
                 // Update widget values
                 document.getElementById('stat-level').textContent = badgesData.level;
                 document.getElementById('stat-points').textContent = badgesData.total_points;
@@ -1246,7 +1037,7 @@
                 document.getElementById('stat-quizzes').textContent = statsData.stats.total_quizzes;
                 document.getElementById('stat-streak').textContent = statsData.stats.current_streak_days;
                 document.getElementById('stat-accuracy').textContent = statsData.stats.overall_accuracy + '%';
-
+                
                 // Show recent badges if any
                 if (badgesData.earned.length > 0) {
                     const recentBadges = badgesData.earned.slice(-3).reverse(); // Last 3 badges
@@ -1254,14 +1045,14 @@
                         const emoji = getBadgeEmoji(badge.icon);
                         return `<span class="recent-badge-mini">${emoji} ${badge.name}</span>`;
                     }).join('');
-
+                    
                     document.getElementById('recent-badges').innerHTML = recentBadgesHtml;
                     document.getElementById('recent-badges-container').style.display = 'block';
                 }
-
+                
                 // Show the widget
                 document.getElementById('badge-widget').style.display = 'block';
-
+                
             } catch (error) {
                 console.error('Error loading badge widget:', error);
                 // Hide widget if there's an error
@@ -1283,31 +1074,31 @@
         function selectTopic(topic, title) {
             currentTopic = topic;
             document.getElementById('selectedTopicTitle').textContent = title;
-
+            
             // Generate difficulty/section buttons based on topic
             const container = document.getElementById('difficultyButtonsContainer');
             container.innerHTML = '';
-
+            
             // All topics now use standard 3 difficulty levels
             const difficulties = [
                 {level: 'beginner', title: 'Beginner', icon: 'fa-seedling', color: 'bg-green-500', desc: 'Start with the basics'},
                 {level: 'intermediate', title: 'Intermediate', icon: 'fa-chart-line', color: 'bg-yellow-500', desc: 'Challenge yourself more'},
                 {level: 'advanced', title: 'Advanced', icon: 'fa-trophy', color: 'bg-red-500', desc: 'Master the topic'}
             ];
-
+            
             // Use 3-column grid for standard difficulties
             container.className = 'grid md:grid-cols-3 gap-6';
-
+            
             difficulties.forEach(diff => {
                 const button = document.createElement('button');
                 button.onclick = () => startQuiz(diff.level);
                 button.className = `difficulty-button ${diff.color} hover:opacity-90 text-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all`;
-
+                
                 // Check if this difficulty is mastered (>80%)
                 const difficultyData = masteryData[topic]?.difficulties?.[diff.level];
                 const isMastered = difficultyData?.mastered || false;
                 const bestScore = difficultyData?.best_score || 0;
-
+                
                 // Add trophy badge if mastered
                 const masteryBadge = isMastered ? `
                     <div class="difficulty-mastery" title="Mastered with ${bestScore}%!">
@@ -1315,11 +1106,11 @@
                         <div class="score">${bestScore}%</div>
                     </div>
                 ` : '';
-
+                
                 // Show best score if attempted but not mastered
-                const scoreDisplay = (bestScore > 0 && !isMastered) ?
+                const scoreDisplay = (bestScore > 0 && !isMastered) ? 
                     `<div class="best-score-display">Best: ${bestScore}%</div>` : '';
-
+                
                 button.innerHTML = `
                     ${masteryBadge}
                     <i class="fas ${diff.icon} text-6xl mb-4"></i>
@@ -1330,7 +1121,7 @@
                 `;
                 container.appendChild(button);
             });
-
+            
             document.getElementById('topicScreen').classList.add('hidden');
             document.getElementById('difficultyScreen').classList.remove('hidden');
         }
@@ -1341,21 +1132,21 @@
             score = 0;
             answered = false;
             startTime = Date.now();
-
+            
             document.getElementById('difficultyScreen').classList.add('hidden');
             document.getElementById('loadingScreen').classList.remove('hidden');
-
+            
             try {
                 const response = await fetch(`/api/questions/${currentTopic}/${difficulty}`);
                 questions = await response.json();
-
+                
                 document.getElementById('loadingScreen').classList.add('hidden');
                 document.getElementById('quizScreen').classList.remove('hidden');
-
+                
                 document.getElementById('quizTopicTitle').textContent = currentTopic.charAt(0).toUpperCase() + currentTopic.slice(1);
                 document.getElementById('total').textContent = questions.length;
                 document.getElementById('totalQuestions').textContent = questions.length;
-
+                
                 showQuestion();
             } catch (error) {
                 console.error('Error loading questions:', error);
@@ -1367,17 +1158,17 @@
         function showQuestion() {
             const question = questions[currentQuestionIndex];
             answered = false;
-
-            document.getElementById('questionText').innerHTML = question.question;
+            
+            document.getElementById('questionText').textContent = question.question;
             document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
             document.getElementById('score').textContent = score;
-
+            
             const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
             document.getElementById('progressBar').style.width = progress + '%';
-
+            
             const optionsContainer = document.getElementById('optionsContainer');
             optionsContainer.innerHTML = '';
-
+            
             // Add number line ONLY for arithmetic questions (addition/subtraction)
             // Do NOT show number line for complex numbers or other topics
             if (currentTopic === 'arithmetic') {
@@ -1388,7 +1179,7 @@
                     optionsContainer.appendChild(numberLineDiv);
                 }
             }
-
+            
             // Add answer options
             question.options.forEach((option, index) => {
                 const button = document.createElement('button');
@@ -1397,14 +1188,14 @@
                 button.onclick = () => handleAnswer(index);
                 optionsContainer.appendChild(button);
             });
-
+            
             // Add flag button
             const flagButton = document.createElement('button');
             flagButton.className = 'w-full mt-4 p-3 rounded-lg text-center text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all';
             flagButton.innerHTML = '<i class="fas fa-flag mr-2"></i>Report an issue with this question';
             flagButton.onclick = () => showFlagQuestionModal(question.id);
             optionsContainer.appendChild(flagButton);
-
+            
             document.getElementById('feedbackContainer').classList.add('hidden');
             document.getElementById('nextButton').classList.add('hidden');
         }
@@ -1412,36 +1203,36 @@
         function handleAnswer(selectedIndex) {
             if (answered) return;
             answered = true;
-
+            
             const question = questions[currentQuestionIndex];
             const correct = selectedIndex === question.correct;
-
+            
             if (correct) {
                 score++;
                 document.getElementById('score').textContent = score;
             }
-
+            
             const allChildren = document.getElementById('optionsContainer').children;
-
+            
             // CRITICAL FIX: Find the offset by checking if first child is number line
             // Number line div doesn't have onclick, buttons do
             let buttonOffset = 0;
             if (allChildren.length > 0 && !allChildren[0].onclick) {
                 buttonOffset = 1; // First child is number line, so buttons start at index 1
             }
-
+            
             // Calculate where option buttons end (before flag button)
             // There are always 4 option buttons, plus potentially 1 number line at start
             const optionButtonCount = 4;
             const optionButtonsEnd = buttonOffset + optionButtonCount;
-
+            
             // Now loop through actual option buttons only (NOT the flag button at the end)
             for (let i = buttonOffset; i < optionButtonsEnd; i++) {
                 const button = allChildren[i];
                 const optionIndex = i - buttonOffset; // Convert container index to option index
-
+                
                 button.disabled = true;
-
+                
                 if (optionIndex === question.correct) {
                     button.className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-green-100 border-2 border-green-500 text-green-800';
                     button.innerHTML += ' <i class="fas fa-check float-right text-green-600"></i>';
@@ -1452,16 +1243,16 @@
                     button.className = 'w-full p-4 rounded-xl text-left text-lg font-medium bg-gray-100 text-gray-600';
                 }
             }
-
+            
             // Keep the flag button enabled and clickable (it's the last child)
             // No need to disable it - students should be able to report issues after seeing the answer
-
+            
             // Generate solution number line for arithmetic questions
             let solutionNumberLine = '';
             if (currentTopic === 'arithmetic') {
                 solutionNumberLine = generateSolutionNumberLine(question.question) || '';
             }
-
+            
             const feedback = document.getElementById('feedbackContainer');
             feedback.className = correct ? 'mb-6 p-6 rounded-xl bg-green-50 border-2 border-green-200' : 'mb-6 p-6 rounded-xl bg-blue-50 border-2 border-blue-200';
             feedback.innerHTML = `
@@ -1477,7 +1268,7 @@
                 </div>
             `;
             feedback.classList.remove('hidden');
-
+            
             document.getElementById('nextButton').classList.remove('hidden');
         }
 
@@ -1490,77 +1281,13 @@
             }
         }
 
-        function showGuestResultModal(score, total, percentage) {
-            const performanceMessages = {
-                100: { emoji: '🏆', title: 'Perfect Score!', message: 'Outstanding! You got every question right!' },
-                90: { emoji: '⭐', title: 'Excellent Work!', message: 'You scored 90% or higher - fantastic!' },
-                70: { emoji: '👍', title: 'Good Job!', message: 'You\'re doing well! Keep practicing!' },
-                50: { emoji: '💪', title: 'Keep Trying!', message: 'You\'re learning! Practice makes perfect!' },
-                0: { emoji: '📚', title: 'Room to Grow', message: 'Don\'t give up! Every expert was once a beginner.' }
-            };
-
-            const messageKey = Object.keys(performanceMessages)
-                .map(Number)
-                .reverse()
-                .find(threshold => percentage >= threshold) || 0;
-            
-            const performance = performanceMessages[messageKey];
-
-            const modal = document.createElement('div');
-            modal.className = 'guest-result-overlay';
-            modal.innerHTML = `
-                <div class="guest-result-modal">
-                    <div style="text-align: center;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">${performance.emoji}</div>
-                        <h2>${performance.title}</h2>
-                        <div class="score-display">${percentage}%</div>
-                        <div class="message">${performance.message}</div>
-                        <div class="message">You got <strong>${score} out of ${total}</strong> questions correct!</div>
-                    </div>
-
-                    <div class="benefits">
-                        <h3>🌟 Create a free account to:</h3>
-                        <ul>
-                            <li>Save your quiz scores and progress</li>
-                            <li>Earn badges and achievements</li>
-                            <li>Track your learning journey</li>
-                            <li>Compete on leaderboards</li>
-                            <li>Get detailed performance analytics</li>
-                        </ul>
-                    </div>
-
-                    <div class="button-group">
-                        <a href="/register" class="primary-btn">Create Free Account</a>
-                        <button onclick="closeGuestModal()" class="secondary-btn">Continue as Guest</button>
-                    </div>
-                </div>
-            `;
-
-            document.body.appendChild(modal);
-            
-            // Close modal when clicking outside
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    closeGuestModal();
-                }
-            });
-        }
-
-        function closeGuestModal() {
-            const modal = document.querySelector('.guest-result-overlay');
-            if (modal) {
-                modal.remove();
-            }
-            backToTopics();
-        }
-
         async function submitAndShowResults() {
             const percentage = Math.round((score / questions.length) * 100);
             const timeTaken = Math.floor((Date.now() - startTime) / 1000);
-
+            
             // Submit to backend
             try {
-                const response = await fetch('/api/submit-quiz', {
+                await fetch('/api/submit-quiz', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
@@ -1572,34 +1299,20 @@
                         time_taken: timeTaken
                     })
                 });
-
-                const result = await response.json();
-                
-                // Check if user is a guest
-                if (result.is_guest || result.prompt_register) {
-                    // Show guest modal with registration prompt
-                    showGuestResultModal(score, questions.length, percentage);
-                    return;
-                }
-                
-                // Regular user - reload progress and show results
-                await loadProgress();
-                await loadBadgeWidget();
-                
             } catch (error) {
                 console.error('Error submitting quiz:', error);
             }
-
+            
             showResults(percentage);
         }
 
         function showResults(percentage) {
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('resultsScreen').classList.remove('hidden');
-
+            
             document.getElementById('percentage').textContent = percentage + '%';
             document.getElementById('scoreText').textContent = `You scored ${score} out of ${questions.length}`;
-
+            
             const messageEl = document.getElementById('performanceMessage');
             if (percentage === 100) {
                 messageEl.className = 'text-xl text-green-600 font-semibold mb-6';
@@ -1644,17 +1357,17 @@
         }
 
         // ==================== QUESTION FLAGGING ====================
-
+        
         let currentFlagQuestionId = null;
 
         function showFlagQuestionModal(questionId) {
             currentFlagQuestionId = questionId;
             const question = questions[currentQuestionIndex];
-
+            
             document.getElementById('flagQuestionText').textContent = question.question;
             document.getElementById('flagQuestionModal').classList.remove('hidden');
             document.getElementById('flagQuestionModal').classList.add('flex');
-
+            
             document.getElementById('flagForm').reset();
         }
 
@@ -1669,15 +1382,15 @@
             if (flagForm) {
                 flagForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
-
+                    
                     const flagType = document.getElementById('flagType').value;
                     const description = document.getElementById('flagDescription').value;
-
+                    
                     if (!flagType || !description.trim()) {
                         alert('Please fill in all fields');
                         return;
                     }
-
+                    
                     try {
                         const response = await fetch('/api/student/flag-question', {
                             method: 'POST',
@@ -1688,9 +1401,9 @@
                                 description: description
                             })
                         });
-
+                        
                         const data = await response.json();
-
+                        
                         if (response.ok) {
                             alert('Thank you! Your report has been submitted to the administrator.');
                             hideFlagModal();
@@ -1734,7 +1447,7 @@
 
                 <div>
                     <label class="block text-gray-700 font-semibold mb-2">Description:</label>
-                    <textarea id="flagDescription" required rows="4"
+                    <textarea id="flagDescription" required rows="4" 
                               class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                               placeholder="Please describe the issue in detail..."></textarea>
                 </div>
@@ -1762,9 +1475,9 @@
                     <label for="currentPassword">
                         <i class="fas fa-lock mr-2"></i>Current Password
                     </label>
-                    <input
-                        type="password"
-                        id="currentPassword"
+                    <input 
+                        type="password" 
+                        id="currentPassword" 
                         required
                         minlength="6"
                         class="form-input"
@@ -1775,9 +1488,9 @@
                     <label for="newPassword">
                         <i class="fas fa-key mr-2"></i>New Password
                     </label>
-                    <input
-                        type="password"
-                        id="newPassword"
+                    <input 
+                        type="password" 
+                        id="newPassword" 
                         required
                         minlength="6"
                         class="form-input"
@@ -1789,9 +1502,9 @@
                     <label for="confirmPassword">
                         <i class="fas fa-check-circle mr-2"></i>Confirm New Password
                     </label>
-                    <input
-                        type="password"
-                        id="confirmPassword"
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
                         required
                         minlength="6"
                         class="form-input"
@@ -2030,32 +1743,32 @@
 
         async function changePassword(event) {
             event.preventDefault();
-
+            
             const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-
+            
             const errorDiv = document.getElementById('passwordError');
             const successDiv = document.getElementById('passwordSuccess');
-
+            
             // Clear previous messages
             errorDiv.classList.add('hidden');
             successDiv.classList.add('hidden');
-
+            
             // Validate passwords match
             if (newPassword !== confirmPassword) {
                 errorDiv.textContent = 'New passwords do not match';
                 errorDiv.classList.remove('hidden');
                 return;
             }
-
+            
             // Validate password length
             if (newPassword.length < 6) {
                 errorDiv.textContent = 'Password must be at least 6 characters long';
                 errorDiv.classList.remove('hidden');
                 return;
             }
-
+            
             try {
                 const response = await fetch('/api/change-password', {
                     method: 'POST',
@@ -2068,14 +1781,14 @@
                         confirm_password: confirmPassword
                     })
                 });
-
+                
                 const data = await response.json();
-
+                
                 if (response.ok) {
                     successDiv.textContent = data.message;
                     successDiv.classList.remove('hidden');
                     document.getElementById('passwordForm').reset();
-
+                    
                     // Auto-close after 2 seconds
                     setTimeout(() => {
                         closePasswordModal();

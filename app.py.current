@@ -6,17 +6,12 @@ from datetime import datetime
 import os
 import random
 import re
+import config
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mathquiz.db'
+app.secret_key = config.SECRET_KEY
+app.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Session configuration for guest mode
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 db = SQLAlchemy(app)
 
@@ -441,11 +436,6 @@ def role_required(*roles):
 def approved_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Allow guest users through
-        if 'is_guest' in session:
-            return f(*args, **kwargs)
-        
-        # For regular users, check authentication and approval
         if 'user_id' not in session:
             return jsonify({'error': 'Authentication required'}), 401
         user = User.query.get(session['user_id'])
@@ -453,15 +443,6 @@ def approved_required(f):
             return jsonify({'error': 'User not found'}), 404
         if user.role == 'teacher' and not user.is_approved:
             return jsonify({'error': 'Teacher account pending approval'}), 403
-        return f(*args, **kwargs)
-    return decorated_function
-
-def guest_or_login_required(f):
-    """Allow both guest users and logged-in users"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'is_guest' not in session and 'user_id' not in session:
-            return jsonify({'error': 'Authentication required'}), 401
         return f(*args, **kwargs)
     return decorated_function
 
@@ -1163,8 +1144,6 @@ def login():
 
     return jsonify({
         'message': 'Login successful',
-        'role': user.role,
-        'is_approved': user.is_approved,
         'user': user.to_dict()
     }), 200
 
@@ -1172,31 +1151,6 @@ def login():
 def logout():
     session.clear()
     return jsonify({'message': 'Logged out successfully'}), 200
-
-@app.route('/api/guest-start', methods=['POST'])
-def guest_start():
-    """Initialize guest session"""
-    session.clear()
-    session['is_guest'] = True
-    session['guest_id'] = f"guest_{datetime.utcnow().timestamp()}"
-    return jsonify({'message': 'Guest session started'}), 200
-
-@app.route('/guest')
-def guest_app():
-    """Guest mode student interface"""
-    if 'is_guest' not in session:
-        return redirect(url_for('index'))
-    return render_template('student_app.html')
-
-@app.route('/api/guest-info')
-def guest_info():
-    """Return guest session information"""
-    if 'is_guest' in session:
-        return jsonify({
-            'is_guest': True,
-            'guest_id': session.get('guest_id', 'unknown')
-        }), 200
-    return jsonify({'is_guest': False}), 200
 
 @app.route('/api/change-password', methods=['POST'])
 @login_required
@@ -1231,22 +1185,9 @@ def change_password():
     return jsonify({'message': 'Password changed successfully'}), 200
 
 @app.route('/api/current-user')
+@login_required
 def current_user():
-    """Get current user info - supports both regular and guest users"""
-    if 'is_guest' in session:
-        return jsonify({
-            'is_guest': True,
-            'full_name': 'Guest User',
-            'email': 'guest@example.com',
-            'role': 'student'
-        }), 200
-    
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-    
     user = User.query.get(session['user_id'])
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
     return jsonify(user.to_dict()), 200
 
 # ==================== STUDENT ROUTES ====================
@@ -1268,152 +1209,117 @@ def student_app():
     return render_template('student_app.html')
 
 @app.route('/api/topics')
-@guest_or_login_required
+@login_required
 @approved_required
 def get_topics():
-    """Get topics grouped by Junior Cycle strands"""
-    
-    # Topic metadata (icons and display titles)
-    topic_info = {
-        'arithmetic': {'title': 'Arithmetic', 'icon': 'calculator'},
-        'fractions': {'title': 'Fractions', 'icon': 'divide'},
-        'decimals': {'title': 'Decimals', 'icon': 'percent'},
-        'multiplication_division': {'title': 'Multiplication & Division', 'icon': 'x'},
-        'number_systems': {'title': 'Number Systems', 'icon': 'hash'},
-        'bodmas': {'title': 'BODMAS', 'icon': 'book'},
-        'introductory_algebra': {'title': 'Introductory Algebra', 'icon': 'book-open'},
-        'functions': {'title': 'Functions', 'icon': 'chart'},
-        'patterns': {'title': 'Patterns', 'icon': 'trending-up'},
-        'solving_equations': {'title': 'Solving Equations', 'icon': 'equals'},
-        'simplifying_expressions': {'title': 'Simplifying Expressions', 'icon': 'calculator'},
-        'expanding_factorising': {'title': 'Expanding & Factorising', 'icon': 'brackets'},
-        'probability': {'title': 'Probability', 'icon': 'dice'},
-        'descriptive_statistics': {'title': 'Descriptive Statistics', 'icon': 'chart-bar'},
-        'sets': {'title': 'Sets', 'icon': 'layers'},
-        'surds': {'title': 'Surds', 'icon': 'radical'},
-        'complex_numbers_intro': {'title': 'Complex Numbers Intro', 'icon': 'infinity'},
-        'complex_numbers_expanded': {'title': 'Complex Numbers - Expanded', 'icon': 'rotate'}
-    }
-    
-    # Build response with strands
-    strands = {}
-    topics_flat = {}
-    
-    # Try to query database for topics with their strands
-    try:
-        from sqlalchemy import text
-        topics_query = db.session.execute(text("""
-            SELECT DISTINCT topic, strand
-            FROM questions
-            WHERE strand IS NOT NULL
-            ORDER BY 
-                CASE strand
-                    WHEN 'Number' THEN 1
-                    WHEN 'Algebra and Functions' THEN 2
-                    WHEN 'Statistics and Probability' THEN 3
-                    WHEN 'Senior Cycle - Algebra' THEN 4
-                    WHEN 'Geometry and Trigonometry' THEN 5
-                    ELSE 6
-                END,
-                CASE topic
-                    -- Order for Number strand
-                    WHEN 'arithmetic' THEN 1
-                    WHEN 'multiplication_division' THEN 2
-                    WHEN 'number_systems' THEN 3
-                    WHEN 'bodmas' THEN 4
-                    WHEN 'fractions' THEN 5
-                    WHEN 'decimals' THEN 6
-                    WHEN 'sets' THEN 7
-                    -- Order for Algebra and Functions strand (Junior Cycle)
-                    WHEN 'introductory_algebra' THEN 1
-                    WHEN 'functions' THEN 2
-                    WHEN 'patterns' THEN 3
-                    WHEN 'solving_equations' THEN 4
-                    WHEN 'simplifying_expressions' THEN 5
-                    WHEN 'expanding_factorising' THEN 6
-                    -- Order for Statistics and Probability strand
-                    WHEN 'probability' THEN 1
-                    WHEN 'descriptive_statistics' THEN 2
-                    -- Order for Senior Cycle - Algebra strand
-                    WHEN 'surds' THEN 1
-                    WHEN 'complex_numbers_intro' THEN 2
-                    WHEN 'complex_numbers_expanded' THEN 3
-                    -- Default order for other topics
-                    ELSE 10
-                END,
-                topic
-        """)).fetchall()
-        
-        for topic, strand in topics_query:
-            if strand not in strands:
-                strands[strand] = []
-            
-            # Add topic to strand list
-            strands[strand].append(topic)
-            
-            # Add topic metadata to flat dict
-            if topic in topic_info:
-                topics_flat[topic] = topic_info[topic]
-            else:
-                # Fallback for topics not in metadata
-                topics_flat[topic] = {
-                    'title': topic.replace('_', ' ').title(),
-                    'icon': 'book'
-                }
-    except Exception as e:
-        # If strand column doesn't exist or query fails, use fallback
-        print(f"Warning: Could not query strand column: {e}")
-        strands = {}
-    
-    # If no strands found (before migration or error), use fallback
-    if not strands:
-        strands = {
-            'Number': ['arithmetic', 'multiplication_division', 'number_systems', 
-                      'bodmas', 'fractions', 'decimals', 'sets'],
-            'Algebra and Functions': ['introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising'],
-            'Statistics and Probability': ['probability', 'descriptive_statistics'],
-            'Senior Cycle - Algebra': ['surds', 'complex_numbers_intro', 
-                                        'complex_numbers_expanded']
-        }
-        topics_flat = topic_info
-    
-    # Strand colors and descriptions
-    strand_info = {
-        'Number': {
-            'color': '#667eea',
-            'icon': '📊',
-            'description': 'Master the fundamentals of numbers and operations'
+    topics = {
+        'arithmetic': {
+            'title': 'Arithmetic',
+            'icon': 'calculator',
+            'color': 'bg-red-500',
+            'description': 'Master addition, subtraction, multiplication and division with whole numbers',
+            'examples': 'e.g., 23 + 45, 100 - 67, 12 × 8',
+            'skills': ['Basic operations', 'Mental math', 'Number sense']
         },
-        'Algebra and Functions': {
-            'color': '#f093fb',
-            'icon': '🔢',
-            'description': 'Discover patterns, equations, and functions'
+        'fractions': {
+            'title': 'Fractions',
+            'icon': 'divide',
+            'color': 'bg-blue-500',
+            'description': 'Learn to work with parts of numbers and convert between fractions',
+            'examples': 'e.g., 1/2 + 1/4, 3/5 × 2/3',
+            'skills': ['Adding fractions', 'Simplifying', 'Mixed numbers']
         },
-        'Statistics and Probability': {
-            'color': '#4facfe',
-            'icon': '📈',
-            'description': 'Analyze data and understand probability'
+        'decimals': {
+            'title': 'Decimals',
+            'icon': 'percent',
+            'color': 'bg-teal-500',
+            'description': 'Understand decimal notation and perform calculations with decimal numbers',
+            'examples': 'e.g., 2.5 + 3.7, 0.25 × 4',
+            'skills': ['Decimal operations', 'Place value', 'Rounding']
         },
-        'Senior Cycle - Algebra': {
-            'color': '#fa709a',
-            'icon': '🎓',
-            'description': 'Advanced algebraic concepts for senior students'
+        'multiplication_division': {
+            'title': 'Multiplication & Division',
+            'icon': 'x',
+            'color': 'bg-indigo-500',
+            'description': 'Practice multiplication tables and division, including negative numbers',
+            'examples': 'e.g., 12 × 15, 144 ÷ 12, -6 × 7',
+            'skills': ['Times tables', 'Long division', 'Negative numbers']
         },
-        'Geometry and Trigonometry': {
-            'color': '#764ba2',
-            'icon': '📐',
-            'description': 'Explore shapes, measurements, and spatial reasoning'
+        'number_systems': {
+            'title': 'Number Systems',
+            'icon': 'hash',
+            'color': 'bg-cyan-500',
+            'description': 'Explore binary, octal, and hexadecimal number systems',
+            'examples': 'e.g., 1010₂ = 10₁₀, FF₁₆ = 255₁₀',
+            'skills': ['Binary conversion', 'Hexadecimal', 'Base systems']
+        },
+        'bodmas': {
+            'title': 'BODMAS',
+            'icon': 'book',
+            'color': 'bg-green-500',
+            'description': 'Master the order of operations: Brackets, Orders, Division, Multiplication, Addition, Subtraction',
+            'examples': 'e.g., 2 + 3 × 4, (5 + 3) ÷ 2',
+            'skills': ['Order of operations', 'Brackets', 'Complex expressions']
+        },
+        'functions': {
+            'title': 'Functions',
+            'icon': 'chart',
+            'color': 'bg-purple-500',
+            'description': 'Understand function notation and evaluate functions',
+            'examples': 'e.g., f(x) = 2x + 1, find f(5)',
+            'skills': ['Function notation', 'Evaluation', 'Composition']
+        },
+        'probability': {
+            'title': 'Probability',
+            'icon': 'dice',
+            'color': 'bg-emerald-500',
+            'description': 'Calculate the likelihood of events using probability theory',
+            'examples': 'e.g., P(heads) = 1/2, P(rolling a 6)',
+            'skills': ['Basic probability', 'Fractions', 'Event outcomes']
+        },
+        'sets': {
+            'title': 'Sets',
+            'icon': 'layers',
+            'color': 'bg-orange-500',
+            'description': 'Learn about collections of objects and set operations',
+            'examples': 'e.g., A ∪ B, A ∩ B, A ⊆ B',
+            'skills': ['Union & intersection', 'Venn diagrams', 'Set notation']
+        },
+        'surds': {
+            'title': 'Surds',
+            'icon': 'radical',
+            'color': 'bg-amber-600',
+            'description': 'Work with square roots and simplify surd expressions',
+            'examples': 'e.g., √50 = 5√2, √12 + √27',
+            'skills': ['Simplifying surds', 'Operations', 'Rationalizing']
+        },
+        'complex_numbers_intro': {
+            'title': 'Complex Numbers Intro',
+            'icon': 'infinity',
+            'color': 'bg-pink-500',
+            'description': 'Introduction to imaginary numbers and basic complex number operations',
+            'examples': 'e.g., i² = -1, 3 + 4i',
+            'skills': ['Imaginary unit', 'Basic operations', 'Real & imaginary parts']
+        },
+        'complex_numbers_expanded': {
+            'title': 'Complex Numbers - Expanded',
+            'icon': 'rotate',
+            'color': 'bg-fuchsia-600',
+            'description': 'Advanced complex number operations including multiplication and division',
+            'examples': 'e.g., (2+3i)(4-i), conjugates',
+            'skills': ['Complex multiplication', 'Conjugates', 'Modulus']
         }
     }
-    
-    return jsonify({
-        'topics': topics_flat,
-        'strands': strands,
-        'strand_info': strand_info
-    })
+
+    # Add question count statistics for each topic
+    for topic_key in topics.keys():
+        topic_questions = Question.query.filter_by(topic=topic_key).count()
+        topics[topic_key]['question_count'] = topic_questions
+
+    return jsonify(topics)
 
 @app.route('/api/questions/<topic>/<difficulty>')
-@guest_or_login_required
+@login_required
 @approved_required
 def get_questions(topic, difficulty):
     """
@@ -1431,37 +1337,21 @@ def get_questions(topic, difficulty):
     return jsonify(questions_list[:25])
 
 @app.route('/api/submit-quiz', methods=['POST'])
-@guest_or_login_required
+@login_required
 @approved_required
 def submit_quiz():
-    """Submit quiz - works for both guests and registered users"""
+    """Submit quiz and update stats/badges"""
     data = request.json
-    
+
     # Normalize topic and difficulty to lowercase
     topic = data.get('topic', '').lower().strip()
     difficulty = data.get('difficulty', '').lower().strip()
-    score = data.get('score', 0)
-    total = data.get('total_questions', 25)
-    percentage = data.get('percentage', 0)
-    time_taken = data.get('time_taken', 0)
-    
-    # For guest users, just return results without saving
-    if 'is_guest' in session:
-        return jsonify({
-            'message': 'Quiz completed!',
-            'score': score,
-            'total': total,
-            'percentage': percentage,
-            'is_guest': True,
-            'prompt_register': True
-        }), 200
-    
-    # For registered users, save to database
+
     # Validate topic and difficulty
     valid_topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
         'number_systems',
-        'bodmas', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'sets', 'probability', 'descriptive_statistics', 'surds',
+        'bodmas', 'functions', 'sets', 'probability', 'surds',
         'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     valid_difficulties = ['beginner', 'intermediate', 'advanced']
@@ -1477,10 +1367,10 @@ def submit_quiz():
         user_id=session['user_id'],
         topic=topic,
         difficulty=difficulty,
-        score=score,
-        total_questions=total,
-        percentage=percentage,
-        time_taken=time_taken
+        score=data.get('score'),
+        total_questions=data.get('total_questions'),
+        percentage=data.get('percentage'),
+        time_taken=data.get('time_taken')
     )
 
     db.session.add(attempt)
@@ -1497,12 +1387,8 @@ def submit_quiz():
     }), 201
 
 @app.route('/api/my-progress')
-@guest_or_login_required
+@login_required
 def my_progress():
-    # Guest users have no progress
-    if 'is_guest' in session:
-        return jsonify([]), 200
-    
     attempts = QuizAttempt.query.filter_by(user_id=session['user_id']).order_by(QuizAttempt.completed_at.desc()).all()
     return jsonify([a.to_dict() for a in attempts])
 
@@ -1513,16 +1399,6 @@ def my_progress():
 @approved_required
 def get_student_badges():
     """Get all badges (earned and available) for the current student"""
-    # Guest users don't have badges
-    if 'is_guest' in session:
-        return jsonify({
-            'earned': [],
-            'available': [],
-            'level': 1,
-            'total_points': 0,
-            'total_badges': 0
-        }), 200
-    
     user_id = session['user_id']
 
     # Get all badges
@@ -1583,25 +1459,6 @@ def get_student_badges():
 @approved_required
 def get_student_stats():
     """Get detailed statistics for the current student"""
-    # Guest users don't have stats
-    if 'is_guest' in session:
-        return jsonify({
-            'stats': {
-                'total_quizzes': 0,
-                'total_questions_answered': 0,
-                'total_correct_answers': 0,
-                'overall_accuracy': 0,
-                'current_streak_days': 0,
-                'longest_streak_days': 0,
-                'total_points': 0,
-                'level': 1,
-                'topics_mastered': 0,
-                'perfect_scores': 0
-            },
-            'topic_progress': [],
-            'recent_attempts': []
-        }), 200
-    
     user_id = session['user_id']
 
     stats = UserStats.query.filter_by(user_id=user_id).first()
@@ -1644,42 +1501,17 @@ def get_student_mastery():
     Get student's mastery status for all topics and difficulties.
     Returns best score for each topic/difficulty combination.
     Mastery threshold: >80%
-    OPTIMIZED: Single query instead of 36 separate queries
     """
-    # Guest users don't have mastery data
-    if 'is_guest' in session:
-        return jsonify({}), 200
-    
     user_id = session['user_id']
 
     # Get all topics - MUST match topics in get_topics() API
     topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'number_systems', 'bodmas', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'probability', 'descriptive_statistics', 'sets', 
+        'number_systems', 'bodmas', 'functions', 'probability', 'sets', 
         'surds', 'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     difficulties = ['beginner', 'intermediate', 'advanced']
 
-    # OPTIMIZED: Get all best scores in a single query
-    from sqlalchemy import text
-    query = text("""
-        SELECT topic, difficulty, MAX(percentage) as best_score
-        FROM quiz_attempts
-        WHERE user_id = :user_id
-        GROUP BY topic, difficulty
-    """)
-    
-    results = db.session.execute(query, {'user_id': user_id}).fetchall()
-    
-    # Build lookup dictionary from query results
-    best_scores = {}
-    for row in results:
-        topic, difficulty, best_score = row
-        if topic not in best_scores:
-            best_scores[topic] = {}
-        best_scores[topic][difficulty] = best_score
-
-    # Build mastery data structure
     mastery_data = {}
 
     for topic in topics:
@@ -1691,25 +1523,29 @@ def get_student_mastery():
         mastered_count = 0
 
         for difficulty in difficulties:
-            best_score = best_scores.get(topic, {}).get(difficulty, 0)
-            
-            if best_score > 80:
+            # Get best score for this topic/difficulty
+            best_attempt = QuizAttempt.query.filter_by(
+                user_id=user_id,
+                topic=topic,
+                difficulty=difficulty
+            ).order_by(QuizAttempt.percentage.desc()).first()
+
+            if best_attempt and best_attempt.percentage > 80:
                 mastery_data[topic]['difficulties'][difficulty] = {
                     'mastered': True,
-                    'best_score': round(best_score, 1)
+                    'best_score': round(best_attempt.percentage, 1)
                 }
                 mastered_count += 1
             else:
                 mastery_data[topic]['difficulties'][difficulty] = {
                     'mastered': False,
-                    'best_score': round(best_score, 1)
+                    'best_score': round(best_attempt.percentage, 1) if best_attempt else 0
                 }
 
         # Topic is mastered if all 3 difficulties are mastered
         mastery_data[topic]['topic_mastered'] = (mastered_count == 3)
 
     return jsonify(mastery_data)
-
 
 
 @app.route('/student/badges')
@@ -2156,7 +1992,7 @@ def get_class_performance_matrix(class_id):
     students = User.query.filter(User.id.in_(student_ids)).all()
 
     # Get all topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'number_systems', 'bodmas', 'probability', 'descriptive_statistics', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'number_systems', 'bodmas', 'probability', 'functions', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     students_data = []
@@ -2316,260 +2152,6 @@ def class_comparison():
         })
 
     return jsonify(comparison_data)
-
-
-# ==================== USER MANAGEMENT ADMIN ROUTES ====================
-
-@app.route('/admin/users')
-@login_required
-@role_required('admin')
-def admin_user_management():
-    """Admin page for managing all users"""
-    return render_template('admin_user_management.html')
-
-@app.route('/api/admin/user/<int:user_id>', methods=['GET'])
-@login_required
-@role_required('admin')
-def get_user_details(user_id):
-    """Get detailed user information"""
-    user = User.query.get_or_404(user_id)
-    
-    # Get additional stats
-    stats = UserStats.query.filter_by(user_id=user_id).first()
-    quiz_count = QuizAttempt.query.filter_by(user_id=user_id).count()
-    
-    # Get class enrollments if student
-    classes = []
-    if user.role == 'student':
-        enrollments = ClassEnrollment.query.filter_by(student_id=user_id).all()
-        classes = [{'id': e.class_obj.id, 'name': e.class_obj.name, 
-                   'teacher': e.class_obj.teacher.full_name} for e in enrollments]
-    
-    # Get classes teaching if teacher
-    elif user.role == 'teacher':
-        teaching_classes = Class.query.filter_by(teacher_id=user_id).all()
-        classes = [{'id': c.id, 'name': c.name, 
-                   'student_count': len(c.enrollments)} for c in teaching_classes]
-    
-    return jsonify({
-        'user': user.to_dict(),
-        'stats': {
-            'total_points': stats.total_points if stats else 0,
-            'level': stats.level if stats else 1,
-            'quiz_count': quiz_count
-        },
-        'classes': classes
-    })
-
-@app.route('/api/admin/user/<int:user_id>', methods=['PUT'])
-@login_required
-@role_required('admin')
-def update_user(user_id):
-    """Update user details (name, email)"""
-    user = User.query.get_or_404(user_id)
-    data = request.json
-    
-    # Update name
-    if 'full_name' in data:
-        new_name = data['full_name'].strip()
-        if new_name:
-            user.full_name = new_name
-    
-    # Update email (check for duplicates)
-    if 'email' in data:
-        new_email = data['email'].strip().lower()
-        if new_email and new_email != user.email:
-            existing = User.query.filter_by(email=new_email).first()
-            if existing:
-                return jsonify({'error': 'Email already in use'}), 400
-            user.email = new_email
-    
-    # Update approval status
-    if 'is_approved' in data:
-        user.is_approved = data['is_approved']
-    
-    db.session.commit()
-    
-    return jsonify({
-        'message': 'User updated successfully',
-        'user': user.to_dict()
-    })
-
-@app.route('/api/admin/user/<int:user_id>', methods=['DELETE'])
-@login_required
-@role_required('admin')
-def delete_user(user_id):
-    """Delete a user and all associated data"""
-    try:
-        user = User.query.get_or_404(user_id)
-        
-        # Don't allow deleting yourself
-        if user.id == session['user_id']:
-            return jsonify({'error': 'Cannot delete your own account'}), 400
-        
-        # Don't allow deleting other admins
-        if user.role == 'admin':
-            return jsonify({'error': 'Cannot delete admin accounts'}), 403
-        
-        # Delete associated data in proper order to avoid foreign key violations
-        
-        # 1. Quiz attempts
-        QuizAttempt.query.filter_by(user_id=user_id).delete()
-        
-        # 2. User stats
-        UserStats.query.filter_by(user_id=user_id).delete()
-        
-        # 3. Topic progress
-        TopicProgress.query.filter_by(user_id=user_id).delete()
-        
-        # 4. User badges
-        UserBadge.query.filter_by(user_id=user_id).delete()
-        
-        # 5. Question flags - BOTH as reporter AND as resolver
-        QuestionFlag.query.filter_by(user_id=user_id).delete()
-        # Set resolved_by to NULL for flags this user resolved
-        QuestionFlag.query.filter_by(resolved_by=user_id).update({'resolved_by': None})
-        
-        # 6. Question edits - Set editor to NULL (keep edit history but anonymize)
-        QuestionEdit.query.filter_by(edited_by=user_id).update({'edited_by': None})
-        
-        # 7. Domain access records (for teachers)
-        TeacherDomainAccess.query.filter_by(teacher_id=user_id).delete()
-        # Set granted_by to NULL for domain access this admin granted
-        TeacherDomainAccess.query.filter_by(granted_by=user_id).update({'granted_by': None})
-        
-        # 8. Domain access requests
-        DomainAccessRequest.query.filter_by(teacher_id=user_id).delete()
-        # Set reviewed_by to NULL for requests this admin reviewed
-        DomainAccessRequest.query.filter_by(reviewed_by=user_id).update({'reviewed_by': None})
-        
-        # 9. Class enrollments (if student)
-        ClassEnrollment.query.filter_by(student_id=user_id).delete()
-        
-        # 10. Classes (if teacher) - also delete all enrollments
-        if user.role == 'teacher':
-            classes = Class.query.filter_by(teacher_id=user_id).all()
-            for class_obj in classes:
-                ClassEnrollment.query.filter_by(class_id=class_obj.id).delete()
-                db.session.delete(class_obj)
-        
-        # Finally, delete the user
-        db.session.delete(user)
-        db.session.commit()
-        
-        return jsonify({
-            'message': f'User {user.full_name} deleted successfully'
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error deleting user {user_id}: {str(e)}")  # Log the error
-        return jsonify({
-            'error': f'Failed to delete user: {str(e)}'
-        }), 500
-
-@app.route('/api/admin/users/bulk-delete', methods=['POST'])
-@login_required
-@role_required('admin')
-def bulk_delete_users():
-    """Delete multiple users at once"""
-    try:
-        data = request.json
-        user_ids = data.get('user_ids', [])
-        
-        if not user_ids:
-            return jsonify({'error': 'No users selected'}), 400
-        
-        deleted_count = 0
-        errors = []
-        
-        for user_id in user_ids:
-            try:
-                user = User.query.get(user_id)
-                
-                if not user:
-                    errors.append(f"User {user_id} not found")
-                    continue
-                
-                # Don't allow deleting yourself
-                if user.id == session['user_id']:
-                    errors.append(f"Cannot delete your own account")
-                    continue
-                
-                # Don't allow deleting other admins
-                if user.role == 'admin':
-                    errors.append(f"Cannot delete admin account: {user.full_name}")
-                    continue
-                
-                # Delete associated data (same as single delete)
-                QuizAttempt.query.filter_by(user_id=user_id).delete()
-                UserStats.query.filter_by(user_id=user_id).delete()
-                TopicProgress.query.filter_by(user_id=user_id).delete()
-                UserBadge.query.filter_by(user_id=user_id).delete()
-                
-                QuestionFlag.query.filter_by(user_id=user_id).delete()
-                QuestionFlag.query.filter_by(resolved_by=user_id).update({'resolved_by': None})
-                
-                QuestionEdit.query.filter_by(edited_by=user_id).update({'edited_by': None})
-                
-                TeacherDomainAccess.query.filter_by(teacher_id=user_id).delete()
-                TeacherDomainAccess.query.filter_by(granted_by=user_id).update({'granted_by': None})
-                
-                DomainAccessRequest.query.filter_by(teacher_id=user_id).delete()
-                DomainAccessRequest.query.filter_by(reviewed_by=user_id).update({'reviewed_by': None})
-                
-                ClassEnrollment.query.filter_by(student_id=user_id).delete()
-                
-                if user.role == 'teacher':
-                    classes = Class.query.filter_by(teacher_id=user_id).all()
-                    for class_obj in classes:
-                        ClassEnrollment.query.filter_by(class_id=class_obj.id).delete()
-                        db.session.delete(class_obj)
-                
-                # Delete the user
-                db.session.delete(user)
-                deleted_count += 1
-                
-            except Exception as e:
-                errors.append(f"Error deleting user {user_id}: {str(e)}")
-                continue
-        
-        # Commit all deletions
-        db.session.commit()
-        
-        response_data = {
-            'deleted_count': deleted_count,
-            'total_requested': len(user_ids)
-        }
-        
-        if errors:
-            response_data['errors'] = errors
-        
-        return jsonify(response_data)
-        
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error in bulk delete: {str(e)}")
-        return jsonify({
-            'error': f'Failed to delete users: {str(e)}'
-        }), 500
-
-@app.route('/api/admin/user/<int:user_id>/toggle-approval', methods=['POST'])
-@login_required
-@role_required('admin')
-def toggle_user_approval(user_id):
-    """Toggle user approval status"""
-    user = User.query.get_or_404(user_id)
-    
-    user.is_approved = not user.is_approved
-    db.session.commit()
-    
-    status = 'approved' if user.is_approved else 'unapproved'
-    
-    return jsonify({
-        'message': f'User {status} successfully',
-        'is_approved': user.is_approved
-    })
 
 
 
@@ -2879,7 +2461,7 @@ def class_dashboard(class_id):
 @role_required('teacher')
 @approved_required
 def get_class_matrix_data(class_id):
-    """Get matrix data for class dashboard with Junior Cycle strands"""
+    """Get matrix data for class dashboard"""
     class_obj = Class.query.get_or_404(class_id)
 
     # Verify teacher owns this class
@@ -2889,78 +2471,8 @@ def get_class_matrix_data(class_id):
     # Get all students in class
     enrollments = ClassEnrollment.query.filter_by(class_id=class_id).all()
 
-    # NEW: Get topics grouped by strand from database
-    try:
-        from sqlalchemy import text
-        topics_query = db.session.execute(text("""
-            SELECT DISTINCT strand, topic
-            FROM questions
-            WHERE strand IS NOT NULL
-            ORDER BY 
-                CASE strand
-                    WHEN 'Number' THEN 1
-                    WHEN 'Algebra and Functions' THEN 2
-                    WHEN 'Statistics and Probability' THEN 3
-                    WHEN 'Senior Cycle - Algebra' THEN 4
-                    WHEN 'Geometry and Trigonometry' THEN 5
-                    ELSE 6
-                END,
-                CASE topic
-                    -- Order for Number strand
-                    WHEN 'arithmetic' THEN 1
-                    WHEN 'multiplication_division' THEN 2
-                    WHEN 'number_systems' THEN 3
-                    WHEN 'bodmas' THEN 4
-                    WHEN 'fractions' THEN 5
-                    WHEN 'decimals' THEN 6
-                    WHEN 'sets' THEN 7
-                    -- Order for Algebra and Functions strand (Junior Cycle)
-                    WHEN 'introductory_algebra' THEN 1
-                    WHEN 'functions' THEN 2
-                    WHEN 'patterns' THEN 3
-                    WHEN 'solving_equations' THEN 4
-                    WHEN 'simplifying_expressions' THEN 5
-                    WHEN 'expanding_factorising' THEN 6
-                    -- Order for Statistics and Probability strand
-                    WHEN 'probability' THEN 1
-                    WHEN 'descriptive_statistics' THEN 2
-                    -- Order for Senior Cycle - Algebra strand
-                    WHEN 'surds' THEN 1
-                    WHEN 'complex_numbers_intro' THEN 2
-                    WHEN 'complex_numbers_expanded' THEN 3
-                    -- Default order for other topics
-                    ELSE 10
-                END,
-                topic
-        """)).fetchall()
-    except Exception as e:
-        print(f"Warning: Could not query strand column in matrix-data: {e}")
-        topics_query = []
-    
-    # Build strands structure
-    strands = {}
-    all_topics = []
-    
-    for strand, topic in topics_query:
-        if strand not in strands:
-            strands[strand] = []
-        strands[strand].append(topic)
-        all_topics.append(topic)
-    
-    # If no strands found (strands not yet added), fall back to hardcoded list
-    if not all_topics:
-        all_topics = ['arithmetic', 'multiplication_division', 'number_systems', 
-                      'bodmas', 'fractions', 'decimals', 'sets',
-                      'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded',
-                      'probability', 'descriptive_statistics']
-        strands = {
-            'Number': ['arithmetic', 'multiplication_division', 'number_systems', 
-                      'bodmas', 'fractions', 'decimals', 'sets'],
-            'Algebra and Functions': ['functions', 'patterns', 'solving_equations', 
-                                      'simplifying_expressions', 'expanding_factorising',
-                                      'surds', 'complex_numbers_intro', 'complex_numbers_expanded'],
-        }
-    
+    # All topics and difficulties
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'number_systems', 'bodmas', 'probability', 'functions', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     # Build matrix data
@@ -2981,7 +2493,7 @@ def get_class_matrix_data(class_id):
         }
 
         # For each topic/difficulty combination
-        for topic in all_topics:
+        for topic in topics:
             for difficulty in difficulties:
                 module_key = f"{topic}_{difficulty}"
 
@@ -3024,9 +2536,8 @@ def get_class_matrix_data(class_id):
 
     return jsonify({
         'students': matrix_data,
-        'topics': all_topics,
+        'topics': topics,
         'difficulties': difficulties,
-        'strands': strands,  # NEW: Include strand grouping
         'class_name': class_obj.name,
         'total_students': len(matrix_data)
     })
@@ -3344,37 +2855,6 @@ def flag_statistics():
 
     return jsonify(stats)
 
-
-
-# GET all users endpoint (frontend expects /api/admin/users plural)
-@app.route('/api/admin/users', methods=['GET'])
-@login_required
-@role_required('admin')
-def admin_get_all_users():
-    """Get all users for admin management"""
-    users = User.query.order_by(User.created_at.desc()).all()
-    
-    users_data = []
-    for user in users:
-        stats = UserStats.query.filter_by(user_id=user.id).first()
-        quiz_count = QuizAttempt.query.filter_by(user_id=user.id).count()
-        
-        users_data.append({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'role': user.role,
-            'is_approved': user.is_approved,
-            'created_at': user.created_at.isoformat() if user.created_at else None,
-            'total_quizzes': quiz_count,
-            'total_points': stats.total_points if stats else 0,
-            'level': stats.level if stats else 1
-        })
-    
-    return jsonify(users_data), 200
-
-
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
@@ -3453,7 +2933,7 @@ if __name__ == '__main__':
             db.session.commit()
             print(f"✅ Created {len(default_badges)} default badges")
 
-    app.run(debug=True)
+    app.run(debug=config.FLASK_DEBUG)
 
 
 # ============================================================

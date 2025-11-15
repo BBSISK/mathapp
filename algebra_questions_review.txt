@@ -1,0 +1,419 @@
+================================================================================
+FIRST 10 QUESTIONS FROM EACH ALGEBRA TOPIC
+================================================================================
+
+================================================================================
+TOPIC: INTRODUCTORY ALGEBRA
+================================================================================
+
+1. [ADVANCED] Question ID: 2489
+   Question: If x = 4 and y = 3, find the value of: x + y
+   A) 7
+   B) 1
+   C) 4
+   D) 12
+   Correct Answer: 1 (A)
+   Explanation: Replace x with 4 and y with 3: 4 + 3 = 7
+   → Selected answer: 7
+
+2. [ADVANCED] Question ID: 2490
+   Question: If x = 4 and y = 5, find the value of: x + y
+   A) 1
+   B) 20
+   C) 9
+   D) 4
+   Correct Answer: 3 (C)
+   Explanation: Replace x with 4 and y with 5: 4 + 5 = 9
+   → Selected answer: 9
+
+3. [ADVANCED] Question ID: 2491
+   Question: If x = 5 and y = 3, find the value of: x + y
+   A) 8
+   B) 15
+   C) 5
+   D) 2
+   Correct Answer: 1 (A)
+   Explanation: Replace x with 5 and y with 3: 5 + 3 = 8
+   → Selected answer: 8
+
+4. [ADVANCED] Question ID: 2492
+   Question: If x = 5 and y = 2, find the value of: x + y
+   A) 7
+   B) 10
+   C) 5
+   D) 3
+   Correct Answer: 1 (A)
+   Explanation: Replace x with 5 and y with 2: 5 + 2 = 7
+   → Selected answer: 7
+
+5. [ADVANCED] Question ID: 2493
+   Question: If x = 3 and y = 7, find the value of: x + y
+   A) 4
+   B) 21
+   C) 3
+   D) 10
+   Correct Answer: 4 (D)
+   Explanation: Replace x with 3 and y with 7: 3 + 7 = 10
+   → Selected answer: 10
+
+6. [ADVANCED] Question ID: 2494
+   Question: If x = 8 and y = 4, find the value of: x + y
+   A) 12
+   B) 32
+   C) 4
+   D) 8
+   Correct Answer: 1 (A)
+   Explanation: Replace x with 8 and y with 4: 8 + 4 = 12
+   → Selected answer: 12
+
+7. [ADVANCED] Question ID: 2495
+   Question: If x = 8 and y = 5, find the value of: x + y
+   A) 13
+   B) 3
+   C) 8
+   D) 40
+   Correct Answer: 1 (A)
+   Explanation: Replace x with 8 and y with 5: 8 + 5 = 13
+   → Selected answer: 13
+
+8. [ADVANCED] Question ID: 2496
+   Question: If x = 4 and y = 5, find the value of: x + y
+   A) 4
+   B) 20
+   C) 1
+   D) 9
+   Correct Answer: 4 (D)
+   Explanation: Replace x with 4 and y with 5: 4 + 5 = 9
+   → Selected answer: 9
+
+9. [ADVANCED] Question ID: 2497
+   Question: If x = 5 and y = 5, find the value of: x + y
+   A) 5
+   B) 10
+   C) 0
+   D) 25
+   Correct Answer: 2 (B)
+   Explanation: Replace x with 5 and y with 5: 5 + 5 = 10
+   → Selected answer: 10
+
+10. [ADVANCED] Question ID: 2498
+   Question: If x = 3 and y = 2, find the value of: x + y
+   A) 1
+   B) 6
+   C) 3
+   D) 5
+   Correct Answer: 4 (D)
+   Explanation: Replace x with 3 and y with 2: 3 + 2 = 5
+   → Selected answer: 5
+
+================================================================================
+TOPIC: SOLVING EQUATIONS
+================================================================================
+
+1. [ADVANCED] Question ID: 2129
+   Question: Solve: 2(x + 3) = 14
+   A) x = 4
+   B) x = 2
+   C) x = 7
+   D) x = 8
+   Correct Answer: 1 (A)
+   Explanation: Expand brackets: 2x + 6 = 14, then solve
+   → Selected answer: x = 4
+
+2. [ADVANCED] Question ID: 2130
+   Question: Solve: 4(x + 1) = 32
+   A) x = 7
+   B) x = 6
+   C) x = 3
+   D) x = 9
+   Correct Answer: 1 (A)
+   Explanation: Expand brackets: 4x + 4 = 32, then solve
+   → Selected answer: x = 7
+
+3. [ADVANCED] Question ID: 2131
+   Question: Solve: 5(x + 2) = 20
+   A) x = -1
+   B) x = 2
+   C) x = -2
+   D) x = 0
+   Correct Answer: 2 (B)
+   Explanation: Expand brackets: 5x + 10 = 20, then solve
+   → Selected answer: x = 2
+
+4. [ADVANCED] Question ID: 2132
+   Question: Solve: 5(x + 2) = 80
+   A) x = 14
+   B) x = 12
+   C) x = 10
+   D) x = 17
+   Correct Answer: 1 (A)
+   Explanation: Expand brackets: 5x + 10 = 80, then solve
+   → Selected answer: x = 14
+
+5. [ADVANCED] Question ID: 2133
+   Question: Solve: 2(x + 1) = 14
+   A) x = 6
+   B) x = 7
+   C) x = 10
+   D) x = 8
+   Correct Answer: 1 (A)
+   Explanation: Expand brackets: 2x + 2 = 14, then solve
+   → Selected answer: x = 6
+
+6. [ADVANCED] Question ID: 2134
+   Question: Solve: 3(x + 2) = 18
+   A) x = 6
+   B) x = 0
+   C) x = 4
+   D) x = 5
+   Correct Answer: 3 (C)
+   Explanation: Expand brackets: 3x + 6 = 18, then solve
+   → Selected answer: x = 4
+
+7. [ADVANCED] Question ID: 2135
+   Question: Solve: 6(x + 1) = 84
+   A) x = 13
+   B) x = 10
+   C) x = 14
+   D) x = 17
+   Correct Answer: 1 (A)
+   Explanation: Expand brackets: 6x + 6 = 84, then solve
+   → Selected answer: x = 13
+
+8. [ADVANCED] Question ID: 2136
+   Question: Solve: 3(x + 5) = 27
+   A) x = 4
+   B) x = 1
+   C) x = 3
+   D) x = 0
+   Correct Answer: 1 (A)
+   Explanation: Expand brackets: 3x + 15 = 27, then solve
+   → Selected answer: x = 4
+
+9. [ADVANCED] Question ID: 2137
+   Question: Solve: 6(x + 5) = 78
+   A) x = 10
+   B) x = 9
+   C) x = 12
+   D) x = 8
+   Correct Answer: 4 (D)
+   Explanation: Expand brackets: 6x + 30 = 78, then solve
+   → Selected answer: x = 8
+
+10. [ADVANCED] Question ID: 2138
+   Question: Solve: 5(x + 2) = 40
+   A) x = 2
+   B) x = 6
+   C) x = 3
+   D) x = 4
+   Correct Answer: 2 (B)
+   Explanation: Expand brackets: 5x + 10 = 40, then solve
+   → Selected answer: x = 6
+
+================================================================================
+TOPIC: SIMPLIFYING EXPRESSIONS
+================================================================================
+
+1. [ADVANCED] Question ID: 2249
+   Question: Simplify: 4x² + 7x + 2x² + 1x
+   A) 62x² + 82x
+   B) 6x² - 8x
+   C) 6x² + 8x - 1
+   D) 6x² + 8x
+   Correct Answer: 4 (D)
+   Explanation: Collect like terms: 6x² + 8x
+   → Selected answer: 6x² + 8x
+
+2. [ADVANCED] Question ID: 2250
+   Question: Simplify: 5x² + 10x + 5x² + 8x
+   A) 10x² + 18x - 1
+   B) 102x² + 182x
+   C) 10x² + 18x
+   D) 10x² - 18x
+   Correct Answer: 3 (C)
+   Explanation: Collect like terms: 10x² + 18x
+   → Selected answer: 10x² + 18x
+
+3. [ADVANCED] Question ID: 2251
+   Question: Simplify: 8x² + 5x + 5x² + 5x
+   A) 13x² - 10x
+   B) 13x² + 10x
+   C) 13x² + 10x - 1
+   D) 132x² + 102x
+   Correct Answer: 2 (B)
+   Explanation: Collect like terms: 13x² + 10x
+   → Selected answer: 13x² + 10x
+
+4. [ADVANCED] Question ID: 2252
+   Question: Simplify: 4x² + 2x + 4x² + 1x
+   A) 8x² - 3x
+   B) 82x² + 32x
+   C) 8x² + 3x - 1
+   D) 8x² + 3x
+   Correct Answer: 4 (D)
+   Explanation: Collect like terms: 8x² + 3x
+   → Selected answer: 8x² + 3x
+
+5. [ADVANCED] Question ID: 2253
+   Question: Simplify: 8x² + 8x + 3x² + 7x
+   A) 11x² + 15x
+   B) 112x² + 152x
+   C) 11x² - 15x
+   D) 11x² + 15x - 1
+   Correct Answer: 1 (A)
+   Explanation: Collect like terms: 11x² + 15x
+   → Selected answer: 11x² + 15x
+
+6. [ADVANCED] Question ID: 2254
+   Question: Simplify: 7x² + 7x + 1x² + 4x
+   A) 8x² - 11x
+   B) 8x² + 11x
+   C) 82x² + 112x
+   D) 8x² + 11x - 1
+   Correct Answer: 2 (B)
+   Explanation: Collect like terms: 8x² + 11x
+   → Selected answer: 8x² + 11x
+
+7. [ADVANCED] Question ID: 2255
+   Question: Simplify: 8x² + 2x + 3x² + 7x
+   A) 112x² + 92x
+   B) 11x² + 9x - 1
+   C) 11x² + 9x
+   D) 11x² - 9x
+   Correct Answer: 3 (C)
+   Explanation: Collect like terms: 11x² + 9x
+   → Selected answer: 11x² + 9x
+
+8. [ADVANCED] Question ID: 2256
+   Question: Simplify: 8x² + 7x + 5x² + 8x
+   A) 13x² + 15x
+   B) 13x² - 15x
+   C) 132x² + 152x
+   D) 13x² + 15x - 1
+   Correct Answer: 1 (A)
+   Explanation: Collect like terms: 13x² + 15x
+   → Selected answer: 13x² + 15x
+
+9. [ADVANCED] Question ID: 2257
+   Question: Simplify: 4x² + 7x + 5x² + 4x
+   A) 9x² + 11x
+   B) 9x² - 11x
+   C) 9x² + 11x - 1
+   D) 92x² + 112x
+   Correct Answer: 1 (A)
+   Explanation: Collect like terms: 9x² + 11x
+   → Selected answer: 9x² + 11x
+
+10. [ADVANCED] Question ID: 2258
+   Question: Simplify: 2x² + 5x + 3x² + 7x
+   A) 5x² + 13x
+   B) 5x² + 12x - 1
+   C) 5x² + 12x
+   D) 5x² - 12x
+   Correct Answer: 3 (C)
+   Explanation: Collect like terms: 5x² + 12x
+   → Selected answer: 5x² + 12x
+
+================================================================================
+TOPIC: EXPANDING FACTORISING
+================================================================================
+
+1. [ADVANCED] Question ID: 2369
+   Question: Expand: (x + 1)(x + 4)
+   A) x² + 5x + 4 - 1
+   B) 2x² + 52x + 4
+   C) x² + 5x + 4
+   D) x² - 5x - 4
+   Correct Answer: 3 (C)
+   Explanation: Use FOIL: x² + 5x + 4
+   → Selected answer: x² + 5x + 4
+
+2. [ADVANCED] Question ID: 2370
+   Question: Expand: (x + 4)(x + 2)
+   A) 2x² + 62x + 8
+   B) x² - 6x - 8
+   C) x² + 6x + 8 - 1
+   D) x² + 6x + 8
+   Correct Answer: 4 (D)
+   Explanation: Use FOIL: x² + 6x + 8
+   → Selected answer: x² + 6x + 8
+
+3. [ADVANCED] Question ID: 2371
+   Question: Expand: (x + 4)(x + 2)
+   A) x² + 6x + 8 - 1
+   B) x² - 6x - 8
+   C) 2x² + 62x + 8
+   D) x² + 6x + 8
+   Correct Answer: 4 (D)
+   Explanation: Use FOIL: x² + 6x + 8
+   → Selected answer: x² + 6x + 8
+
+4. [ADVANCED] Question ID: 2372
+   Question: Expand: (x + 6)(x + 1)
+   A) x² - 7x - 6
+   B) 2x² + 72x + 6
+   C) x² + 7x + 6 - 1
+   D) x² + 7x + 6
+   Correct Answer: 4 (D)
+   Explanation: Use FOIL: x² + 7x + 6
+   → Selected answer: x² + 7x + 6
+
+5. [ADVANCED] Question ID: 2373
+   Question: Expand: (x + 7)(x + 9)
+   A) 2x² + 162x + 63
+   B) x² - 16x - 63
+   C) x² + 16x + 63
+   D) x² + 16x + 63 - 1
+   Correct Answer: 3 (C)
+   Explanation: Use FOIL: x² + 16x + 63
+   → Selected answer: x² + 16x + 63
+
+6. [ADVANCED] Question ID: 2374
+   Question: Expand: (x + 2)(x + 1)
+   A) x² + 3x + 2
+   B) x² - 3x - 2
+   C) x² + 3x + 3
+   D) x² + 3x + 2 - 1
+   Correct Answer: 1 (A)
+   Explanation: Use FOIL: x² + 3x + 2
+   → Selected answer: x² + 3x + 2
+
+7. [ADVANCED] Question ID: 2375
+   Question: Expand: (x + 4)(x + 4)
+   A) 2x² + 82x + 16
+   B) x² + 8x + 16
+   C) x² + 8x + 16 - 1
+   D) x² - 8x - 16
+   Correct Answer: 2 (B)
+   Explanation: Use FOIL: x² + 8x + 16
+   → Selected answer: x² + 8x + 16
+
+8. [ADVANCED] Question ID: 2376
+   Question: Expand: (x + 4)(x + 3)
+   A) x² - 7x - 12
+   B) x² + 7x + 12
+   C) x² + 7x + 13
+   D) x² + 7x + 12 - 1
+   Correct Answer: 2 (B)
+   Explanation: Use FOIL: x² + 7x + 12
+   → Selected answer: x² + 7x + 12
+
+9. [ADVANCED] Question ID: 2377
+   Question: Expand: (x + 3)(x + 5)
+   A) 2x² + 82x + 15
+   B) x² + 8x + 15 - 1
+   C) x² - 8x - 15
+   D) x² + 8x + 15
+   Correct Answer: 4 (D)
+   Explanation: Use FOIL: x² + 8x + 15
+   → Selected answer: x² + 8x + 15
+
+10. [ADVANCED] Question ID: 2378
+   Question: Expand: (x + 7)(x + 5)
+   A) x² + 12x + 35 - 1
+   B) x² - 12x - 35
+   C) x² + 13x + 35
+   D) x² + 12x + 35
+   Correct Answer: 4 (D)
+   Explanation: Use FOIL: x² + 12x + 35
+   → Selected answer: x² + 12x + 35

@@ -1281,12 +1281,7 @@ def get_topics():
         'multiplication_division': {'title': 'Multiplication & Division', 'icon': 'x'},
         'number_systems': {'title': 'Number Systems', 'icon': 'hash'},
         'bodmas': {'title': 'BODMAS', 'icon': 'book'},
-        'introductory_algebra': {'title': 'Introductory Algebra', 'icon': 'book-open'},
         'functions': {'title': 'Functions', 'icon': 'chart'},
-        'patterns': {'title': 'Patterns', 'icon': 'trending-up'},
-        'solving_equations': {'title': 'Solving Equations', 'icon': 'equals'},
-        'simplifying_expressions': {'title': 'Simplifying Expressions', 'icon': 'calculator'},
-        'expanding_factorising': {'title': 'Expanding & Factorising', 'icon': 'brackets'},
         'probability': {'title': 'Probability', 'icon': 'dice'},
         'descriptive_statistics': {'title': 'Descriptive Statistics', 'icon': 'chart-bar'},
         'sets': {'title': 'Sets', 'icon': 'layers'},
@@ -1325,12 +1320,7 @@ def get_topics():
                     WHEN 'decimals' THEN 6
                     WHEN 'sets' THEN 7
                     -- Order for Algebra and Functions strand (Junior Cycle)
-                    WHEN 'introductory_algebra' THEN 1
-                    WHEN 'functions' THEN 2
-                    WHEN 'patterns' THEN 3
-                    WHEN 'solving_equations' THEN 4
-                    WHEN 'simplifying_expressions' THEN 5
-                    WHEN 'expanding_factorising' THEN 6
+                    WHEN 'functions' THEN 1
                     -- Order for Statistics and Probability strand
                     WHEN 'probability' THEN 1
                     WHEN 'descriptive_statistics' THEN 2
@@ -1370,7 +1360,7 @@ def get_topics():
         strands = {
             'Number': ['arithmetic', 'multiplication_division', 'number_systems', 
                       'bodmas', 'fractions', 'decimals', 'sets'],
-            'Algebra and Functions': ['introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising'],
+            'Algebra and Functions': ['functions'],
             'Statistics and Probability': ['probability', 'descriptive_statistics'],
             'Senior Cycle - Algebra': ['surds', 'complex_numbers_intro', 
                                         'complex_numbers_expanded']
@@ -1461,7 +1451,7 @@ def submit_quiz():
     valid_topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
         'number_systems',
-        'bodmas', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'sets', 'probability', 'descriptive_statistics', 'surds',
+        'bodmas', 'functions', 'sets', 'probability', 'descriptive_statistics', 'surds',
         'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     valid_difficulties = ['beginner', 'intermediate', 'advanced']
@@ -1655,7 +1645,7 @@ def get_student_mastery():
     # Get all topics - MUST match topics in get_topics() API
     topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'number_systems', 'bodmas', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'probability', 'descriptive_statistics', 'sets', 
+        'number_systems', 'bodmas', 'functions', 'probability', 'descriptive_statistics', 'sets', 
         'surds', 'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     difficulties = ['beginner', 'intermediate', 'advanced']
@@ -2156,7 +2146,7 @@ def get_class_performance_matrix(class_id):
     students = User.query.filter(User.id.in_(student_ids)).all()
 
     # Get all topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'number_systems', 'bodmas', 'probability', 'descriptive_statistics', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
+    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'number_systems', 'bodmas', 'probability', 'descriptive_statistics', 'functions', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     students_data = []
@@ -2915,12 +2905,7 @@ def get_class_matrix_data(class_id):
                     WHEN 'decimals' THEN 6
                     WHEN 'sets' THEN 7
                     -- Order for Algebra and Functions strand (Junior Cycle)
-                    WHEN 'introductory_algebra' THEN 1
-                    WHEN 'functions' THEN 2
-                    WHEN 'patterns' THEN 3
-                    WHEN 'solving_equations' THEN 4
-                    WHEN 'simplifying_expressions' THEN 5
-                    WHEN 'expanding_factorising' THEN 6
+                    WHEN 'functions' THEN 1
                     -- Order for Statistics and Probability strand
                     WHEN 'probability' THEN 1
                     WHEN 'descriptive_statistics' THEN 2
@@ -2951,14 +2936,14 @@ def get_class_matrix_data(class_id):
     if not all_topics:
         all_topics = ['arithmetic', 'multiplication_division', 'number_systems', 
                       'bodmas', 'fractions', 'decimals', 'sets',
-                      'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded',
+                      'functions', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded',
                       'probability', 'descriptive_statistics']
         strands = {
             'Number': ['arithmetic', 'multiplication_division', 'number_systems', 
                       'bodmas', 'fractions', 'decimals', 'sets'],
-            'Algebra and Functions': ['functions', 'patterns', 'solving_equations', 
-                                      'simplifying_expressions', 'expanding_factorising',
-                                      'surds', 'complex_numbers_intro', 'complex_numbers_expanded'],
+            'Algebra and Functions': ['functions', 'surds', 'complex_numbers_intro', 
+                                      'complex_numbers_expanded'],
+            'Statistics and Probability': ['probability', 'descriptive_statistics']
         }
     
     difficulties = ['beginner', 'intermediate', 'advanced']
@@ -3343,37 +3328,6 @@ def flag_statistics():
         stats['by_flag_type'][flag_type] = QuestionFlag.query.filter_by(flag_type=flag_type, status='pending').count()
 
     return jsonify(stats)
-
-
-
-# GET all users endpoint (frontend expects /api/admin/users plural)
-@app.route('/api/admin/users', methods=['GET'])
-@login_required
-@role_required('admin')
-def admin_get_all_users():
-    """Get all users for admin management"""
-    users = User.query.order_by(User.created_at.desc()).all()
-    
-    users_data = []
-    for user in users:
-        stats = UserStats.query.filter_by(user_id=user.id).first()
-        quiz_count = QuizAttempt.query.filter_by(user_id=user.id).count()
-        
-        users_data.append({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'role': user.role,
-            'is_approved': user.is_approved,
-            'created_at': user.created_at.isoformat() if user.created_at else None,
-            'total_quizzes': quiz_count,
-            'total_points': stats.total_points if stats else 0,
-            'level': stats.level if stats else 1
-        })
-    
-    return jsonify(users_data), 200
-
-
 
 if __name__ == '__main__':
     with app.app_context():

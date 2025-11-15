@@ -1,0 +1,39 @@
+=== MATH MASTER - PYTHONANYWHERE DEPLOYMENT ===
+
+App URL: https://yourusername.pythonanywhere.com
+
+Admin Login:
+- Email: barry.b.sisk@gmail.com
+- Password: [SECURE PASSWORD - stored securely]
+
+Important Paths:
+- App directory: /home/yourusername/mathapp
+- Virtual env: /home/yourusername/mathapp/venv
+- Database: /home/yourusername/mathapp/mathquiz.db
+- Backups: /home/yourusername/mathapp/backups
+- Environment: /home/yourusername/mathapp/.env
+
+Logs:
+- Error log: /var/log/yourusername.pythonanywhere.com.error.log
+- Access log: /var/log/yourusername.pythonanywhere.com.access.log
+
+Useful Commands:
+# Activate venv
+cd ~/mathapp && source venv/bin/activate
+
+# Update from GitHub
+git pull origin claude/app-review-01RJ8RCovWD2PJ2eLiA3v2gf
+
+# Backup database
+~/backup_mathapp.sh
+
+# View recent errors
+tail -50 /var/log/yourusername.pythonanywhere.com.error.log
+
+# Reload web app
+# (Go to Web tab and click Reload button)
+
+Questions in database: ~300
+Python version: 3.10
+
+Deployment date: $(date)

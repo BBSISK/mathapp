@@ -3344,37 +3344,6 @@ def flag_statistics():
 
     return jsonify(stats)
 
-
-
-# GET all users endpoint (frontend expects /api/admin/users plural)
-@app.route('/api/admin/users', methods=['GET'])
-@login_required
-@role_required('admin')
-def admin_get_all_users():
-    """Get all users for admin management"""
-    users = User.query.order_by(User.created_at.desc()).all()
-    
-    users_data = []
-    for user in users:
-        stats = UserStats.query.filter_by(user_id=user.id).first()
-        quiz_count = QuizAttempt.query.filter_by(user_id=user.id).count()
-        
-        users_data.append({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'role': user.role,
-            'is_approved': user.is_approved,
-            'created_at': user.created_at.isoformat() if user.created_at else None,
-            'total_quizzes': quiz_count,
-            'total_points': stats.total_points if stats else 0,
-            'level': stats.level if stats else 1
-        })
-    
-    return jsonify(users_data), 200
-
-
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

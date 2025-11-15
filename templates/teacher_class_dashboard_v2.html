@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Performance Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* NEW: Search and Filter Controls */
+        .search-bar {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input-wrapper {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 45px 12px 45px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 18px;
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 5px;
+            display: none;
+        }
+
+        .clear-search:hover {
+            color: #dc3545;
+        }
+
+        .clear-search.visible {
+            display: block;
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            padding: 8px 15px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-chip:hover {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .filter-chip.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .controls-bar {
+            padding: 20px 30px;
+            background: #ffffff;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .student-count {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .student-count strong {
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .student-count .search-match {
+            color: #28a745;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .dashboard-content {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 12px;
+        }
+
+        .matrix-table thead th {
+            background: #667eea;
+            color: white;
+            padding: 8px;
+            font-weight: 600;
+            font-size: 11px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-right: 1px solid rgba(255,255,255,0.2);
+            white-space: nowrap;
+        }
+
+        /* FROZEN COLUMN 1: Student Name */
+        .matrix-table thead th.col-student {
+            position: sticky !important;
+            left: 0 !important;
+            z-index: 11 !important;
+            background: #764ba2 !important;
+            min-width: 200px !important;
+            width: 200px !important;
+        }
+
+        /* FROZEN COLUMN 2: Points */
+        .matrix-table thead th.col-points {
+            position: sticky !important;
+            left: 200px !important;
+            z-index: 11 !important;
+            background: #8b5fbf !important;
+            min-width: 80px !important;
+            width: 80px !important;
+        }
+
+        /* FROZEN COLUMN 3: Level */
+        .matrix-table thead th.col-level {
+            position: sticky !important;
+            left: 280px !important;
+            z-index: 11 !important;
+            background: #9d73d1 !important;
+            min-width: 70px !important;
+            width: 70px !important;
+        }
+
+        .matrix-table tbody td {
+            border: 1px solid #e9ecef;
+            text-align: center;
+            position: relative;
+            height: 30px;
+            padding: 4px;
+            min-width: 60px;
+        }
+
+        /* FROZEN BODY CELL 1: Student */
+        .student-cell {
+            position: sticky !important;
+            left: 0 !important;
+            background: white !important;
+            z-index: 5 !important;
+            text-align: left !important;
+            padding: 8px 12px !important;
+            font-weight: 600;
+            border-right: 2px solid #dee2e6 !important;
+            white-space: nowrap;
+            min-width: 200px !important;
+            width: 200px !important;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
+        }
+
+        /* FROZEN BODY CELL 2: Points */
+        .points-cell {
+            position: sticky !important;
+            left: 200px !important;
+            background: white !important;
+            z-index: 5 !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            color: #667eea !important;
+            border-right: 1px solid #dee2e6 !important;
+            min-width: 80px !important;
+            width: 80px !important;
+        }
+
+        /* FROZEN BODY CELL 3: Level */
+        .level-cell {
+            position: sticky !important;
+            left: 280px !important;
+            background: white !important;
+            z-index: 5 !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            color: #764ba2 !important;
+            border-right: 2px solid #dee2e6 !important;
+            min-width: 70px !important;
+            width: 70px !important;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.08) !important;
+        }
+
+        .student-cell-inner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .student-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .student-name {
+            cursor: pointer;
+        }
+
+        .student-name mark {
+            background: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 700;
+        }
+
+        .performance-cell {
+            font-weight: 700;
+            font-size: 13px;
+            cursor: help;
+            transition: all 0.2s;
+        }
+
+        .performance-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .color-grey {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+
+        .color-yellow {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .color-green {
+            background: #28a745;
+            color: white;
+        }
+
+        /* Tooltip styles */
+        #floatingTooltip {
+            position: fixed;
+            display: none;
+            background: #2d3748;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            z-index: 10000;
+            min-width: 280px;
+            max-width: 350px;
+            font-size: 13px;
+            line-height: 1.6;
+            pointer-events: none;
+        }
+
+        .tooltip-header {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .tooltip-row {
+            margin: 6px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .tooltip-label {
+            color: #cbd5e0;
+        }
+
+        .tooltip-value {
+            font-weight: 600;
+        }
+
+        .tooltip-recommendation {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .tooltip-recommendation-title {
+            font-weight: 700;
+            color: #ffc107;
+            margin-bottom: 5px;
+        }
+
+        .tooltip-recommendation-text {
+            color: #e2e8f0;
+            font-size: 12px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-top: 2px solid #e9ecef;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-size: 16px;
+        }
+
+        .no-results-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-content {
+                padding: 15px;
+            }
+
+            .matrix-table {
+                font-size: 10px;
+            }
+
+            .performance-cell {
+                font-size: 11px;
+            }
+
+            .search-input-wrapper {
+                min-width: 100%;
+            }
+        }
+
+        tr.selected {
+            background-color: #e7f3ff !important;
+        }
+
+        tr.selected .student-cell {
+            background-color: #d0e7ff !important;
+        }
+
+        tr.hidden {
+            display: none;
+        }
+
+        tr.filtered-out {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating tooltip -->
+    <div id="floatingTooltip"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1 id="className">Class Performance Dashboard</h1>
+            <p id="teacherName"></p>
+            <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 8px; margin-top: 10px; display: inline-block;">
+                <strong>🆕 Version 2.3 - ALTERNATE BUTTON LAYOUT</strong> ✅
+            </div>
+            <div class="header-controls">
+                <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh Data</button>
+                <button class="btn btn-primary" onclick="openColumnSelector()">📋 Select Columns</button>
+                <button class="btn btn-secondary" onclick="exportData()">📊 Export to CSV</button>
+                <button class="btn btn-secondary" onclick="goBack()">← Back</button>
+            </div>
+        </div>
+
+        <!-- NEW: Column Selector Modal -->
+        <div id="columnSelectorModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; overflow-y: auto;">
+            <div style="max-width: 900px; margin: 50px auto; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px 15px 0 0;">
+                    <h2 style="margin: 0; font-size: 24px;">📋 Select Topics to Display</h2>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">Choose which topics and difficulty levels you want to see in the dashboard</p>
+                </div>
+                <div style="padding: 30px;">
+                    <div style="margin-bottom: 20px;">
+                        <!-- Buttons in separate divs to prevent flexbox issues -->
+                        <div style="display: inline-block; margin-right: 15px;">
+                            <button class="btn btn-primary" onclick="selectAllColumns()" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px;">✓ Select All</button>
+                        </div>
+                        <div style="display: inline-block;">
+                            <button onclick="deselectAllColumns()" style="background: #dc3545; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px;">✗ Deselect All</button>
+                        </div>
+                    </div>
+                    <div id="columnSelectorContent" style="max-height: 500px; overflow-y: auto;">
+                        <!-- Populated dynamically -->
+                    </div>
+                    <div style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e9ecef; display: flex; gap: 15px; justify-content: flex-end;">
+                        <button class="btn btn-primary" onclick="applyColumnSelection()">✓ Apply Changes</button>
+                        <button class="btn btn-secondary" onclick="closeColumnSelector()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW: Search Bar -->
+        <div class="search-bar">
+            <div class="search-input-wrapper">
+                <span class="search-icon">🔍</span>
+                <input 
+                    type="text" 
+                    id="studentSearch" 
+                    class="search-input" 
+                    placeholder="Search students by name..."
+                    oninput="handleSearch()"
+                >
+                <button class="clear-search" id="clearSearch" onclick="clearSearch()">✕</button>
+            </div>
+            <div class="filter-chips">
+                <div class="filter-chip" onclick="filterByPerformance('all')" data-filter="all">All Students</div>
+                <div class="filter-chip" onclick="filterByPerformance('excellent')" data-filter="excellent">Excellent (>80%)</div>
+                <div class="filter-chip" onclick="filterByPerformance('needs-improvement')" data-filter="needs-improvement">Needs Help (<60%)</div>
+                <div class="filter-chip" onclick="filterByPerformance('not-started')" data-filter="not-started">Not Started</div>
+            </div>
+        </div>
+
+        <div class="controls-bar">
+            <div class="student-count">
+                Showing <strong id="visibleCount">0</strong> of <strong id="totalCount">0</strong> students
+                <span class="search-match" id="searchMatch"></span>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="selectAllVisible()">✓ Select Visible</button>
+                <button class="btn btn-secondary" onclick="deselectAllStudents()">✗ Clear Selection</button>
+                <button class="btn btn-secondary" onclick="resetAll()">🔄 Reset Filters</button>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <div id="loadingMessage" class="loading">Loading class data</div>
+            <div id="noResults" class="no-results" style="display: none;">
+                <div class="no-results-icon">🔍</div>
+                <div>No students found matching your search</div>
+                <button class="btn btn-secondary" onclick="clearSearch()" style="margin-top: 15px;">Clear Search</button>
+            </div>
+            <div id="matrixContainer" style="display: none;"></div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box color-grey"></div>
+                <span>Not Attempted / < 20%</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box color-yellow"></div>
+                <span>20% - 80% (Needs Improvement)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box color-green"></div>
+                <span>> 80% (Excellent)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let classData = null;
+        let selectedStudents = new Set();
+        let tooltipData = {};
+        let currentSearchTerm = '';
+        let currentPerformanceFilter = 'all';
+        let visibleColumns = {}; // Track which columns are visible
+        
+        const classId = getClassIdFromURL();
+
+        function getClassIdFromURL() {
+            const path = window.location.pathname;
+            const match = path.match(/\/teacher\/class-dashboard\/(\d+)/);
+            return match ? match[1] : null;
+        }
+
+        function goBack() {
+            window.location.href = '/teacher';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!classId) {
+                alert('No class ID provided');
+                goBack();
+                return;
+            }
+            loadClassData();
+            
+            // Set default filter chip as active
+            document.querySelector('[data-filter="all"]').classList.add('active');
+        });
+
+        async function loadClassData() {
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}/matrix-data`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load class data');
+                }
+
+                classData = await response.json();
+                
+                document.getElementById('className').textContent = classData.class_name || 'Class Performance Dashboard';
+                document.getElementById('totalCount').textContent = classData.total_students;
+
+                renderMatrix(classData);
+                updateAllVisibility();
+                
+                document.getElementById('loadingMessage').style.display = 'none';
+                document.getElementById('matrixContainer').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading class data:', error);
+                document.getElementById('loadingMessage').innerHTML = 
+                    '<div style="color: #dc3545;">❌ Failed to load class data. <button onclick="goBack()" style="padding: 10px 20px; margin-left: 10px; border-radius: 5px; cursor: pointer;">Go Back</button></div>';
+            }
+        }
+
+        function renderMatrix(data) {
+            const container = document.getElementById('matrixContainer');
+            tooltipData = {};
+            
+            // Initialize column visibility if not done
+            if (Object.keys(visibleColumns).length === 0) {
+                initializeColumnVisibility();
+            }
+            
+            let html = '<table class="matrix-table"><thead><tr>';
+            html += '<th class="col-student">Student Name</th>';
+            html += '<th class="col-points">Points</th>';
+            html += '<th class="col-level">Level</th>';
+            
+            const topics = data.topics;
+            const difficulties = data.difficulties;
+            
+            topics.forEach(topic => {
+                const topicName = formatTopicName(topic);
+                difficulties.forEach(diff => {
+                    // Only show column if visible
+                    if (isColumnVisible(topic, diff)) {
+                        const diffName = formatDifficultyName(diff);
+                        html += `<th>${topicName}<br>${diffName}</th>`;
+                    }
+                });
+            });
+            
+            html += '</tr></thead><tbody>';
+            
+            data.students.forEach((student) => {
+                html += `<tr id="student-row-${student.student_id}" 
+                            class="${selectedStudents.has(student.student_id) ? 'selected' : ''}" 
+                            data-student-name="${student.student_name.toLowerCase()}">`;
+                
+                html += `<td class="student-cell" style="position: sticky !important; left: 0 !important; background: white !important; z-index: 5 !important;">
+                    <div class="student-cell-inner">
+                        <input type="checkbox" class="student-checkbox" 
+                               id="checkbox-${student.student_id}"
+                               onchange="toggleStudent(${student.student_id})"
+                               ${selectedStudents.has(student.student_id) ? 'checked' : ''}>
+                        <label for="checkbox-${student.student_id}" class="student-name" data-original="${student.student_name}">${student.student_name}</label>
+                    </div>
+                </td>`;
+                
+                // Add Points column
+                const points = student.total_points || 0;
+                html += `<td class="points-cell" style="position: sticky !important; left: 200px !important; background: white !important; z-index: 5 !important;">${points}</td>`;
+                
+                // Add Level column
+                const level = student.level || 1;
+                html += `<td class="level-cell" style="position: sticky !important; left: 280px !important; background: white !important; z-index: 5 !important;">${level}</td>`;
+                
+                topics.forEach(topic => {
+                    difficulties.forEach(diff => {
+                        // Only show column if visible
+                        if (!isColumnVisible(topic, diff)) return;
+                        
+                        const moduleKey = `${topic}_${diff}`;
+                        const module = student.modules[moduleKey];
+                        const cellId = `cell-${student.student_id}-${topic}-${diff}`;
+                        
+                        if (module) {
+                            const recommendation = generateRecommendation(module, topic, diff);
+                            
+                            tooltipData[cellId] = {
+                                topic: formatTopicName(topic),
+                                difficulty: formatDifficultyName(diff),
+                                percentage: module.percentage,
+                                attempts: module.attempts,
+                                completed: module.completed,
+                                recommendation: recommendation
+                            };
+                            
+                            html += `<td id="${cellId}" class="performance-cell color-${module.color}" 
+                                        onmouseenter="showTooltip(event, '${cellId}')" 
+                                        onmousemove="updateTooltipPosition(event)"
+                                        onmouseleave="hideTooltip()">
+                                ${module.percentage}%
+                            </td>`;
+                        } else {
+                            tooltipData[cellId] = {
+                                topic: formatTopicName(topic),
+                                difficulty: formatDifficultyName(diff),
+                                percentage: 0,
+                                attempts: 0,
+                                completed: false,
+                                recommendation: "Student should attempt this module to establish baseline performance."
+                            };
+                            
+                            html += `<td id="${cellId}" class="performance-cell color-grey"
+                                        onmouseenter="showTooltip(event, '${cellId}')" 
+                                        onmousemove="updateTooltipPosition(event)"
+                                        onmouseleave="hideTooltip()">
+                                N/A
+                            </td>`;
+                        }
+                    });
+                });
+                
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            
+            // Verification message
+            console.log('✅ Dashboard V4 loaded with frozen columns: Student Name (0px), Points (200px), Level (280px)');
+        }
+
+        // NEW: Search functionality
+        function handleSearch() {
+            const searchInput = document.getElementById('studentSearch');
+            const clearBtn = document.getElementById('clearSearch');
+            currentSearchTerm = searchInput.value.toLowerCase().trim();
+            
+            if (currentSearchTerm) {
+                clearBtn.classList.add('visible');
+            } else {
+                clearBtn.classList.remove('visible');
+            }
+            
+            updateAllVisibility();
+        }
+
+        function clearSearch() {
+            const searchInput = document.getElementById('studentSearch');
+            const clearBtn = document.getElementById('clearSearch');
+            searchInput.value = '';
+            currentSearchTerm = '';
+            clearBtn.classList.remove('visible');
+            
+            // Remove all highlighting
+            document.querySelectorAll('.student-name').forEach(label => {
+                const originalName = label.getAttribute('data-original');
+                label.innerHTML = originalName;
+            });
+            
+            updateAllVisibility();
+        }
+
+        // NEW: Performance filtering
+        function filterByPerformance(filterType) {
+            currentPerformanceFilter = filterType;
+            
+            // Update active chip
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${filterType}"]`).classList.add('active');
+            
+            updateAllVisibility();
+        }
+
+        function matchesPerformanceFilter(student) {
+            if (currentPerformanceFilter === 'all') return true;
+            
+            const modules = Object.values(student.modules);
+            
+            if (currentPerformanceFilter === 'not-started') {
+                return modules.length === 0 || modules.every(m => !m.completed);
+            }
+            
+            if (modules.length === 0) return false;
+            
+            const avgPercentage = modules.reduce((sum, m) => sum + m.percentage, 0) / modules.length;
+            
+            if (currentPerformanceFilter === 'excellent') {
+                return avgPercentage > 80;
+            }
+            
+            if (currentPerformanceFilter === 'needs-improvement') {
+                return avgPercentage < 60;
+            }
+            
+            return true;
+        }
+
+        // NEW: Combined visibility update - SHOWS ALL STUDENTS BY DEFAULT
+        function updateAllVisibility() {
+            if (!classData) return;
+            
+            let visibleCount = 0;
+            let matchingCount = 0;
+            
+            classData.students.forEach(student => {
+                const row = document.getElementById(`student-row-${student.student_id}`);
+                if (!row) return;
+                
+                const studentName = student.student_name.toLowerCase();
+                const matchesSearch = !currentSearchTerm || studentName.includes(currentSearchTerm);
+                const matchesFilter = matchesPerformanceFilter(student);
+                
+                // Highlight search matches
+                if (matchesSearch && currentSearchTerm) {
+                    const label = row.querySelector('.student-name');
+                    const originalName = label.getAttribute('data-original');
+                    const regex = new RegExp(`(${currentSearchTerm})`, 'gi');
+                    label.innerHTML = originalName.replace(regex, '<mark>$1</mark>');
+                } else {
+                    const label = row.querySelector('.student-name');
+                    const originalName = label.getAttribute('data-original');
+                    label.innerHTML = originalName;
+                }
+                
+                // Apply ONLY search and performance filters - NOT selection
+                // ALL students are visible by default
+                if (matchesSearch && matchesFilter) {
+                    row.classList.remove('filtered-out');
+                    row.classList.remove('hidden');
+                    matchingCount++;
+                    visibleCount++;
+                } else {
+                    // Hide only if doesn't match search/filter
+                    row.classList.add('filtered-out');
+                }
+            });
+            
+            // Update counts
+            document.getElementById('visibleCount').textContent = visibleCount;
+            
+            // Show search match info
+            const searchMatchEl = document.getElementById('searchMatch');
+            if (currentSearchTerm || currentPerformanceFilter !== 'all') {
+                searchMatchEl.textContent = `(${matchingCount} matching filters)`;
+            } else {
+                searchMatchEl.textContent = '';
+            }
+            
+            // Show/hide no results message
+            const noResults = document.getElementById('noResults');
+            const matrixContainer = document.getElementById('matrixContainer');
+            if (matchingCount === 0 && classData.students.length > 0) {
+                noResults.style.display = 'block';
+                matrixContainer.style.display = 'none';
+            } else {
+                noResults.style.display = 'none';
+                matrixContainer.style.display = 'block';
+            }
+        }
+
+        function toggleStudent(studentId) {
+            const row = document.getElementById(`student-row-${studentId}`);
+            const checkbox = document.getElementById(`checkbox-${studentId}`);
+            
+            if (checkbox.checked) {
+                selectedStudents.add(studentId);
+                row.classList.add('selected');
+            } else {
+                selectedStudents.delete(studentId);
+                row.classList.remove('selected');
+            }
+            
+            updateAllVisibility();
+        }
+
+        // NEW: Select all visible students (respects search/filter)
+        function selectAllVisible() {
+            if (!classData) return;
+            
+            classData.students.forEach(student => {
+                const row = document.getElementById(`student-row-${student.student_id}`);
+                if (!row) return;
+                
+                // Only select if not filtered out
+                if (!row.classList.contains('filtered-out')) {
+                    selectedStudents.add(student.student_id);
+                    const checkbox = document.getElementById(`checkbox-${student.student_id}`);
+                    if (row) row.classList.add('selected');
+                    if (checkbox) checkbox.checked = true;
+                }
+            });
+            
+            updateAllVisibility();
+        }
+
+        function deselectAllStudents() {
+            selectedStudents.clear();
+            
+            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            document.querySelectorAll('tr.selected').forEach(row => {
+                row.classList.remove('selected');
+            });
+            
+            updateAllVisibility();
+        }
+
+        function resetAll() {
+            clearSearch();
+            deselectAllStudents();
+            filterByPerformance('all');
+        }
+
+        function refreshData() {
+            document.getElementById('loadingMessage').style.display = 'block';
+            document.getElementById('matrixContainer').style.display = 'none';
+            selectedStudents.clear();
+            currentSearchTerm = '';
+            currentPerformanceFilter = 'all';
+            document.getElementById('studentSearch').value = '';
+            loadClassData();
+        }
+
+        function exportData() {
+            if (!classData) return;
+            
+            let csv = 'Student Name,Points,Level,';
+            
+            classData.topics.forEach(topic => {
+                classData.difficulties.forEach(diff => {
+                    // Only export visible columns
+                    if (isColumnVisible(topic, diff)) {
+                        csv += `${formatTopicName(topic)} ${formatDifficultyName(diff)},`;
+                    }
+                });
+            });
+            csv += '\n';
+            
+            classData.students.forEach(student => {
+                const row = document.getElementById(`student-row-${student.student_id}`);
+                
+                // Export: visible students (not filtered out) AND selected OR all if none selected
+                if (row && row.classList.contains('filtered-out')) {
+                    return; // Skip filtered out students
+                }
+                
+                // If students are selected, only export selected ones
+                if (selectedStudents.size > 0 && !selectedStudents.has(student.student_id)) {
+                    return;
+                }
+                
+                const points = student.total_points || 0;
+                const level = student.level || 1;
+                csv += `"${student.student_name}",${points},${level},`;
+                
+                classData.topics.forEach(topic => {
+                    classData.difficulties.forEach(diff => {
+                        // Only export visible columns
+                        if (isColumnVisible(topic, diff)) {
+                            const moduleKey = `${topic}_${diff}`;
+                            const module = student.modules[moduleKey];
+                            csv += module ? `${module.percentage}%,` : 'N/A,';
+                        }
+                    });
+                });
+                
+                csv += '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `class_performance_${classData.class_name}_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        // Tooltip functions (unchanged)
+        function showTooltip(event, cellId) {
+            const tooltip = document.getElementById('floatingTooltip');
+            const data = tooltipData[cellId];
+            
+            if (!data) return;
+            
+            let content = `
+                <div class="tooltip-header">${data.topic} - ${data.difficulty}</div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Average Score:</span>
+                    <span class="tooltip-value">${data.percentage}%</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Attempts:</span>
+                    <span class="tooltip-value">${data.attempts}</span>
+                </div>
+                <div class="tooltip-row">
+                    <span class="tooltip-label">Status:</span>
+                    <span class="tooltip-value">${data.completed ? 'Completed' : 'Not Started'}</span>
+                </div>
+            `;
+            
+            if (data.recommendation) {
+                content += `
+                    <div class="tooltip-recommendation">
+                        <div class="tooltip-recommendation-title">💡 Recommendation:</div>
+                        <div class="tooltip-recommendation-text">${data.recommendation}</div>
+                    </div>
+                `;
+            }
+            
+            tooltip.innerHTML = content;
+            tooltip.style.display = 'block';
+            updateTooltipPosition(event);
+        }
+
+        function updateTooltipPosition(event) {
+            const tooltip = document.getElementById('floatingTooltip');
+            if (tooltip.style.display === 'none') return;
+            
+            const padding = 15;
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            let left = event.clientX + padding;
+            let top = event.clientY + padding;
+            
+            if (left + tooltipRect.width > viewportWidth - padding) {
+                left = event.clientX - tooltipRect.width - padding;
+            }
+            
+            if (top + tooltipRect.height > viewportHeight - padding) {
+                top = event.clientY - tooltipRect.height - padding;
+            }
+            
+            if (left < padding) left = padding;
+            if (top < padding) top = padding;
+            
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('floatingTooltip').style.display = 'none';
+        }
+
+        function generateRecommendation(module, topic, difficulty) {
+            if (!module.completed) {
+                return "Student should attempt this module to establish baseline performance.";
+            }
+
+            const percentage = module.percentage;
+
+            if (percentage < 20) {
+                return "Critical: Student needs immediate intervention. Consider 1-on-1 support or foundational review.";
+            } else if (percentage < 40) {
+                return "Significant gaps identified. Recommend additional practice and review of basic concepts.";
+            } else if (percentage < 60) {
+                return "Below target. Encourage focused practice on weak areas. Consider peer tutoring.";
+            } else if (percentage < 80) {
+                return "Approaching proficiency. A few more practice sessions should improve mastery.";
+            } else if (percentage < 90) {
+                return "Good performance! Encourage student to push for mastery with challenging problems.";
+            } else {
+                return "Excellent mastery! Student is ready to progress or help peers.";
+            }
+        }
+
+        function formatTopicName(topic) {
+            const names = {
+                'arithmetic': 'Arithmetic',
+                'fractions': 'Fractions',
+                'decimals': 'Decimals',
+                'percentages': 'Percentages',
+                'multiplication_division': 'Mult/Div',
+                'number_systems': 'Number Systems',
+                'bodmas': 'BODMAS',
+                'probability': 'Probability',
+                'descriptive_statistics': 'Descriptive Stats',
+                'patterns': 'Patterns',
+                'functions': 'Functions',
+                'surds': 'Surds',
+                'sets': 'Sets',
+                'complex_numbers_intro': 'Complex Intro',
+                'complex_numbers_expanded': 'Complex Expanded',
+                'complex_numbers': 'Complex #'  // Legacy support
+            };
+            return names[topic] || topic;
+        }
+
+        function formatDifficultyName(difficulty) {
+            const names = {
+                'beginner': 'Beginner',
+                'intermediate': 'Intermediate',
+                'advanced': 'Advanced',
+                // Legacy section support
+                'section1': 'Section 1',
+                'section2': 'Section 2',
+                'section3': 'Section 3',
+                'section4': 'Section 4',
+                'section5': 'Section 5'
+            };
+            return names[difficulty] || difficulty;
+        }
+
+        // ========== COLUMN SELECTOR FUNCTIONS ==========
+        
+        function initializeColumnVisibility() {
+            // Initialize all columns as visible by default
+            if (!classData) return;
+            
+            const savedColumns = localStorage.getItem(`columnVisibility_${classId}`);
+            if (savedColumns) {
+                visibleColumns = JSON.parse(savedColumns);
+            } else {
+                // All visible by default
+                classData.topics.forEach(topic => {
+                    classData.difficulties.forEach(diff => {
+                        const key = `${topic}_${diff}`;
+                        visibleColumns[key] = true;
+                    });
+                });
+            }
+        }
+
+        function openColumnSelector() {
+            if (!classData) return;
+            
+            const content = document.getElementById('columnSelectorContent');
+            let html = '';
+            
+            // Group by topic
+            classData.topics.forEach(topic => {
+                const topicName = formatTopicName(topic);
+                html += `
+                    <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #dee2e6;">
+                            <input type="checkbox" 
+                                   id="topic-toggle-${topic}" 
+                                   onchange="toggleTopicColumns('${topic}')"
+                                   style="width: 20px; height: 20px; margin-right: 12px; cursor: pointer;">
+                            <label for="topic-toggle-${topic}" 
+                                   style="font-size: 18px; font-weight: 700; color: #667eea; margin: 0; cursor: pointer;">
+                                ${topicName}
+                            </label>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-left: 32px;">
+                `;
+                
+                classData.difficulties.forEach(diff => {
+                    const key = `${topic}_${diff}`;
+                    const diffName = formatDifficultyName(diff);
+                    const checked = visibleColumns[key] !== false ? 'checked' : '';
+                    
+                    html += `
+                        <label style="display: flex; align-items: center; padding: 10px; background: white; border: 2px solid #dee2e6; border-radius: 8px; cursor: pointer; transition: all 0.2s;" 
+                               onmouseover="this.style.borderColor='#667eea'; this.style.background='#f0f3ff'" 
+                               onmouseout="this.style.borderColor='#dee2e6'; this.style.background='white'">
+                            <input type="checkbox" 
+                                   class="column-checkbox" 
+                                   data-topic="${topic}"
+                                   data-column="${key}" 
+                                   ${checked}
+                                   onchange="updateTopicCheckbox('${topic}')"
+                                   style="width: 18px; height: 18px; margin-right: 10px; cursor: pointer;">
+                            <span style="font-size: 14px; font-weight: 500;">${diffName}</span>
+                        </label>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+                
+                // Update topic checkbox state
+                setTimeout(() => updateTopicCheckbox(topic), 0);
+            });
+            
+            content.innerHTML = html;
+            document.getElementById('columnSelectorModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeColumnSelector() {
+            document.getElementById('columnSelectorModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function toggleTopicColumns(topic) {
+            const checkbox = document.getElementById(`topic-toggle-${topic}`);
+            const isChecked = checkbox.checked;
+            
+            // Toggle all difficulty checkboxes for this topic
+            const checkboxes = document.querySelectorAll(`input.column-checkbox[data-topic="${topic}"]`);
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+            });
+        }
+
+        function updateTopicCheckbox(topic) {
+            const checkboxes = document.querySelectorAll(`input.column-checkbox[data-topic="${topic}"]`);
+            const topicCheckbox = document.getElementById(`topic-toggle-${topic}`);
+            
+            if (!topicCheckbox) return;
+            
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            
+            if (checkedCount === 0) {
+                topicCheckbox.checked = false;
+                topicCheckbox.indeterminate = false;
+            } else if (checkedCount === checkboxes.length) {
+                topicCheckbox.checked = true;
+                topicCheckbox.indeterminate = false;
+            } else {
+                topicCheckbox.checked = false;
+                topicCheckbox.indeterminate = true;
+            }
+        }
+
+        function selectAllColumns() {
+            document.querySelectorAll('.column-checkbox').forEach(cb => {
+                cb.checked = true;
+            });
+            // Update all topic checkboxes
+            if (classData) {
+                classData.topics.forEach(topic => updateTopicCheckbox(topic));
+            }
+        }
+
+        function deselectAllColumns() {
+            document.querySelectorAll('.column-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            // Update all topic checkboxes
+            if (classData) {
+                classData.topics.forEach(topic => updateTopicCheckbox(topic));
+            }
+        }
+
+        function applyColumnSelection() {
+            // Save selected columns
+            const checkboxes = document.querySelectorAll('.column-checkbox');
+            checkboxes.forEach(cb => {
+                const key = cb.dataset.column;
+                visibleColumns[key] = cb.checked;
+            });
+            
+            // Check if at least one column is selected
+            const hasVisible = Object.values(visibleColumns).some(v => v);
+            if (!hasVisible) {
+                alert('Please select at least one column to display.');
+                return;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem(`columnVisibility_${classId}`, JSON.stringify(visibleColumns));
+            
+            // Re-render the matrix
+            renderMatrix(classData);
+            updateAllVisibility();
+            
+            closeColumnSelector();
+        }
+
+        // Modify the existing renderMatrix function to respect column visibility
+        function isColumnVisible(topic, difficulty) {
+            const key = `${topic}_${difficulty}`;
+            return visibleColumns[key] !== false;
+        }
+    </script>
+</body>
+</html>

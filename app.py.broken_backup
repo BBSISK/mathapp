@@ -3346,12 +3346,154 @@ def flag_statistics():
 
 
 
-# GET all users endpoint (frontend expects /api/admin/users plural)
+# ==================== ADMIN USER MANAGEMENT ROUTES ====================
+
 @app.route('/api/admin/users', methods=['GET'])
 @login_required
 @role_required('admin')
-def admin_get_all_users():
+def get_all_users():
     """Get all users for admin management"""
+    users = User.query.order_by(User.created_at.desc()).all()
+    
+    users_data = []
+    for user in users:
+        # Get user stats
+        stats = UserStats.query.filter_by(user_id=user.id).first()
+        
+        # Count quiz attempts
+        quiz_count = QuizAttempt.query.filter_by(user_id=user.id).count()
+        
+        users_data.append({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'role': user.role,
+            'is_approved': user.is_approved,
+            'created_at': user.created_at.isoformat() if user.created_at else None,
+            'total_quizzes': quiz_count,
+            'total_points': stats.total_points if stats else 0,
+            'level': stats.level if stats else 1
+        })
+    
+    return jsonify(users_data), 200
+
+
+@app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@login_required
+@role_required('admin')
+def delete_user(user_id):
+    """Delete a single user"""
+    # Prevent deleting yourself
+    if user_id == session['user_id']:
+        return jsonify({'error': 'Cannot delete your own account'}), 400
+    
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        # Delete related records first (cascading)
+        UserStats.query.filter_by(user_id=user_id).delete()
+        QuizAttempt.query.filter_by(user_id=user_id).delete()
+        UserBadge.query.filter_by(user_id=user_id).delete()
+        
+        # Delete the user
+        db.session.delete(user)
+        db.session.commit()
+        
+        return jsonify({'message': f'User {user.username} deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/users/bulk-delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def bulk_delete_users():
+    """Delete multiple users at once"""
+    data = request.json
+    user_ids = data.get('user_ids', [])
+    
+    if not user_ids:
+        return jsonify({'error': 'No user IDs provided'}), 400
+    
+    # Prevent deleting yourself
+    if session['user_id'] in user_ids:
+        return jsonify({'error': 'Cannot delete your own account'}), 400
+    
+    try:
+        deleted_count = 0
+        for user_id in user_ids:
+            user = User.query.get(user_id)
+            if user:
+                # Delete related records
+                UserStats.query.filter_by(user_id=user_id).delete()
+                QuizAttempt.query.filter_by(user_id=user_id).delete()
+                UserBadge.query.filter_by(user_id=user_id).delete()
+                
+                # Delete user
+                db.session.delete(user)
+                deleted_count += 1
+        
+        db.session.commit()
+        return jsonify({'message': f'{deleted_count} user(s) deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/users/<int:user_id>', methods=['PUT'])
+@login_required
+@role_required('admin')
+def update_user(user_id):
+    """Update user details (role, approval status, etc.)"""
+    user = User.query.get_or_404(user_id)
+    data = request.json
+    
+    try:
+        # Update allowed fields
+        if 'role' in data:
+            user.role = data['role']
+        
+        if 'is_approved' in data:
+            user.is_approved = data['is_approved']
+        
+        if 'email' in data:
+            user.email = data['email']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'User updated successfully',
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'role': user.role,
+                'is_approved': user.is_approved
+            }
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/users/<int:user_id>/approve', methods=['POST'])
+@login_required
+@role_required('admin')
+def approve_user(user_id):
+    """Approve a user"""
+    user = User.query.get_or_404(user_id)
+    user.is_approved = True
+    db.session.commit()
+    
+    return jsonify({'message': f'User {user.username} approved'}), 200
+
+
+@app.route('/users1')
+@login_required
+@role_required('admin')
+def users1():
+    """Legacy user management endpoint - returns user data"""
     users = User.query.order_by(User.created_at.desc()).all()
     
     users_data = []
@@ -3372,7 +3514,6 @@ def admin_get_all_users():
         })
     
     return jsonify(users_data), 200
-
 
 
 if __name__ == '__main__':
