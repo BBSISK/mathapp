@@ -2,11 +2,10 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 import random
 import re
-import uuid
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
@@ -133,7 +132,7 @@ class QuestionFlag(db.Model):
             reporter_name = self.reporter.full_name if self.reporter else 'Unknown User'
         else:
             reporter_name = f"Guest ({self.guest_identifier or 'Anonymous'})"
-
+        
         return {
             'id': self.id,
             'question_id': self.question_id,
@@ -430,8 +429,7 @@ class TopicProgress(db.Model):
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Allow full accounts (user_id), casual guests (is_guest + user_id), and repeat guests (guest_code)
-        if 'user_id' not in session and 'guest_code' not in session:
+        if 'user_id' not in session:
             return jsonify({'error': 'Authentication required'}), 401
         return f(*args, **kwargs)
     return decorated_function
@@ -440,11 +438,6 @@ def role_required(*roles):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # Repeat guests are considered students
-            if 'guest_code' in session and 'student' in roles:
-                return f(*args, **kwargs)
-            
-            # Full accounts and casual guests
             if 'user_id' not in session:
                 return jsonify({'error': 'Authentication required'}), 401
             user = User.query.get(session['user_id'])
@@ -457,14 +450,10 @@ def role_required(*roles):
 def approved_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Allow casual guests through
+        # Allow guest users through
         if 'is_guest' in session:
             return f(*args, **kwargs)
         
-        # Allow repeat guests through
-        if 'guest_code' in session:
-            return f(*args, **kwargs)
-
         # For regular users, check authentication and approval
         if 'user_id' not in session:
             return jsonify({'error': 'Authentication required'}), 401
@@ -480,7 +469,7 @@ def guest_or_login_required(f):
     """Allow both guest users and logged-in users"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'is_guest' not in session and 'user_id' not in session and 'guest_code' not in session:
+        if 'is_guest' not in session and 'user_id' not in session:
             return jsonify({'error': 'Authentication required'}), 401
         return f(*args, **kwargs)
     return decorated_function
@@ -1193,121 +1182,30 @@ def logout():
     session.clear()
     return jsonify({'message': 'Logged out successfully'}), 200
 
-
-# ==================== FIXED GUEST ROUTES ====================
-# REPLACE your existing guest routes (lines ~1185-1208) with these:
-
 @app.route('/api/guest-start', methods=['POST'])
 def guest_start():
-    """Initialize guest session with proper user_id"""
-    import uuid
-
-    try:
-        session.clear()
-
-        # Get or create the guest user in database
-        guest_user = User.query.filter_by(email='guest@mathmaster.app').first()
-
-        if not guest_user:
-            # Create guest user if it doesn't exist
-            guest_user = User(
-                email='guest@mathmaster.app',
-                password_hash='no_password_required',
-                full_name='Guest User',
-                role='student',
-                is_approved=True
-            )
-            db.session.add(guest_user)
-            db.session.commit()
-
-        # Set up guest session properly
-        session['is_guest'] = True
-        session['guest_session_id'] = str(uuid.uuid4())
-        session['user_id'] = guest_user.id  # CRITICAL: Set user_id
-        session['role'] = 'student'
-
-        # Try to create guest_sessions table if it doesn't exist
-        try:
-            from sqlalchemy import text
-            db.session.execute(text("""
-                CREATE TABLE IF NOT EXISTS guest_sessions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    session_id TEXT UNIQUE NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    quiz_attempts INTEGER DEFAULT 0
-                )
-            """))
-
-            # Insert this guest session
-            db.session.execute(
-                text("INSERT OR IGNORE INTO guest_sessions (session_id) VALUES (:sid)"),
-                {"sid": session['guest_session_id']}
-            )
-            db.session.commit()
-        except Exception as e:
-            print(f"Note: Could not create guest_sessions table: {e}")
-            # Not critical, continue anyway
-
-        return jsonify({
-            'success': True,
-            'message': 'Guest session started',
-            'redirect': '/student'
-        }), 200
-
-    except Exception as e:
-        print(f"Error starting guest session: {e}")
-        db.session.rollback()
-        return jsonify({'error': f'Failed to start guest session: {str(e)}'}), 500
-
+    """Initialize guest session"""
+    session.clear()
+    session['is_guest'] = True
+    session['guest_id'] = f"guest_{datetime.utcnow().timestamp()}"
+    return jsonify({'message': 'Guest session started'}), 200
 
 @app.route('/guest')
 def guest_app():
-    """Guest mode redirect - initializes session if needed"""
-    import uuid
-
-    # If not already a guest, set up guest session
-    if 'is_guest' not in session or 'user_id' not in session:
-        try:
-            # Get or create guest user
-            guest_user = User.query.filter_by(email='guest@mathmaster.app').first()
-
-            if not guest_user:
-                guest_user = User(
-                    email='guest@mathmaster.app',
-                    password_hash='no_password_required',
-                    full_name='Guest User',
-                    role='student',
-                    is_approved=True
-                )
-                db.session.add(guest_user)
-                db.session.commit()
-
-            # Set up session
-            session['is_guest'] = True
-            session['guest_session_id'] = str(uuid.uuid4())
-            session['user_id'] = guest_user.id
-            session['role'] = 'student'
-
-        except Exception as e:
-            print(f"Error setting up guest session: {e}")
-            return redirect('/')
-
-    # Redirect to student app
-    return redirect('/student')
-
+    """Guest mode student interface"""
+    if 'is_guest' not in session:
+        return redirect(url_for('index'))
+    return render_template('student_app.html')
 
 @app.route('/api/guest-info')
 def guest_info():
     """Return guest session information"""
-    if session.get('is_guest'):
+    if 'is_guest' in session:
         return jsonify({
             'is_guest': True,
-            'guest_id': session.get('guest_session_id', 'unknown'),
-            'user_id': session.get('user_id')
+            'guest_id': session.get('guest_id', 'unknown')
         }), 200
     return jsonify({'is_guest': False}), 200
-
 
 @app.route('/api/change-password', methods=['POST'])
 @login_required
@@ -1351,10 +1249,10 @@ def current_user():
             'email': 'guest@example.com',
             'role': 'student'
         }), 200
-
+    
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
-
+    
     user = User.query.get(session['user_id'])
     if not user:
         return jsonify({'error': 'User not found'}), 404
@@ -1373,11 +1271,6 @@ def student_redirect():
 @login_required
 @approved_required
 def student_app():
-    # Handle repeat guests (they don't have user_id)
-    if 'guest_code' in session:
-        return render_template('student_app.html')
-    
-    # Handle full accounts and casual guests
     user = User.query.get(session['user_id'])
     if user.role != 'student':
         return redirect(url_for('index'))
@@ -1388,7 +1281,7 @@ def student_app():
 @approved_required
 def get_topics():
     """Get topics grouped by Junior Cycle strands"""
-
+    
     # Topic metadata (icons and display titles)
     topic_info = {
         'arithmetic': {'title': 'Arithmetic', 'icon': 'calculator'},
@@ -1410,11 +1303,11 @@ def get_topics():
         'complex_numbers_intro': {'title': 'Complex Numbers Intro', 'icon': 'infinity'},
         'complex_numbers_expanded': {'title': 'Complex Numbers - Expanded', 'icon': 'rotate'}
     }
-
+    
     # Build response with strands
     strands = {}
     topics_flat = {}
-
+    
     # Try to query database for topics with their strands
     try:
         from sqlalchemy import text
@@ -1422,7 +1315,7 @@ def get_topics():
             SELECT DISTINCT topic, strand
             FROM questions
             WHERE strand IS NOT NULL
-            ORDER BY
+            ORDER BY 
                 CASE strand
                     WHEN 'Number' THEN 1
                     WHEN 'Algebra and Functions' THEN 2
@@ -1459,14 +1352,14 @@ def get_topics():
                 END,
                 topic
         """)).fetchall()
-
+        
         for topic, strand in topics_query:
             if strand not in strands:
                 strands[strand] = []
-
+            
             # Add topic to strand list
             strands[strand].append(topic)
-
+            
             # Add topic metadata to flat dict
             if topic in topic_info:
                 topics_flat[topic] = topic_info[topic]
@@ -1480,19 +1373,19 @@ def get_topics():
         # If strand column doesn't exist or query fails, use fallback
         print(f"Warning: Could not query strand column: {e}")
         strands = {}
-
+    
     # If no strands found (before migration or error), use fallback
     if not strands:
         strands = {
-            'Number': ['arithmetic', 'multiplication_division', 'number_systems',
+            'Number': ['arithmetic', 'multiplication_division', 'number_systems', 
                       'bodmas', 'fractions', 'decimals', 'sets'],
             'Algebra and Functions': ['introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising'],
             'Statistics and Probability': ['probability', 'descriptive_statistics'],
-            'Senior Cycle - Algebra': ['surds', 'complex_numbers_intro',
+            'Senior Cycle - Algebra': ['surds', 'complex_numbers_intro', 
                                         'complex_numbers_expanded']
         }
         topics_flat = topic_info
-
+    
     # Strand colors and descriptions
     strand_info = {
         'Number': {
@@ -1521,7 +1414,7 @@ def get_topics():
             'description': 'Explore shapes, measurements, and spatial reasoning'
         }
     }
-
+    
     return jsonify({
         'topics': topics_flat,
         'strands': strands,
@@ -1550,9 +1443,9 @@ def get_questions(topic, difficulty):
 @guest_or_login_required
 @approved_required
 def submit_quiz():
-    """Submit quiz - works for guests, repeat guests, and registered users"""
+    """Submit quiz - works for both guests and registered users"""
     data = request.json
-
+    
     # Normalize topic and difficulty to lowercase
     topic = data.get('topic', '').lower().strip()
     difficulty = data.get('difficulty', '').lower().strip()
@@ -1560,7 +1453,19 @@ def submit_quiz():
     total = data.get('total_questions', 25)
     percentage = data.get('percentage', 0)
     time_taken = data.get('time_taken', 0)
-
+    
+    # For guest users, just return results without saving
+    if 'is_guest' in session:
+        return jsonify({
+            'message': 'Quiz completed!',
+            'score': score,
+            'total': total,
+            'percentage': percentage,
+            'is_guest': True,
+            'prompt_register': True
+        }), 200
+    
+    # For registered users, save to database
     # Validate topic and difficulty
     valid_topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
@@ -1576,59 +1481,6 @@ def submit_quiz():
     if difficulty not in valid_difficulties:
         return jsonify({'error': f'Invalid difficulty: {difficulty}'}), 400
 
-    # Handle repeat guests - save to guest tables
-    if 'guest_code' in session:
-        from sqlalchemy import text
-        guest_code = session['guest_code']
-        
-        # Save quiz attempt
-        db.session.execute(text("""
-            INSERT INTO guest_quiz_attempts (guest_code, topic, difficulty, score, total_questions, time_spent)
-            VALUES (:code, :topic, :diff, :score, :total, :time)
-        """), {
-            "code": guest_code,
-            "topic": topic,
-            "diff": difficulty,
-            "score": score,
-            "total": total,
-            "time": time_taken
-        })
-        
-        # Update guest stats
-        db.session.execute(text("""
-            UPDATE guest_users
-            SET total_score = total_score + :score,
-                quizzes_completed = quizzes_completed + 1,
-                last_active = :now
-            WHERE guest_code = :code
-        """), {
-            "score": score,
-            "now": datetime.utcnow(),
-            "code": guest_code
-        })
-        
-        db.session.commit()
-        
-        return jsonify({
-            'message': 'Quiz completed!',
-            'score': score,
-            'total': total,
-            'percentage': percentage,
-            'is_repeat_guest': True
-        }), 200
-
-    # For casual guests, just return results without saving
-    if 'is_guest' in session:
-        return jsonify({
-            'message': 'Quiz completed!',
-            'score': score,
-            'total': total,
-            'percentage': percentage,
-            'is_guest': True,
-            'prompt_register': True
-        }), 200
-
-    # For registered users, save to database
     # Create quiz attempt
     attempt = QuizAttempt(
         user_id=session['user_id'],
@@ -1659,7 +1511,7 @@ def my_progress():
     # Guest users have no progress
     if 'is_guest' in session:
         return jsonify([]), 200
-
+    
     attempts = QuizAttempt.query.filter_by(user_id=session['user_id']).order_by(QuizAttempt.completed_at.desc()).all()
     return jsonify([a.to_dict() for a in attempts])
 
@@ -1679,7 +1531,7 @@ def get_student_badges():
             'total_points': 0,
             'total_badges': 0
         }), 200
-
+    
     user_id = session['user_id']
 
     # Get all badges
@@ -1740,63 +1592,7 @@ def get_student_badges():
 @approved_required
 def get_student_stats():
     """Get detailed statistics for the current student"""
-    
-    # Handle repeat guests - fetch from guest tables
-    if 'guest_code' in session:
-        from sqlalchemy import text
-        guest_code = session['guest_code']
-        
-        # Get guest stats
-        guest_stats = db.session.execute(text("""
-            SELECT total_score, quizzes_completed
-            FROM guest_users
-            WHERE guest_code = :code
-        """), {"code": guest_code}).fetchone()
-        
-        # Get guest quiz attempts
-        attempts = db.session.execute(text("""
-            SELECT topic, difficulty, score, total_questions, completed_at
-            FROM guest_quiz_attempts
-            WHERE guest_code = :code
-            ORDER BY completed_at DESC
-            LIMIT 10
-        """), {"code": guest_code}).fetchall()
-        
-        # Calculate accuracy
-        total_correct = sum(a[2] for a in attempts) if attempts else 0
-        total_questions = sum(a[3] for a in attempts) if attempts else 0
-        accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
-        
-        # Get badge count
-        badge_count = db.session.execute(text("""
-            SELECT COUNT(*) FROM guest_badges WHERE guest_code = :code
-        """), {"code": guest_code}).fetchone()[0]
-        
-        return jsonify({
-            'stats': {
-                'total_quizzes': guest_stats[1] if guest_stats else 0,
-                'total_questions_answered': total_questions,
-                'total_correct_answers': total_correct,
-                'overall_accuracy': round(accuracy, 1),
-                'current_streak_days': 0,
-                'longest_streak_days': 0,
-                'total_points': guest_stats[0] if guest_stats else 0,
-                'level': 1,
-                'topics_mastered': 0,
-                'perfect_scores': 0,
-                'badges_earned': badge_count
-            },
-            'topic_progress': [],
-            'recent_attempts': [{
-                'topic': a[0],
-                'difficulty': a[1],
-                'score': a[2],
-                'total_questions': a[3],
-                'completed_at': a[4]
-            } for a in attempts]
-        }), 200
-    
-    # Handle casual guests - no stats
+    # Guest users don't have stats
     if 'is_guest' in session:
         return jsonify({
             'stats': {
@@ -1814,8 +1610,7 @@ def get_student_stats():
             'topic_progress': [],
             'recent_attempts': []
         }), 200
-
-    # Handle full accounts
+    
     user_id = session['user_id']
 
     stats = UserStats.query.filter_by(user_id=user_id).first()
@@ -1863,13 +1658,13 @@ def get_student_mastery():
     # Guest users don't have mastery data
     if 'is_guest' in session:
         return jsonify({}), 200
-
+    
     user_id = session['user_id']
 
     # Get all topics - MUST match topics in get_topics() API
     topics = [
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'number_systems', 'bodmas', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'probability', 'descriptive_statistics', 'sets',
+        'number_systems', 'bodmas', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'probability', 'descriptive_statistics', 'sets', 
         'surds', 'complex_numbers_intro', 'complex_numbers_expanded'
     ]
     difficulties = ['beginner', 'intermediate', 'advanced']
@@ -1882,9 +1677,9 @@ def get_student_mastery():
         WHERE user_id = :user_id
         GROUP BY topic, difficulty
     """)
-
+    
     results = db.session.execute(query, {'user_id': user_id}).fetchall()
-
+    
     # Build lookup dictionary from query results
     best_scores = {}
     for row in results:
@@ -1906,7 +1701,7 @@ def get_student_mastery():
 
         for difficulty in difficulties:
             best_score = best_scores.get(topic, {}).get(difficulty, 0)
-
+            
             if best_score > 80:
                 mastery_data[topic]['difficulties'][difficulty] = {
                     'mastered': True,
@@ -2547,24 +2342,24 @@ def admin_user_management():
 def get_user_details(user_id):
     """Get detailed user information"""
     user = User.query.get_or_404(user_id)
-
+    
     # Get additional stats
     stats = UserStats.query.filter_by(user_id=user_id).first()
     quiz_count = QuizAttempt.query.filter_by(user_id=user_id).count()
-
+    
     # Get class enrollments if student
     classes = []
     if user.role == 'student':
         enrollments = ClassEnrollment.query.filter_by(student_id=user_id).all()
-        classes = [{'id': e.class_obj.id, 'name': e.class_obj.name,
+        classes = [{'id': e.class_obj.id, 'name': e.class_obj.name, 
                    'teacher': e.class_obj.teacher.full_name} for e in enrollments]
-
+    
     # Get classes teaching if teacher
     elif user.role == 'teacher':
         teaching_classes = Class.query.filter_by(teacher_id=user_id).all()
-        classes = [{'id': c.id, 'name': c.name,
+        classes = [{'id': c.id, 'name': c.name, 
                    'student_count': len(c.enrollments)} for c in teaching_classes]
-
+    
     return jsonify({
         'user': user.to_dict(),
         'stats': {
@@ -2582,13 +2377,13 @@ def update_user(user_id):
     """Update user details (name, email)"""
     user = User.query.get_or_404(user_id)
     data = request.json
-
+    
     # Update name
     if 'full_name' in data:
         new_name = data['full_name'].strip()
         if new_name:
             user.full_name = new_name
-
+    
     # Update email (check for duplicates)
     if 'email' in data:
         new_email = data['email'].strip().lower()
@@ -2597,13 +2392,13 @@ def update_user(user_id):
             if existing:
                 return jsonify({'error': 'Email already in use'}), 400
             user.email = new_email
-
+    
     # Update approval status
     if 'is_approved' in data:
         user.is_approved = data['is_approved']
-
+    
     db.session.commit()
-
+    
     return jsonify({
         'message': 'User updated successfully',
         'user': user.to_dict()
@@ -2616,65 +2411,65 @@ def delete_user(user_id):
     """Delete a user and all associated data"""
     try:
         user = User.query.get_or_404(user_id)
-
+        
         # Don't allow deleting yourself
         if user.id == session['user_id']:
             return jsonify({'error': 'Cannot delete your own account'}), 400
-
+        
         # Don't allow deleting other admins
         if user.role == 'admin':
             return jsonify({'error': 'Cannot delete admin accounts'}), 403
-
+        
         # Delete associated data in proper order to avoid foreign key violations
-
+        
         # 1. Quiz attempts
         QuizAttempt.query.filter_by(user_id=user_id).delete()
-
+        
         # 2. User stats
         UserStats.query.filter_by(user_id=user_id).delete()
-
+        
         # 3. Topic progress
         TopicProgress.query.filter_by(user_id=user_id).delete()
-
+        
         # 4. User badges
         UserBadge.query.filter_by(user_id=user_id).delete()
-
+        
         # 5. Question flags - BOTH as reporter AND as resolver
         QuestionFlag.query.filter_by(user_id=user_id).delete()
         # Set resolved_by to NULL for flags this user resolved
         QuestionFlag.query.filter_by(resolved_by=user_id).update({'resolved_by': None})
-
+        
         # 6. Question edits - Set editor to NULL (keep edit history but anonymize)
         QuestionEdit.query.filter_by(edited_by=user_id).update({'edited_by': None})
-
+        
         # 7. Domain access records (for teachers)
         TeacherDomainAccess.query.filter_by(teacher_id=user_id).delete()
         # Set granted_by to NULL for domain access this admin granted
         TeacherDomainAccess.query.filter_by(granted_by=user_id).update({'granted_by': None})
-
+        
         # 8. Domain access requests
         DomainAccessRequest.query.filter_by(teacher_id=user_id).delete()
         # Set reviewed_by to NULL for requests this admin reviewed
         DomainAccessRequest.query.filter_by(reviewed_by=user_id).update({'reviewed_by': None})
-
+        
         # 9. Class enrollments (if student)
         ClassEnrollment.query.filter_by(student_id=user_id).delete()
-
+        
         # 10. Classes (if teacher) - also delete all enrollments
         if user.role == 'teacher':
             classes = Class.query.filter_by(teacher_id=user_id).all()
             for class_obj in classes:
                 ClassEnrollment.query.filter_by(class_id=class_obj.id).delete()
                 db.session.delete(class_obj)
-
+        
         # Finally, delete the user
         db.session.delete(user)
         db.session.commit()
-
+        
         return jsonify({
             'message': f'User {user.full_name} deleted successfully'
         })
-
+        
     except Exception as e:
         db.session.rollback()
         print(f"Error deleting user {user_id}: {str(e)}")  # Log the error
@@ -2690,77 +2485,77 @@ def bulk_delete_users():
     try:
         data = request.json
         user_ids = data.get('user_ids', [])
-
+        
         if not user_ids:
             return jsonify({'error': 'No users selected'}), 400
-
+        
         deleted_count = 0
         errors = []
-
+        
         for user_id in user_ids:
             try:
                 user = User.query.get(user_id)
-
+                
                 if not user:
                     errors.append(f"User {user_id} not found")
                     continue
-
+                
                 # Don't allow deleting yourself
                 if user.id == session['user_id']:
                     errors.append(f"Cannot delete your own account")
                     continue
-
+                
                 # Don't allow deleting other admins
                 if user.role == 'admin':
                     errors.append(f"Cannot delete admin account: {user.full_name}")
                     continue
-
+                
                 # Delete associated data (same as single delete)
                 QuizAttempt.query.filter_by(user_id=user_id).delete()
                 UserStats.query.filter_by(user_id=user_id).delete()
                 TopicProgress.query.filter_by(user_id=user_id).delete()
                 UserBadge.query.filter_by(user_id=user_id).delete()
-
+                
                 QuestionFlag.query.filter_by(user_id=user_id).delete()
                 QuestionFlag.query.filter_by(resolved_by=user_id).update({'resolved_by': None})
-
+                
                 QuestionEdit.query.filter_by(edited_by=user_id).update({'edited_by': None})
-
+                
                 TeacherDomainAccess.query.filter_by(teacher_id=user_id).delete()
                 TeacherDomainAccess.query.filter_by(granted_by=user_id).update({'granted_by': None})
-
+                
                 DomainAccessRequest.query.filter_by(teacher_id=user_id).delete()
                 DomainAccessRequest.query.filter_by(reviewed_by=user_id).update({'reviewed_by': None})
-
+                
                 ClassEnrollment.query.filter_by(student_id=user_id).delete()
-
+                
                 if user.role == 'teacher':
                     classes = Class.query.filter_by(teacher_id=user_id).all()
                     for class_obj in classes:
                         ClassEnrollment.query.filter_by(class_id=class_obj.id).delete()
                         db.session.delete(class_obj)
-
+                
                 # Delete the user
                 db.session.delete(user)
                 deleted_count += 1
-
+                
             except Exception as e:
                 errors.append(f"Error deleting user {user_id}: {str(e)}")
                 continue
-
+        
         # Commit all deletions
         db.session.commit()
-
+        
         response_data = {
             'deleted_count': deleted_count,
             'total_requested': len(user_ids)
         }
-
+        
         if errors:
             response_data['errors'] = errors
-
+        
         return jsonify(response_data)
-
+        
     except Exception as e:
         db.session.rollback()
         print(f"Error in bulk delete: {str(e)}")
@@ -2774,12 +2569,12 @@ def bulk_delete_users():
 def toggle_user_approval(user_id):
     """Toggle user approval status"""
     user = User.query.get_or_404(user_id)
-
+    
     user.is_approved = not user.is_approved
     db.session.commit()
-
+    
     status = 'approved' if user.is_approved else 'unapproved'
-
+    
     return jsonify({
         'message': f'User {status} successfully',
         'is_approved': user.is_approved
@@ -3110,7 +2905,7 @@ def get_class_matrix_data(class_id):
             SELECT DISTINCT strand, topic
             FROM questions
             WHERE strand IS NOT NULL
-            ORDER BY
+            ORDER BY 
                 CASE strand
                     WHEN 'Number' THEN 1
                     WHEN 'Algebra and Functions' THEN 2
@@ -3150,31 +2945,31 @@ def get_class_matrix_data(class_id):
     except Exception as e:
         print(f"Warning: Could not query strand column in matrix-data: {e}")
         topics_query = []
-
+    
     # Build strands structure
     strands = {}
     all_topics = []
-
+    
     for strand, topic in topics_query:
         if strand not in strands:
             strands[strand] = []
         strands[strand].append(topic)
         all_topics.append(topic)
-
+    
     # If no strands found (strands not yet added), fall back to hardcoded list
     if not all_topics:
-        all_topics = ['arithmetic', 'multiplication_division', 'number_systems',
+        all_topics = ['arithmetic', 'multiplication_division', 'number_systems', 
                       'bodmas', 'fractions', 'decimals', 'sets',
                       'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded',
                       'probability', 'descriptive_statistics']
         strands = {
-            'Number': ['arithmetic', 'multiplication_division', 'number_systems',
+            'Number': ['arithmetic', 'multiplication_division', 'number_systems', 
                       'bodmas', 'fractions', 'decimals', 'sets'],
-            'Algebra and Functions': ['functions', 'patterns', 'solving_equations',
+            'Algebra and Functions': ['functions', 'patterns', 'solving_equations', 
                                       'simplifying_expressions', 'expanding_factorising',
                                       'surds', 'complex_numbers_intro', 'complex_numbers_expanded'],
         }
-
+    
     difficulties = ['beginner', 'intermediate', 'advanced']
 
     # Build matrix data
@@ -3182,10 +2977,10 @@ def get_class_matrix_data(class_id):
 
     for enrollment in enrollments:
         student = enrollment.student
-
+        
         # Get student stats
         stats = UserStats.query.filter_by(user_id=student.id).first()
-
+        
         student_data = {
             'student_id': student.id,
             'student_name': student.full_name,
@@ -3318,7 +3113,7 @@ def flag_question():
         # Create a hash of IP + user agent for better privacy
         user_agent = request.headers.get('User-Agent', '')
         guest_identifier = hashlib.md5(f"{guest_id}{user_agent}".encode()).hexdigest()[:16]
-
+        
         flag = QuestionFlag(
             question_id=question_id,
             user_id=None,
@@ -3348,7 +3143,7 @@ def get_my_flags():
         guest_id = request.remote_addr or 'unknown'
         user_agent = request.headers.get('User-Agent', '')
         guest_identifier = hashlib.md5(f"{guest_id}{user_agent}".encode()).hexdigest()[:16]
-
+        
         flags = QuestionFlag.query.filter_by(guest_identifier=guest_identifier).order_by(QuestionFlag.created_at.desc()).all()
     return jsonify([f.to_dict() for f in flags])
 
@@ -3595,12 +3390,12 @@ def flag_statistics():
 def admin_get_all_users():
     """Get all users for admin management"""
     users = User.query.order_by(User.created_at.desc()).all()
-
+    
     users_data = []
     for user in users:
         stats = UserStats.query.filter_by(user_id=user.id).first()
         quiz_count = QuizAttempt.query.filter_by(user_id=user.id).count()
-
+        
         users_data.append({
             'id': user.id,
             'username': user.full_name,  # FIXED: Use full_name instead of username
@@ -3612,7 +3407,7 @@ def admin_get_all_users():
             'total_points': stats.total_points if stats else 0,
             'level': stats.level if stats else 1
         })
-
+    
     return jsonify(users_data), 200
 
 
@@ -3639,59 +3434,59 @@ if __name__ == '__main__':
         if Badge.query.count() == 0:
             default_badges = [
                 # Beginner badges
-                Badge(name='First Steps', description='Complete your first quiz', icon='fa-star',
-                      category='beginner', requirement_type='quizzes_completed', requirement_value=1,
+                Badge(name='First Steps', description='Complete your first quiz', icon='fa-star', 
+                      category='beginner', requirement_type='quizzes_completed', requirement_value=1, 
                       points=10, color='yellow'),
-                Badge(name='Curious Learner', description='Complete 5 quizzes', icon='fa-book',
-                      category='progress', requirement_type='quizzes_completed', requirement_value=5,
+                Badge(name='Curious Learner', description='Complete 5 quizzes', icon='fa-book', 
+                      category='progress', requirement_type='quizzes_completed', requirement_value=5, 
                       points=20, color='blue'),
-                Badge(name='Dedicated Student', description='Complete 10 quizzes', icon='fa-graduation-cap',
-                      category='progress', requirement_type='quizzes_completed', requirement_value=10,
+                Badge(name='Dedicated Student', description='Complete 10 quizzes', icon='fa-graduation-cap', 
+                      category='progress', requirement_type='quizzes_completed', requirement_value=10, 
                       points=30, color='purple'),
-                Badge(name='Math Enthusiast', description='Complete 25 quizzes', icon='fa-heart',
-                      category='progress', requirement_type='quizzes_completed', requirement_value=25,
+                Badge(name='Math Enthusiast', description='Complete 25 quizzes', icon='fa-heart', 
+                      category='progress', requirement_type='quizzes_completed', requirement_value=25, 
                       points=50, color='red'),
-                Badge(name='Quiz Master', description='Complete 50 quizzes', icon='fa-trophy',
-                      category='progress', requirement_type='quizzes_completed', requirement_value=50,
+                Badge(name='Quiz Master', description='Complete 50 quizzes', icon='fa-trophy', 
+                      category='progress', requirement_type='quizzes_completed', requirement_value=50, 
                       points=100, color='gold'),
-
+                
                 # Streak badges
-                Badge(name='Week Warrior', description='Practice 7 days in a row', icon='fa-bolt',
-                      category='streak', requirement_type='streak_days', requirement_value=7,
+                Badge(name='Week Warrior', description='Practice 7 days in a row', icon='fa-bolt', 
+                      category='streak', requirement_type='streak_days', requirement_value=7, 
                       points=40, color='orange'),
-                Badge(name='Unstoppable', description='Practice 14 days in a row', icon='fa-rocket',
-                      category='streak', requirement_type='streak_days', requirement_value=14,
+                Badge(name='Unstoppable', description='Practice 14 days in a row', icon='fa-rocket', 
+                      category='streak', requirement_type='streak_days', requirement_value=14, 
                       points=75, color='red'),
-
+                
                 # Mastery badges
-                Badge(name='Topic Master', description='Master any topic (all 3 difficulties)', icon='fa-certificate',
-                      category='mastery', requirement_type='topics_mastered', requirement_value=1,
+                Badge(name='Topic Master', description='Master any topic (all 3 difficulties)', icon='fa-certificate', 
+                      category='mastery', requirement_type='topics_mastered', requirement_value=1, 
                       points=30, color='green'),
-                Badge(name='Subject Expert', description='Master 3 different topics', icon='fa-brain',
-                      category='mastery', requirement_type='topics_mastered', requirement_value=3,
+                Badge(name='Subject Expert', description='Master 3 different topics', icon='fa-brain', 
+                      category='mastery', requirement_type='topics_mastered', requirement_value=3, 
                       points=75, color='purple'),
-                Badge(name='Mathematics Genius', description='Master 5 different topics', icon='fa-infinity',
-                      category='mastery', requirement_type='topics_mastered', requirement_value=5,
+                Badge(name='Mathematics Genius', description='Master 5 different topics', icon='fa-infinity', 
+                      category='mastery', requirement_type='topics_mastered', requirement_value=5, 
                       points=150, color='gold'),
-
+                
                 # Accuracy badges
-                Badge(name='Perfect Score', description='Get 100% on a quiz', icon='fa-gem',
-                      category='accuracy', requirement_type='perfect_scores', requirement_value=1,
+                Badge(name='Perfect Score', description='Get 100% on a quiz', icon='fa-gem', 
+                      category='accuracy', requirement_type='perfect_scores', requirement_value=1, 
                       points=15, color='cyan'),
-                Badge(name='Perfectionist', description='Get 5 perfect scores', icon='fa-star',
-                      category='accuracy', requirement_type='perfect_scores', requirement_value=5,
+                Badge(name='Perfectionist', description='Get 5 perfect scores', icon='fa-star', 
+                      category='accuracy', requirement_type='perfect_scores', requirement_value=5, 
                       points=50, color='gold'),
-                Badge(name='High Achiever', description='Score 90%+ on 10 quizzes', icon='fa-bullseye',
-                      category='accuracy', requirement_type='high_scores', requirement_value=10,
+                Badge(name='High Achiever', description='Score 90%+ on 10 quizzes', icon='fa-bullseye', 
+                      category='accuracy', requirement_type='high_scores', requirement_value=10, 
                       points=40, color='green'),
-                Badge(name='Excellence Personified', description='Score 90%+ on 25 quizzes', icon='fa-crown',
-                      category='accuracy', requirement_type='high_scores', requirement_value=25,
+                Badge(name='Excellence Personified', description='Score 90%+ on 25 quizzes', icon='fa-crown', 
+                      category='accuracy', requirement_type='high_scores', requirement_value=25, 
                       points=100, color='gold'),
             ]
-
+            
             for badge in default_badges:
                 db.session.add(badge)
-
+            
             db.session.commit()
             print(f"✅ Created {len(default_badges)} default badges")
 
@@ -3752,369 +3547,3 @@ def teacher_simple_delete_class(class_id):
     db.session.commit()
     flash('Class deleted.', 'success')
     return redirect('/teacher/classes')
-
-# ==================== DUAL GUEST SYSTEM ====================
-# Supports both casual guests and repeat guests with codes
-
-# Animal codes for repeat guests
-ANIMALS = [
-    'ant', 'ape', 'bat', 'bear', 'bee', 'bird', 'cat', 'clam', 'cod', 'cow',
-    'crab', 'crow', 'deer', 'dog', 'dove', 'duck', 'eagle', 'eel', 'elk', 'fish',
-    'fly', 'fox', 'frog', 'gnat', 'goat', 'goose', 'hawk', 'hog', 'horse', 'jay',
-    'lark', 'lion', 'loon', 'lynx', 'mink', 'mole', 'moth', 'mouse', 'mule', 'newt',
-    'orca', 'owl', 'ox', 'panda', 'pig', 'puma', 'rat', 'ray', 'seal', 'shark',
-    'sheep', 'shrew', 'sloth', 'slug', 'snail', 'snake', 'swan', 'tiger', 'toad', 'trout',
-    'viper', 'vole', 'wasp', 'whale', 'wolf', 'worm', 'yak', 'zebra', 'bison', 'boar',
-    'bunny', 'camel', 'cobra', 'coral', 'crane', 'dingo', 'drake', 'gecko', 'hippo', 'hyena',
-    'koala', 'lemur', 'llama', 'moose', 'otter', 'pony', 'quail', 'raven', 'rhino', 'robin',
-    'skunk', 'squid', 'stork', 'tapir', 'tern', 'tuna', 'weasel', 'betta', 'finch', 'guppy'
-]
-
-def generate_guest_code():
-    """Generate unique animal code (e.g., panda42)"""
-    max_attempts = 100
-    
-    for _ in range(max_attempts):
-        animal = random.choice(ANIMALS)
-        number = random.randint(0, 99)
-        code = f"{animal}{number:02d}"
-        
-        # Check if code is already taken
-        from sqlalchemy import text
-        existing = db.session.execute(
-            text("SELECT 1 FROM guest_users WHERE guest_code = :code"), 
-            {"code": code}
-        ).fetchone()
-        
-        if not existing:
-            return code
-    
-    raise Exception("Could not generate unique guest code. Please try again.")
-
-
-def get_current_user_info():
-    """
-    Get user info for either full account, repeat guest, or casual guest
-    Returns dict with user data or None
-    """
-    # Check full account
-    if 'user_id' in session and 'guest_code' not in session and not session.get('is_guest'):
-        user = User.query.get(session['user_id'])
-        if user and user.email != 'guest@mathmaster.app':
-            return {
-                'type': 'full',
-                'id': user.id,
-                'name': user.full_name,
-                'email': user.email,
-                'role': user.role,
-                'total_score': getattr(user, 'total_score', 0),
-                'quizzes_completed': getattr(user, 'quizzes_completed', 0)
-            }
-    
-    # Check repeat guest
-    if 'guest_code' in session:
-        from sqlalchemy import text
-        result = db.session.execute(
-            text("""SELECT guest_code, total_score, quizzes_completed, created_at, last_active
-               FROM guest_users WHERE guest_code = :code AND is_active = 1"""),
-            {"code": session['guest_code']}
-        ).fetchone()
-        
-        if result:
-            return {
-                'type': 'repeat_guest',
-                'guest_code': result[0],
-                'name': f"Guest {result[0].title()}",
-                'total_score': result[1] or 0,
-                'quizzes_completed': result[2] or 0,
-                'created_at': result[3],
-                'last_active': result[4]
-            }
-    
-    # Check casual guest (shared guest@mathmaster.app user)
-    if session.get('is_guest') and 'user_id' in session:
-        user = User.query.get(session['user_id'])
-        if user and user.email == 'guest@mathmaster.app':
-            return {
-                'type': 'casual_guest',
-                'name': 'Guest User',
-                'session_id': session.get('guest_session_id', 'unknown')
-            }
-    
-    return None
-
-
-def update_guest_last_active(guest_code):
-    """Update last_active timestamp for repeat guest"""
-    from sqlalchemy import text
-    db.session.execute(
-        text("UPDATE guest_users SET last_active = :now WHERE guest_code = :code"),
-        {"now": datetime.utcnow(), "code": guest_code}
-    )
-    db.session.commit()
-
-
-# ==================== CASUAL GUEST ROUTES ====================
-
-@app.route('/api/casual-guest-start', methods=['POST'])
-def casual_guest_start():
-    """Initialize casual guest session (temporary, no code)"""
-    try:
-        session.clear()
-        
-        # Get or create the shared casual guest user
-        guest_user = User.query.filter_by(email='guest@mathmaster.app').first()
-        
-        if not guest_user:
-            guest_user = User(
-                email='guest@mathmaster.app',
-                password_hash='no_password_required',
-                full_name='Guest User',
-                role='student',
-                is_approved=True
-            )
-            db.session.add(guest_user)
-            db.session.commit()
-        
-        # Set up casual guest session
-        session['is_guest'] = True
-        session['guest_session_id'] = str(uuid.uuid4())
-        session['user_id'] = guest_user.id
-        session['role'] = 'student'
-        session['guest_type'] = 'casual'
-        
-        return jsonify({
-            'success': True,
-            'message': 'Casual guest session started',
-            'redirect': '/student'
-        }), 200
-        
-    except Exception as e:
-        print(f"Error starting casual guest session: {e}")
-        db.session.rollback()
-        return jsonify({'error': f'Failed to start guest session: {str(e)}'}), 500
-
-
-# ==================== REPEAT GUEST ROUTES ====================
-
-@app.route('/api/repeat-guest/generate', methods=['POST'])
-def generate_repeat_guest():
-    """Generate new repeat guest code"""
-    try:
-        from sqlalchemy import text
-        
-        # Generate unique code
-        code = generate_guest_code()
-        
-        # Create guest user in database
-        db.session.execute(text("""
-            INSERT INTO guest_users (guest_code, created_at, last_active)
-            VALUES (:code, :now, :now)
-        """), {"code": code, "now": datetime.utcnow()})
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'guest_code': code,
-            'message': f'Your code is: {code}'
-        }), 200
-        
-    except Exception as e:
-        print(f"Error generating guest code: {e}")
-        db.session.rollback()
-        return jsonify({'error': 'Failed to generate code. Please try again.'}), 500
-
-
-@app.route('/api/repeat-guest/login', methods=['POST'])
-def repeat_guest_login():
-    """Login with repeat guest code"""
-    try:
-        from sqlalchemy import text
-        data = request.json
-        code = data.get('guest_code', '').strip().lower()
-        
-        if not code:
-            return jsonify({'error': 'Please enter your guest code'}), 400
-        
-        # Check if code exists and is active
-        result = db.session.execute(
-            text("SELECT guest_code FROM guest_users WHERE guest_code = :code AND is_active = 1"),
-            {"code": code}
-        ).fetchone()
-        
-        if not result:
-            return jsonify({'error': 'Code not found. Please check and try again.'}), 404
-        
-        # Get or create the shared guest user for repeat guests
-        guest_user = User.query.filter_by(email='guest@mathmaster.app').first()
-        
-        if not guest_user:
-            guest_user = User(
-                email='guest@mathmaster.app',
-                password_hash='no_password_required',
-                full_name='Guest User',
-                role='student',
-                is_approved=True
-            )
-            db.session.add(guest_user)
-            db.session.commit()
-        
-        # Set up repeat guest session
-        session.clear()
-        session['guest_code'] = code
-        session['user_id'] = guest_user.id  # CRITICAL: Set user_id for @login_required
-        session['role'] = 'student'
-        session['guest_type'] = 'repeat'
-        
-        # Update last active
-        update_guest_last_active(code)
-        
-        return jsonify({
-            'success': True,
-            'message': 'Welcome back!',
-            'redirect': '/student'
-        }), 200
-        
-    except Exception as e:
-        print(f"Error logging in guest: {e}")
-        db.session.rollback()
-        return jsonify({'error': 'Login failed. Please try again.'}), 500
-
-
-@app.route('/api/repeat-guest/stats')
-def repeat_guest_stats():
-    """Get stats for current repeat guest"""
-    if 'guest_code' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    
-    try:
-        from sqlalchemy import text
-        code = session['guest_code']
-        
-        # Get stats
-        result = db.session.execute(text("""
-            SELECT 
-                total_score,
-                quizzes_completed,
-                (SELECT COUNT(*) FROM guest_badges WHERE guest_code = :code) as badges_earned
-            FROM guest_users
-            WHERE guest_code = :code
-        """), {"code": code}).fetchone()
-        
-        if result:
-            return jsonify({
-                'total_score': result[0] or 0,
-                'quizzes_completed': result[1] or 0,
-                'badges_earned': result[2] or 0
-            }), 200
-        
-        return jsonify({'error': 'Stats not found'}), 404
-        
-    except Exception as e:
-        print(f"Error getting guest stats: {e}")
-        return jsonify({'error': 'Failed to load stats'}), 500
-
-
-@app.route('/api/repeat-guest/convert', methods=['POST'])
-def convert_guest_to_full():
-    """Convert repeat guest to full account"""
-    if 'guest_code' not in session:
-        return jsonify({'error': 'Not logged in as guest'}), 401
-    
-    try:
-        from sqlalchemy import text
-        data = request.json
-        
-        email = data.get('email', '').strip()
-        password = data.get('password', '').strip()
-        full_name = data.get('full_name', '').strip()
-        
-        # Validation
-        if not email or not password or not full_name:
-            return jsonify({'error': 'All fields required'}), 400
-        
-        if len(password) < 6:
-            return jsonify({'error': 'Password must be at least 6 characters'}), 400
-        
-        # Check if email already exists
-        existing = User.query.filter_by(email=email).first()
-        if existing:
-            return jsonify({'error': 'Email already registered'}), 400
-        
-        guest_code = session['guest_code']
-        
-        # Get guest data
-        guest_data = db.session.execute(text("""
-            SELECT total_score, quizzes_completed
-            FROM guest_users
-            WHERE guest_code = :code
-        """), {"code": guest_code}).fetchone()
-        
-        # Create new full user account
-        new_user = User(
-            email=email,
-            full_name=full_name,
-            role='student',
-            is_approved=True
-        )
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.flush()
-        
-        # Migrate quiz attempts
-        db.session.execute(text("""
-            INSERT INTO quiz_attempts (user_id, topic, difficulty, score, total_questions, completed_at)
-            SELECT :user_id, topic, difficulty, score, total_questions, completed_at
-            FROM guest_quiz_attempts
-            WHERE guest_code = :code
-        """), {"user_id": new_user.id, "code": guest_code})
-        
-        # Migrate badges
-        db.session.execute(text("""
-            INSERT INTO user_badges (user_id, badge_id, earned_at)
-            SELECT :user_id, badge_id, earned_at
-            FROM guest_badges
-            WHERE guest_code = :code
-        """), {"user_id": new_user.id, "code": guest_code})
-        
-        # Deactivate guest account
-        db.session.execute(
-            text("UPDATE guest_users SET is_active = 0 WHERE guest_code = :code"),
-            {"code": guest_code}
-        )
-        
-        db.session.commit()
-        
-        # Switch session to full account
-        session.clear()
-        session['user_id'] = new_user.id
-        session['role'] = 'student'
-        
-        return jsonify({
-            'success': True,
-            'message': 'Account upgraded successfully!',
-            'redirect': '/student'
-        }), 200
-        
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error converting guest account: {e}")
-        return jsonify({'error': 'Upgrade failed. Please try again.'}), 500
-
-
-def cleanup_inactive_guests(days=30):
-    """
-    Delete guest accounts that haven't been used in X days
-    Returns number of deleted accounts
-    """
-    from sqlalchemy import text
-    cutoff_date = datetime.utcnow() - timedelta(days=days)
-    
-    result = db.session.execute(text("""
-        DELETE FROM guest_users 
-        WHERE last_active < :cutoff AND is_active = 1
-    """), {"cutoff": cutoff_date})
-    
-    db.session.commit()
-    return result.rowcount
-

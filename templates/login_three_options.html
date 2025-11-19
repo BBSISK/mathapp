@@ -68,13 +68,6 @@
             gap: 20px;
             margin-bottom: 30px;
         }
-        
-        /* Prevent grid overflow on small screens */
-        @media (max-width: 800px) {
-            .options-grid {
-                grid-template-columns: 1fr;
-            }
-        }
 
         .option-card {
             background: #f8f9ff;
@@ -278,13 +271,6 @@
             margin: 20px 0;
             font-family: 'Courier New', monospace;
             text-transform: uppercase;
-            color: white;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            border-radius: 12px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            word-break: break-all;
-            line-height: 1.2;
         }
 
         .code-warning {
@@ -365,93 +351,6 @@
             display: block;
             margin-bottom: 6px;
         }
-
-        /* Mobile optimizations */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .container {
-                padding: 25px 15px;
-            }
-
-            .header {
-                margin-bottom: 25px;
-            }
-
-            .header h1 {
-                font-size: 28px;
-            }
-
-            .header p {
-                font-size: 14px;
-            }
-
-            .options-grid {
-                gap: 15px;
-                margin-bottom: 20px;
-            }
-
-            .option-card {
-                padding: 20px 15px;
-            }
-
-            .option-icon {
-                font-size: 42px;
-                margin-bottom: 12px;
-            }
-
-            .option-title {
-                font-size: 18px;
-            }
-
-            .option-desc {
-                font-size: 12px;
-            }
-
-            .info-box {
-                padding: 10px 12px;
-                font-size: 11px;
-                margin-top: 15px;
-                line-height: 1.3;
-            }
-
-            .info-box strong {
-                margin-bottom: 4px;
-                font-size: 12px;
-            }
-
-            .info-box br {
-                display: none;
-            }
-            
-            /* Mobile code display */
-            .code-display {
-                padding: 20px 15px;
-                margin: 15px 0;
-            }
-            
-            .guest-code {
-                font-size: 32px;
-                letter-spacing: 2px;
-                padding: 15px;
-                word-break: break-word;
-            }
-            
-            .code-display h3 {
-                font-size: 16px;
-            }
-            
-            .code-warning {
-                padding: 12px;
-                font-size: 12px;
-            }
-            
-            .code-warning strong {
-                font-size: 14px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -503,9 +402,9 @@
 
             <div class="info-box">
                 <strong>💡 Which should I choose?</strong>
-                <strong>Quick Try:</strong> First look. No signup, progress disappears.<br>
-                <strong>Get a Code:</strong> Animal code (like "panda42") saves your progress.<br>
-                <strong>Full Account:</strong> Best for regular use. All features, any device.
+                <strong>Quick Try:</strong> Perfect for a first look. No signup, but progress disappears when you close your browser.<br>
+                <strong>Get a Code:</strong> Get a unique animal code (like "panda42") to save your progress. Return anytime!<br>
+                <strong>Full Account:</strong> Best for regular use. Login from any device, unlock all features.
             </div>
         </div>
 

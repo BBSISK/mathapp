@@ -1,0 +1,177 @@
+<!-- TUTORIAL MODAL COMPONENT -->
+<!-- Add this to student_app.html, just before the closing </body> tag -->
+
+<!-- Tutorial Splash Screen Modal -->
+<div id="tutorialModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+    <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-book-open text-2xl mr-3"></i>
+                <h2 id="tutorialTitle" class="text-2xl font-bold">Tutorial</h2>
+            </div>
+            <button onclick="closeTutorial()" class="text-white hover:text-gray-200 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Content (Scrollable) -->
+        <div class="flex-1 overflow-y-auto p-6">
+            <!-- Introduction -->
+            <div id="tutorialIntro" class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                <!-- Dynamic content -->
+            </div>
+            
+            <!-- Key Principles -->
+            <div class="mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                    Key Principles
+                </h3>
+                <div id="tutorialPrinciples" class="space-y-3">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+            
+            <!-- Worked Examples -->
+            <div class="mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    Worked Examples
+                </h3>
+                <div id="tutorialExamples" class="space-y-4">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+            
+            <!-- Tips -->
+            <div class="mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-star text-purple-500 mr-2"></i>
+                    Quick Tips
+                </h3>
+                <div id="tutorialTips" class="space-y-2">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="bg-gray-50 px-6 py-4 border-t">
+            <div class="flex items-center justify-between">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="dontShowAgain" class="mr-2 w-4 h-4">
+                    <span class="text-sm text-gray-600">Don't show this automatically again</span>
+                </label>
+                <button onclick="startQuiz()" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+                    Got It - Start Quiz! 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Help Button (shown during quiz) -->
+<button id="tutorialHelpBtn" class="fixed bottom-6 right-6 bg-purple-600 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all z-40 hidden" onclick="showTutorial()">
+    <i class="fas fa-book-open mr-2"></i>
+    Need Help?
+</button>
+
+<style>
+/* Tutorial Modal Styles */
+#tutorialModal.flex {
+    display: flex !important;
+}
+
+.tutorial-principle {
+    background: white;
+    border-left: 4px solid #9333ea;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.tutorial-example {
+    background: #f0fdf4;
+    border: 2px solid #86efac;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+}
+
+.tutorial-example-question {
+    font-weight: 600;
+    color: #047857;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.tutorial-example-steps {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 0.75rem 0;
+}
+
+.tutorial-example-step {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: #374151;
+}
+
+.tutorial-example-step:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #9333ea;
+    font-weight: bold;
+}
+
+.tutorial-example-answer {
+    background: #dcfce7;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    color: #047857;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.tutorial-tip {
+    padding: 0.75rem;
+    padding-left: 2.5rem;
+    background: white;
+    border-radius: 0.5rem;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.tutorial-tip:before {
+    content: attr(data-icon);
+    position: absolute;
+    left: 0.75rem;
+    font-size: 1.2rem;
+}
+
+/* Floating Help Button Animation */
+#tutorialHelpBtn {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #tutorialModal > div {
+        max-width: 100%;
+        margin: 1rem;
+    }
+}
+</style>

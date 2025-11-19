@@ -6,6 +6,8 @@
     <title>Math Master - Student</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Quiz Milestone Celebration System -->
+    <script src="{{ url_for('static', filename='quiz_milestones.js') }}"></script>
     <style>
         .number-line-container {
             margin: 20px 0;
@@ -683,6 +685,161 @@
         .guest-result-modal .secondary-btn:hover {
             background: #cbd5e0;
         }
+
+        /* ========================================
+           MILESTONE CELEBRATION SYSTEM 
+           ======================================== */
+        
+        .milestone-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .milestone-modal {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.5s ease-out;
+            position: relative;
+        }
+
+        .milestone-modal.perfect-score {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .milestone-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        .milestone-title {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .milestone-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .milestone-badges-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .milestone-badge {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s;
+        }
+
+        .milestone-badge:hover {
+            transform: scale(1.02);
+        }
+
+        .milestone-badge-icon {
+            font-size: 40px;
+            margin-bottom: 5px;
+        }
+
+        .milestone-badge-name {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .milestone-badge-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        .milestone-badge-points {
+            color: #ffd700;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .milestone-continue-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .milestone-continue-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                transform: translateY(-50px) scale(0.8);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 min-h-screen">
@@ -1342,6 +1499,10 @@
             answered = false;
             startTime = Date.now();
 
+            // Initialize milestone celebration system
+            milestoneSystem.setDifficulty(difficulty);
+            milestoneSystem.reset();
+
             document.getElementById('difficultyScreen').classList.add('hidden');
             document.getElementById('loadingScreen').classList.remove('hidden');
 
@@ -1355,6 +1516,19 @@
                 document.getElementById('quizTopicTitle').textContent = currentTopic.charAt(0).toUpperCase() + currentTopic.slice(1);
                 document.getElementById('total').textContent = questions.length;
                 document.getElementById('totalQuestions').textContent = questions.length;
+
+                // Initialize tutorial system for ALL topics (shows splash screen on first visit, help button on subsequent)
+                const tutorialTopics = [
+                    'introductory_algebra', 'solving_equations', 'simplifying_expressions',
+                    'expanding_factorising', 'functions', 'patterns', 'arithmetic',
+                    'bodmas', 'fractions', 'decimals', 'multiplication_division',
+                    'number_systems', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded',
+                    'descriptive_statistics', 'probability', 'sets'
+                ];
+                
+                if (tutorialTopics.includes(currentTopic)) {
+                    initTutorial(currentTopic, difficulty);
+                }
 
                 showQuestion();
             } catch (error) {
@@ -1415,6 +1589,9 @@
 
             const question = questions[currentQuestionIndex];
             const correct = selectedIndex === question.correct;
+
+            // Record answer in milestone system for celebrations
+            milestoneSystem.recordAnswer(correct);
 
             if (correct) {
                 score++;
@@ -1580,6 +1757,18 @@
                     // Show guest modal with registration prompt
                     showGuestResultModal(score, questions.length, percentage);
                     return;
+                }
+                
+                // ✨ NEW: Show milestone celebration if badges were earned
+                if (result.newly_earned_badges && result.newly_earned_badges.length > 0) {
+                    console.log('🎉 Badges earned:', result.newly_earned_badges);
+                    // Show milestone modal BEFORE results screen
+                    showMilestoneModal(result.newly_earned_badges);
+                    
+                    // Wait a moment for user to see the celebration
+                    // The user will click "Continue" to proceed
+                } else {
+                    console.log('No new badges earned this time');
                 }
                 
                 // Regular user - reload progress and show results
@@ -2012,6 +2201,161 @@
         .btn-submit:active {
             transform: translateY(0);
         }
+
+        /* ========================================
+           MILESTONE CELEBRATION SYSTEM 
+           ======================================== */
+        
+        .milestone-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .milestone-modal {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.5s ease-out;
+            position: relative;
+        }
+
+        .milestone-modal.perfect-score {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .milestone-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        .milestone-title {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .milestone-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        .milestone-badges-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .milestone-badge {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s;
+        }
+
+        .milestone-badge:hover {
+            transform: scale(1.02);
+        }
+
+        .milestone-badge-icon {
+            font-size: 40px;
+            margin-bottom: 5px;
+        }
+
+        .milestone-badge-name {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .milestone-badge-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        .milestone-badge-points {
+            color: #ffd700;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .milestone-continue-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .milestone-continue-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                transform: translateY(-50px) scale(0.8);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
     </style>
 
     <script>
@@ -2108,7 +2452,1634 @@
                 }
             }
         });
+
+        // ========================================
+        // MILESTONE CELEBRATION SYSTEM
+        // ========================================
+
+        function createConfetti(container) {
+            const canvas = document.createElement('canvas');
+            canvas.className = 'confetti-canvas';
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+            
+            const ctx = canvas.getContext('2d');
+            const pieces = [];
+            const numberOfPieces = 100;
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#feca57', '#ee5a6f', '#c7ecee', '#ffd700', '#ff85c0'];
+            
+            class ConfettiPiece {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height - canvas.height;
+                    this.size = Math.random() * 8 + 4;
+                    this.speedY = Math.random() * 3 + 2;
+                    this.speedX = Math.random() * 2 - 1;
+                    this.color = colors[Math.floor(Math.random() * colors.length)];
+                    this.rotation = Math.random() * 360;
+                    this.rotationSpeed = Math.random() * 10 - 5;
+                }
+                
+                update() {
+                    this.y += this.speedY;
+                    this.x += this.speedX;
+                    this.rotation += this.rotationSpeed;
+                    
+                    if (this.y > canvas.height) {
+                        this.y = -10;
+                        this.x = Math.random() * canvas.width;
+                    }
+                }
+                
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation * Math.PI / 180);
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                    ctx.restore();
+                }
+            }
+            
+            for (let i = 0; i < numberOfPieces; i++) {
+                pieces.push(new ConfettiPiece());
+            }
+            
+            let animationId;
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(piece => {
+                    piece.update();
+                    piece.draw();
+                });
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            animate();
+            
+            // Stop after 5 seconds
+            setTimeout(() => {
+                cancelAnimationFrame(animationId);
+                canvas.remove();
+            }, 5000);
+            
+            return canvas;
+        }
+
+        function showMilestoneModal(badges) {
+            if (!badges || badges.length === 0) return;
+            
+            console.log('🎉 Showing milestone modal for badges:', badges);
+            
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'milestone-overlay';
+            overlay.id = 'milestone-overlay';
+            
+            // Create modal
+            const modal = document.createElement('div');
+            modal.className = 'milestone-modal';
+            
+            // Check if this is a special achievement (perfect score, mastery, etc)
+            const isSpecial = badges.some(b => 
+                b.name.includes('Perfect') || 
+                b.name.includes('Flawless') ||
+                b.name.includes('Master') || 
+                b.name.includes('Genius') ||
+                b.name.includes('Excellence')
+            );
+            
+            if (isSpecial) {
+                modal.classList.add('perfect-score');
+            }
+            
+            // Get appropriate icon
+            const getIcon = (badge) => {
+                if (badge.icon && badge.icon !== 'null') return badge.icon;
+                // Default icons based on badge name
+                if (badge.name.includes('Perfect') || badge.name.includes('Flawless')) return '💯';
+                if (badge.name.includes('Master') || badge.name.includes('Genius')) return '🎓';
+                if (badge.name.includes('Streak') || badge.name.includes('Warrior')) return '🔥';
+                if (badge.name.includes('First')) return '🌟';
+                if (badge.name.includes('Sharp')) return '🎯';
+                return '🏆';
+            };
+            
+            const mainIcon = badges.length === 1 ? getIcon(badges[0]) : (badges.length > 1 ? '🎉' : '🏆');
+            
+            // Build modal content
+            modal.innerHTML = `
+                <div class="milestone-icon">${mainIcon}</div>
+                <div class="milestone-title">
+                    ${badges.length === 1 ? 'Achievement Unlocked!' : badges.length + ' Achievements!'}
+                </div>
+                <div class="milestone-subtitle">
+                    You've earned ${badges.length === 1 ? 'a new badge' : badges.length + ' new badges'}!
+                </div>
+                
+                <div class="milestone-badges-container">
+                    ${badges.map(badge => `
+                        <div class="milestone-badge">
+                            <div class="milestone-badge-icon">${getIcon(badge)}</div>
+                            <div class="milestone-badge-name">${badge.name}</div>
+                            <div class="milestone-badge-description">${badge.description}</div>
+                            <div class="milestone-badge-points">+${badge.points} points</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <button class="milestone-continue-btn" onclick="closeMilestoneModal()">
+                    Continue
+                </button>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            // Add confetti for special achievements
+            if (isSpecial) {
+                const confettiCanvas = createConfetti(modal);
+                modal.insertBefore(confettiCanvas, modal.firstChild);
+            }
+            
+            // Play achievement sound (optional)
+            playAchievementSound();
+        }
+
+        function closeMilestoneModal() {
+            const overlay = document.getElementById('milestone-overlay');
+            if (overlay) {
+                overlay.style.animation = 'fadeIn 0.3s ease-out reverse';
+                setTimeout(() => overlay.remove(), 300);
+            }
+        }
+
+        function playAchievementSound() {
+            // Optional: Add achievement sound
+            // You can add an audio file and play it here
+            try {
+                // const audio = new Audio('/static/achievement.mp3');
+                // audio.volume = 0.3;
+                // audio.play().catch(e => console.log('Could not play sound:', e));
+            } catch (e) {
+                // Sound playback failed, that's okay
+            }
+        }
+
     </script>
+
+
+
+<!-- ========================================== -->
+<!-- TUTORIAL SYSTEM - Added for splash screens -->
+<!-- ========================================== -->
+
+<!-- Tutorial Data -->
+<script>
+/**
+ * TUTORIAL DATA STRUCTURE
+ * 
+ * This file contains all tutorial content for topics.
+ * To add a new topic tutorial, simply add a new entry to the TUTORIALS object.
+ * 
+ * Structure:
+ * TUTORIALS = {
+ *   'topic_name': {
+ *     'beginner': { title, introduction, principles, examples, tips },
+ *     'intermediate': { ... },
+ *     'advanced': { ... }
+ *   }
+ * }
+ */
+
+const TUTORIALS = {
+    // Introductory Algebra Tutorial Content
+    'introductory_algebra': {
+        'beginner': {
+            title: 'Collecting Like Terms',
+            introduction: 'In this level, you\'ll learn to <strong>collect like terms</strong> - combining terms that have the same letter.',
+            
+            principles: [
+                {
+                    title: 'Like Terms',
+                    content: '<strong>Like terms</strong> have exactly the same letter part.<br>• 3x and 5x are like terms (both have \'x\')<br>• 4y and 2y are like terms (both have \'y\')<br>• 3x and 5y are NOT like terms (different letters)'
+                },
+                {
+                    title: 'How to Collect',
+                    content: 'Think of it like fruit: 3 apples + 5 apples = 8 apples<br>Just add the numbers, keep the letter!'
+                }
+            ],
+            
+            examples: [
+                {
+                    question: 'Simplify: 4x + 3x',
+                    steps: [
+                        'Both terms have \'x\' - they are like terms ✓',
+                        'Add the numbers: 4 + 3 = 7',
+                        'Keep the letter: x'
+                    ],
+                    answer: '7x'
+                },
+                {
+                    question: 'Simplify: 5y + 2y',
+                    steps: [
+                        'Both terms have \'y\' - they are like terms ✓',
+                        'Add the numbers: 5 + 2 = 7',
+                        'Keep the letter: y'
+                    ],
+                    answer: '7y'
+                }
+            ],
+            
+            tips: [
+                '✅ Always keep the letter - it doesn\'t change!',
+                '✅ Just add the numbers - ignore the letters when adding',
+                '⚠️ Don\'t forget the letter: 4x + 3x = 7x (not 7)',
+                '⚠️ Don\'t multiply: 2y + 3y = 5y (not 6y)'
+            ]
+        },
+        
+        'intermediate': {
+            title: 'Substitution (One Variable)',
+            introduction: 'In this level, you\'ll learn <strong>substitution</strong> - finding the value of expressions when you know what x equals.',
+            
+            principles: [
+                {
+                    title: 'What is Substitution?',
+                    content: '<strong>Substitution</strong> means replacing a letter with its number value.<br>Example: If x = 5, then x + 3 means 5 + 3 = 8'
+                },
+                {
+                    title: 'Use Brackets!',
+                    content: 'Always use brackets when substituting.<br>If x = 4, write 3(4) not 34'
+                }
+            ],
+            
+            examples: [
+                {
+                    question: 'If x = 4, find the value of x + 7',
+                    steps: [
+                        'Write the expression: x + 7',
+                        'Replace x with 4: (4) + 7',
+                        'Calculate: 4 + 7'
+                    ],
+                    answer: '11'
+                },
+                {
+                    question: 'If x = 5, find the value of 2x',
+                    steps: [
+                        'Write the expression: 2x (means 2 times x)',
+                        'Replace x with 5 (use brackets!): 2(5)',
+                        'Calculate: 2 × 5'
+                    ],
+                    answer: '10'
+                }
+            ],
+            
+            tips: [
+                '✅ Always use brackets when substituting',
+                '✅ Remember 2x means 2 × x (multiply!)',
+                '✅ Follow BOMDAS - multiply before adding',
+                '⚠️ Don\'t just stick numbers together: 3x when x=4 is 12, not 34'
+            ]
+        },
+        
+        'advanced': {
+            title: 'Substitution (Two Variables)',
+            introduction: 'In this level, you\'ll substitute <strong>two different variables</strong> (like x and y) in the same expression.',
+            
+            principles: [
+                {
+                    title: 'Multiple Variables',
+                    content: 'Each letter can represent a different number!<br>Example: If x = 3 and y = 5, then x + y means 3 + 5 = 8'
+                },
+                {
+                    title: 'Multiply First',
+                    content: 'When you see 2x or 3y, multiply BEFORE adding/subtracting (BOMDAS!)'
+                }
+            ],
+            
+            examples: [
+                {
+                    question: 'If x = 4 and y = 3, find x + y',
+                    steps: [
+                        'Write: x + y',
+                        'Replace both letters: (4) + (3)',
+                        'Calculate: 4 + 3'
+                    ],
+                    answer: '7'
+                },
+                {
+                    question: 'If x = 5 and y = 4, find 2x + y',
+                    steps: [
+                        'Write: 2x + y',
+                        'Replace: 2(5) + (4)',
+                        'Multiply first: 10 + 4',
+                        'Then add: 14'
+                    ],
+                    answer: '14'
+                }
+            ],
+            
+            tips: [
+                '✅ Keep track of which value goes with which letter',
+                '✅ Use brackets for both variables',
+                '✅ Multiply before you add/subtract (BOMDAS!)',
+                '⚠️ Don\'t mix up the values: x=4, y=3 means x+y = 4+3, not 3+4... well, same answer, but you get the idea!'
+            ]
+        }
+    },
+    
+    // ============================================
+    // SOLVING EQUATIONS
+    // ============================================
+    'solving_equations': {
+        'beginner': {
+            title: 'One-Step Equations',
+            introduction: 'Learn to solve <strong>one-step equations</strong> like x + 5 = 12. You\'ll discover how to "undo" addition to find the value of x.',
+            
+            principles: [
+                {
+                    title: 'What is an Equation?',
+                    content: 'An <strong>equation</strong> is like a balance scale - both sides must be equal.<br>Example: x + 3 = 10 means "something plus 3 equals 10"<br>Our job is to find what that "something" (x) is!'
+                },
+                {
+                    title: 'The Golden Rule',
+                    content: '<strong>Whatever you do to one side, do to the other!</strong><br>Think of it like a seesaw - if you take weight off one side, you must take the same weight off the other side to keep it balanced.'
+                },
+                {
+                    title: 'Undoing Addition',
+                    content: 'To solve x + 3 = 10, we need to <strong>undo</strong> the +3<br>• Addition is undone by subtraction<br>• Subtract 3 from BOTH sides<br>• x + 3 - 3 = 10 - 3<br>• x = 7'
+                }
+            ],
+            
+            examples: [
+                {
+                    question: 'Solve: x + 3 = 10',
+                    steps: [
+                        'We need to get x by itself (isolate x)',
+                        'The +3 is attached to x, so we undo it',
+                        'Subtract 3 from BOTH sides: x + 3 - 3 = 10 - 3',
+                        'Left side: x + 3 - 3 = x (the 3s cancel out!)',
+                        'Right side: 10 - 3 = 7',
+                        'Therefore: x = 7'
+                    ],
+                    answer: 'x = 7'
+                },
+                {
+                    question: 'Solve: x + 9 = 29',
+                    steps: [
+                        'We need to remove the +9 to isolate x',
+                        'Subtract 9 from BOTH sides: x + 9 - 9 = 29 - 9',
+                        'Left side: x + 9 - 9 = x',
+                        'Right side: 29 - 9 = 20',
+                        'Therefore: x = 20'
+                    ],
+                    answer: 'x = 20'
+                },
+                {
+                    question: 'Solve: x + 14 = 18',
+                    steps: [
+                        'Subtract 14 from BOTH sides: x + 14 - 14 = 18 - 14',
+                        'Left side simplifies to: x',
+                        'Right side: 18 - 14 = 4',
+                        'Therefore: x = 4'
+                    ],
+                    answer: 'x = 4'
+                }
+            ],
+            
+            tips: [
+                '✅ Always do the SAME thing to both sides of the equation',
+                '✅ Check your answer by substituting back: if x = 7, does 7 + 3 = 10? Yes! ✓',
+                '✅ Think: "What number + [this number] = [that number]?"',
+                '⚠️ Don\'t just subtract from the right side - do BOTH sides!',
+                '⚠️ Remember to actually subtract - don\'t just remove the number'
+            ]
+        },
+        
+        'intermediate': {
+            title: 'Two-Step Equations',
+            introduction: 'Master <strong>two-step equations</strong> like 2x + 4 = 18. These need TWO operations to solve - but don\'t worry, we\'ll take it step by step!',
+            
+            principles: [
+                {
+                    title: 'Two Steps to Freedom!',
+                    content: 'In 2x + 4 = 18, x is trapped by TWO operations:<br>1. It\'s being <strong>multiplied</strong> by 2<br>2. Then 4 is being <strong>added</strong><br><br>We need to undo BOTH operations to free x!'
+                },
+                {
+                    title: 'Order Matters - Work Backwards!',
+                    content: 'Use <strong>reverse BOMDAS</strong>:<br>• Addition/Subtraction was done LAST, so undo it FIRST<br>• Multiplication/Division was done FIRST, so undo it LAST<br><br>Think of getting dressed: you put socks on first, then shoes. To undress, you take shoes off FIRST, then socks!'
+                },
+                {
+                    title: 'The Two-Step Process',
+                    content: '<strong>Step 1:</strong> Undo addition/subtraction (get 2x = something)<br><strong>Step 2:</strong> Undo multiplication/division (get x = something)'
+                }
+            ],
+            
+            examples: [
+                {
+                    question: 'Solve: 2x + 4 = 18',
+                    steps: [
+                        '<strong>STEP 1 - Remove the +4:</strong>',
+                        'Subtract 4 from both sides: 2x + 4 - 4 = 18 - 4',
+                        'Simplifies to: 2x = 14',
+                        '',
+                        '<strong>STEP 2 - Remove the ×2:</strong>',
+                        'Divide both sides by 2: 2x ÷ 2 = 14 ÷ 2',
+                        'Simplifies to: x = 7',
+                        '',
+                        '<strong>CHECK:</strong> Does 2(7) + 4 = 18? → 14 + 4 = 18 ✓'
+                    ],
+                    answer: 'x = 7'
+                },
+                {
+                    question: 'Solve: 6x + 6 = 72',
+                    steps: [
+                        '<strong>STEP 1 - Remove the +6:</strong>',
+                        'Subtract 6 from both sides: 6x + 6 - 6 = 72 - 6',
+                        'Simplifies to: 6x = 66',
+                        '',
+                        '<strong>STEP 2 - Remove the ×6:</strong>',
+                        'Divide both sides by 6: 6x ÷ 6 = 66 ÷ 6',
+                        'Simplifies to: x = 11',
+                        '',
+                        '<strong>CHECK:</strong> Does 6(11) + 6 = 72? → 66 + 6 = 72 ✓'
+                    ],
+                    answer: 'x = 11'
+                },
+                {
+                    question: 'Solve: 4x + 1 = 45',
+                    steps: [
+                        '<strong>STEP 1:</strong> Subtract 1 from both sides',
+                        '4x = 44',
+                        '',
+                        '<strong>STEP 2:</strong> Divide both sides by 4',
+                        'x = 11',
+                        '',
+                        '<strong>CHECK:</strong> 4(11) + 1 = 44 + 1 = 45 ✓'
+                    ],
+                    answer: 'x = 11'
+                }
+            ],
+            
+            tips: [
+                '✅ ALWAYS do addition/subtraction FIRST, multiplication/division SECOND',
+                '✅ Write out each step clearly - rushing causes mistakes!',
+                '✅ Check your answer by substituting back into the original equation',
+                '⚠️ Don\'t divide before subtracting - order matters!',
+                '⚠️ Remember: "Undo" means do the opposite operation'
+            ]
+        },
+        
+        'advanced': {
+            title: 'Equations with Brackets',
+            introduction: 'Tackle <strong>equations with brackets</strong> like 2(x + 3) = 14. You\'ll learn to expand brackets first, then solve the resulting two-step equation.',
+            
+            principles: [
+                {
+                    title: 'Brackets First - Always!',
+                    content: 'When you see brackets like 2(x + 3), you MUST expand them first.<br><strong>Expanding</strong> means multiplying everything inside the bracket by the number outside.<br>2(x + 3) becomes 2×x + 2×3 = 2x + 6'
+                },
+                {
+                    title: 'The Three-Step Process',
+                    content: '<strong>Step 1:</strong> Expand the brackets (multiply out)<br><strong>Step 2:</strong> Subtract/add to isolate the x term<br><strong>Step 3:</strong> Divide/multiply to find x'
+                },
+                {
+                    title: 'Expanding Brackets',
+                    content: 'Multiply the number OUTSIDE by EVERY term inside:<br>• 2(x + 3) = 2×x + 2×3 = 2x + 6<br>• 5(x + 2) = 5×x + 5×2 = 5x + 10<br>• 4(x + 1) = 4×x + 4×1 = 4x + 4'
+                }
+            ],
+            
+            examples: [
+                {
+                    question: 'Solve: 2(x + 3) = 14',
+                    steps: [
+                        '<strong>STEP 1 - Expand the brackets:</strong>',
+                        'Multiply 2 by everything inside: 2×x + 2×3',
+                        'This gives us: 2x + 6 = 14',
+                        '',
+                        '<strong>STEP 2 - Remove the +6:</strong>',
+                        'Subtract 6 from both sides: 2x + 6 - 6 = 14 - 6',
+                        'Simplifies to: 2x = 8',
+                        '',
+                        '<strong>STEP 3 - Remove the ×2:</strong>',
+                        'Divide both sides by 2: 2x ÷ 2 = 8 ÷ 2',
+                        'Therefore: x = 4',
+                        '',
+                        '<strong>CHECK:</strong> Does 2(4 + 3) = 14? → 2(7) = 14 ✓'
+                    ],
+                    answer: 'x = 4'
+                },
+                {
+                    question: 'Solve: 5(x + 2) = 20',
+                    steps: [
+                        '<strong>STEP 1 - Expand brackets:</strong>',
+                        '5×x + 5×2 = 5x + 10',
+                        'Equation becomes: 5x + 10 = 20',
+                        '',
+                        '<strong>STEP 2 - Subtract 10:</strong>',
+                        '5x + 10 - 10 = 20 - 10',
+                        '5x = 10',
+                        '',
+                        '<strong>STEP 3 - Divide by 5:</strong>',
+                        'x = 2',
+                        '',
+                        '<strong>CHECK:</strong> 5(2 + 2) = 5(4) = 20 ✓'
+                    ],
+                    answer: 'x = 2'
+                },
+                {
+                    question: 'Solve: 4(x + 1) = 32',
+                    steps: [
+                        '<strong>STEP 1:</strong> Expand: 4x + 4 = 32',
+                        '',
+                        '<strong>STEP 2:</strong> Subtract 4: 4x = 28',
+                        '',
+                        '<strong>STEP 3:</strong> Divide by 4: x = 7',
+                        '',
+                        '<strong>CHECK:</strong> 4(7 + 1) = 4(8) = 32 ✓'
+                    ],
+                    answer: 'x = 7'
+                }
+            ],
+            
+            tips: [
+                '✅ ALWAYS expand brackets FIRST - this is the most important step!',
+                '✅ Multiply the outside number by EVERY term inside the brackets',
+                '✅ After expanding, you have a two-step equation - follow the two-step process',
+                '✅ Check by substituting your answer back into the ORIGINAL equation (with brackets)',
+                '⚠️ Don\'t forget to multiply the number outside by BOTH terms inside',
+                '⚠️ Common mistake: 2(x + 3) ≠ 2x + 3 (you must multiply the 3 too!)'
+            ]
+        }
+    },
+    
+    // ============================================
+    // 3. SIMPLIFYING EXPRESSIONS  
+    // ============================================
+    'simplifying_expressions': {
+        'beginner': {
+            title: 'Collecting Like Terms',
+            introduction: 'Learn to <strong>combine like terms</strong> by adding terms with the same variable: 6x + 9x = 15x',
+            principles: [
+                {title: 'Like Terms', content: 'Terms with the same letter can be combined. 6x and 9x are like terms.'},
+                {title: 'How to Combine', content: 'Add the numbers, keep the letter: 6x + 9x = 15x'}
+            ],
+            examples: [
+                {question: 'Simplify: 6x + 9x', steps: ['Both have x','Add: 6 + 9 = 15', 'Keep x'], answer: '15x'},
+                {question: 'Simplify: 5x + 5x', steps: ['Add: 5 + 5 = 10'], answer: '10x'}
+            ],
+            tips: ['✅ Only combine same letters', '⚠️ Keep the letter in answer']
+        },
+        'intermediate': {
+            title: 'Variables and Constants',
+            introduction: 'Simplify expressions with <strong>both variables and numbers</strong>: 5x + 4 + 2x + 2',
+            principles: [
+                {title: 'Two Types', content: 'Variable terms (5x) and constants (4). Collect each separately.'}
+            ],
+            examples: [
+                {question: '5x + 4 + 2x + 2', steps: ['x terms: 5x + 2x = 7x', 'Constants: 4 + 2 = 6'], answer: '7x + 6'}
+            ],
+            tips: ['✅ Keep variables and numbers separate']
+        },
+        'advanced': {
+            title: 'Expressions with Powers',
+            introduction: 'Simplify expressions with <strong>x²</strong> terms: 4x² + 7x + 2x²',
+            principles: [
+                {title: 'Different Powers', content: 'x² and x are different! Combine x² with x², x with x.'}
+            ],
+            examples: [
+                {question: '4x² + 7x + 2x² + 1x', steps: ['x²: 4x² + 2x² = 6x²', 'x: 7x + 1x = 8x'], answer: '6x² + 8x'}
+            ],
+            tips: ['✅ x² and x are NOT the same', '✅ Write highest power first']
+        }
+    },
+    
+    // ============================================
+    // 4. EXPANDING & FACTORISING
+    // ============================================
+    'expanding_factorising': {
+        'beginner': {
+            title: 'Expanding Brackets',
+            introduction: 'Multiply everything inside by the outside number: 6(x + 9) = 6x + 54',
+            principles: [
+                {title: 'Distribution', content: 'Multiply outside number by EACH term inside'}
+            ],
+            examples: [
+                {question: '6(x + 9)', steps: ['6 × x = 6x', '6 × 9 = 54'], answer: '6x + 54'}
+            ],
+            tips: ['✅ Multiply ALL terms inside']
+        },
+        'intermediate': {
+            title: 'Factorising',
+            introduction: 'Find common factor and put outside brackets: 8x + 80 = 8(x + 10)',
+            principles: [
+                {title: 'Common Factor', content: 'Find biggest number that divides both terms'}
+            ],
+            examples: [
+                {question: '8x + 80', steps: ['Common factor: 8', '8x ÷ 8 = x', '80 ÷ 8 = 10'], answer: '8(x + 10)'}
+            ],
+            tips: ['✅ Check by expanding back']
+        },
+        'advanced': {
+            title: 'Double Brackets (FOIL)',
+            introduction: 'Expand using FOIL method: (x + 1)(x + 4) = x² + 5x + 4',
+            principles: [
+                {title: 'FOIL', content: 'First, Outer, Inner, Last - multiply all combinations'}
+            ],
+            examples: [
+                {question: '(x + 1)(x + 4)', steps: ['F: x×x = x²', 'O: x×4 = 4x', 'I: 1×x = 1x', 'L: 1×4 = 4', 'Combine: x² + 5x + 4'], answer: 'x² + 5x + 4'}
+            ],
+            tips: ['✅ Combine middle terms']
+        }
+    },
+    
+    // ============================================
+    // 5. FUNCTIONS
+    // ============================================
+    'functions': {
+        'beginner': {
+            title: 'Function Notation',
+            introduction: 'Learn what f(x) means. If f(x) = x + 5, find f(3).',
+            principles: [
+                {title: 'Functions', content: 'f(x) is a rule. f(3) means substitute 3 for x'}
+            ],
+            examples: [
+                {question: 'f(x) = x + 5, find f(3)', steps: ['Replace x with 3', 'f(3) = 3 + 5 = 8'], answer: '8'}
+            ],
+            tips: ['✅ Replace ALL x with the number']
+        },
+        'intermediate': {
+            title: 'Evaluating Functions',
+            introduction: 'Evaluate functions with multiplication: f(x) = 2x + 3',
+            principles: [
+                {title: 'BOMDAS', content: 'Multiply before adding'}
+            ],
+            examples: [
+                {question: 'f(x) = 2x + 3, find f(4)', steps: ['f(4) = 2(4) + 3', '= 8 + 3 = 11'], answer: '11'}
+            ],
+            tips: ['✅ Use brackets when substituting']
+        },
+        'advanced': {
+            title: 'Complex Functions',
+            introduction: 'Functions with powers: f(x) = x² + 2x - 3',
+            principles: [
+                {title: 'Multiple Terms', content: 'Calculate each term separately'}
+            ],
+            examples: [
+                {question: 'f(x) = x² + 2x - 3, find f(-1)', steps: ['f(-1) = (-1)² + 2(-1) - 3', '= 1 - 2 - 3 = -4'], answer: '-4'}
+            ],
+            tips: ['✅ Use brackets for negative numbers']
+        }
+    },
+    
+    // ============================================
+    // 6. PATTERNS
+    // ============================================
+    'patterns': {
+        'beginner': {
+            title: 'Visual Patterns',
+            introduction: 'Identify and continue patterns: 🌟 🌙 🌟 🌙 ?',
+            principles: [
+                {title: 'Repeating Patterns', content: 'Look for what repeats'}
+            ],
+            examples: [
+                {question: '🌟 🌙 🌟 🌙 ?', steps: ['Pattern alternates', 'After 🌙 comes 🌟'], answer: '🌟'}
+            ],
+            tips: ['✅ Look for repeats']
+        },
+        'intermediate': {
+            title: 'Number Sequences',
+            introduction: 'Find the pattern in number sequences: 3, 7, 11, 15...',
+            principles: [
+                {title: 'Common Difference', content: 'What do you add each time?'}
+            ],
+            examples: [
+                {question: '3, 7, 11, 15, ?', steps: ['Difference: +4 each time', '15 + 4 = 19'], answer: '19'}
+            ],
+            tips: ['✅ Check the difference between terms']
+        },
+        'advanced': {
+            title: 'nth Term Formula',
+            introduction: 'Find patterns in special sequences: 1, 4, 9, 16...',
+            principles: [
+                {title: 'Special Sequences', content: 'Square numbers: 1², 2², 3², 4²...'}
+            ],
+            examples: [
+                {question: '1, 4, 9, 16, ?', steps: ['These are squares', '1², 2², 3², 4², 5²', 'Next: 5² = 25'], answer: '25'}
+            ],
+            tips: ['✅ Look for squares, doubles, triangular numbers']
+        }
+    },
+    
+    // ============================================
+    // 7. ARITHMETIC
+    // ============================================
+    'arithmetic': {
+        'beginner': {
+            title: 'Basic Addition',
+            introduction: 'Master basic addition: 8 + 4 = 12',
+            principles: [
+                {title: 'Adding', content: 'Count forward from the first number'}
+            ],
+            examples: [
+                {question: '8 + 4', steps: ['Start at 8', 'Count forward 4: 9, 10, 11, 12'], answer: '12'}
+            ],
+            tips: ['✅ Count carefully']
+        },
+        'intermediate': {
+            title: 'Adding Negative Numbers',
+            introduction: 'Add positive and negative: -7 + 14',
+            principles: [
+                {title: 'Negatives', content: 'Adding negative = subtracting'}
+            ],
+            examples: [
+                {question: '-7 + 14', steps: ['14 - 7 = 7'], answer: '7'}
+            ],
+            tips: ['✅ Think of it as subtraction']
+        },
+        'advanced': {
+            title: 'Adding Two Negatives',
+            introduction: 'Add two negative numbers: (-5) + (-12)',
+            principles: [
+                {title: 'Two Negatives', content: 'Result gets more negative'}
+            ],
+            examples: [
+                {question: '(-5) + (-12)', steps: ['Add magnitudes: 5 + 12 = 17', 'Make negative: -17'], answer: '-17'}
+            ],
+            tips: ['✅ Both negative = more negative result']
+        }
+    },
+    
+    // ============================================
+    // 8. BODMAS
+    // ============================================
+    'bodmas': {
+        'beginner': {
+            title: 'Order of Operations Basics',
+            introduction: 'Learn BODMAS: Brackets, Order, Multiply/Divide, Add/Subtract',
+            principles: [
+                {title: 'BODMAS', content: 'Multiply before you add'}
+            ],
+            examples: [
+                {question: '5 + 3 × 2', steps: ['Multiply first: 3 × 2 = 6', 'Then add: 5 + 6 = 11'], answer: '11'}
+            ],
+            tips: ['✅ Always multiply/divide before add/subtract']
+        },
+        'intermediate': {
+            title: 'Multiple Operations',
+            introduction: 'Handle complex expressions: 20 - 4 × 3 + 2',
+            principles: [
+                {title: 'Order Matters', content: 'Follow BODMAS strictly'}
+            ],
+            examples: [
+                {question: '20 - 4 × 3 + 2', steps: ['Multiply: 4 × 3 = 12', '20 - 12 + 2', 'Left to right: 10'], answer: '10'}
+            ],
+            tips: ['✅ Multiplication first']
+        },
+        'advanced': {
+            title: 'With Powers',
+            introduction: 'BODMAS with indices: 3 + 2² × 5',
+            principles: [
+                {title: 'Powers First', content: 'After brackets, do powers (Order)'}
+            ],
+            examples: [
+                {question: '3 + 2² × 5', steps: ['Power: 2² = 4', 'Multiply: 4 × 5 = 20', 'Add: 3 + 20 = 23'], answer: '23'}
+            ],
+            tips: ['✅ Powers before multiplication']
+        }
+    },
+    
+    // ============================================
+    // 9. FRACTIONS
+    // ============================================
+    'fractions': {
+        'beginner': {
+            title: 'Adding Fractions',
+            introduction: 'Add fractions with same denominator: 1/4 + 1/4',
+            principles: [
+                {title: 'Same Denominator', content: 'Add numerators, keep denominator'}
+            ],
+            examples: [
+                {question: '1/4 + 1/4', steps: ['Add tops: 1 + 1 = 2', 'Keep bottom: 4', 'Result: 2/4 = 1/2'], answer: '1/2'}
+            ],
+            tips: ['✅ Simplify answer']
+        },
+        'intermediate': {
+            title: 'Multiplying Fractions',
+            introduction: 'Multiply fractions: 2/3 × 3/4',
+            principles: [
+                {title: 'Multiply Across', content: 'Top × top, bottom × bottom'}
+            ],
+            examples: [
+                {question: '2/3 × 3/4', steps: ['2 × 3 = 6', '3 × 4 = 12', '6/12 = 1/2'], answer: '1/2'}
+            ],
+            tips: ['✅ Simplify final answer']
+        },
+        'advanced': {
+            title: 'Complex Fraction Operations',
+            introduction: 'Combine operations with fractions',
+            principles: [
+                {title: 'BODMAS with Fractions', content: 'Follow operation order'}
+            ],
+            examples: [
+                {question: '(2/3 + 1/4) × 3/5', steps: ['Brackets first: 2/3 + 1/4 = 11/12', '11/12 × 3/5 = 11/20'], answer: '11/20'}
+            ],
+            tips: ['✅ Brackets first']
+        }
+    },
+    
+    // ============================================
+    // 10. DECIMALS
+    // ============================================
+    'decimals': {
+        'beginner': {
+            title: 'Adding Decimals',
+            introduction: 'Add decimal numbers: 4.5 + 1.0',
+            principles: [
+                {title: 'Line Up Points', content: 'Decimal points must line up vertically'}
+            ],
+            examples: [
+                {question: '4.5 + 1.0', steps: ['Line up: 4.5', '       + 1.0', '       = 5.5'], answer: '5.5'}
+            ],
+            tips: ['✅ Always line up decimal points']
+        },
+        'intermediate': {
+            title: 'Multiplying Decimals',
+            introduction: 'Multiply decimals by whole numbers: 4.9 × 6',
+            principles: [
+                {title: 'Multiply Normally', content: 'Then place decimal point'}
+            ],
+            examples: [
+                {question: '4.9 × 6', steps: ['49 × 6 = 294', 'One decimal place: 29.4'], answer: '29.4'}
+            ],
+            tips: ['✅ Count decimal places']
+        },
+        'advanced': {
+            title: 'Decimal × Decimal',
+            introduction: 'Multiply two decimals: 6.0 × 0.8',
+            principles: [
+                {title: 'Count Places', content: 'Total decimal places in answer'}
+            ],
+            examples: [
+                {question: '6.0 × 0.8', steps: ['60 × 8 = 480', 'Two places total: 4.80 = 4.8'], answer: '4.8'}
+            ],
+            tips: ['✅ Add up all decimal places']
+        }
+    },
+    
+    // ============================================
+    // 11. MULTIPLICATION & DIVISION
+    // ============================================
+    'multiplication_division': {
+        'beginner': {
+            title: 'Basic Multiplication',
+            introduction: 'Master times tables: 2 × 5 = 10',
+            principles: [
+                {title: 'Multiplication', content: 'Repeated addition'}
+            ],
+            examples: [
+                {question: '2 × 5', steps: ['2 + 2 + 2 + 2 + 2 = 10'], answer: '10'}
+            ],
+            tips: ['✅ Learn times tables']
+        },
+        'intermediate': {
+            title: 'Negative Number Rules',
+            introduction: 'Multiply and divide with negatives',
+            principles: [
+                {title: 'Sign Rules', content: 'Positive × Negative = Negative<br>Negative × Negative = Positive'}
+            ],
+            examples: [
+                {question: '-4 × 5', steps: ['Different signs = negative', 'Answer: -20'], answer: '-20'}
+            ],
+            tips: ['✅ Remember sign rules']
+        },
+        'advanced': {
+            title: 'Two Negatives',
+            introduction: 'Multiply two negative numbers',
+            principles: [
+                {title: 'Negative × Negative', content: 'Always gives positive'}
+            ],
+            examples: [
+                {question: '(-17) × (-18)', steps: ['17 × 18 = 306', 'Both negative = positive'], answer: '306'}
+            ],
+            tips: ['✅ Negative × Negative = Positive']
+        }
+    },
+    
+    // ============================================
+    // 12. NUMBER SYSTEMS
+    // ============================================
+    'number_systems': {
+        'beginner': {
+            title: 'Natural Numbers',
+            introduction: 'Learn about natural numbers: 1, 2, 3, 4...',
+            principles: [
+                {title: 'Natural Numbers', content: 'Counting numbers starting from 1'}
+            ],
+            examples: [
+                {question: 'Smallest natural number?', steps: ['Natural numbers: 1, 2, 3...', 'Smallest is 1'], answer: '1'}
+            ],
+            tips: ['✅ Start from 1']
+        },
+        'intermediate': {
+            title: 'Integers and Operations',
+            introduction: 'Work with positive and negative integers',
+            principles: [
+                {title: 'Integers', content: 'Include negative numbers, zero, positives'}
+            ],
+            examples: [
+                {question: 'What is -8 + (-5)?', steps: ['Both negative', 'Add magnitudes: 8 + 5 = 13', 'Make negative: -13'], answer: '-13'}
+            ],
+            tips: ['✅ Watch signs carefully']
+        },
+        'advanced': {
+            title: 'Temperature Problems',
+            introduction: 'Apply integers to real situations',
+            principles: [
+                {title: 'Real Applications', content: 'Temperature can go below zero'}
+            ],
+            examples: [
+                {question: '3° colder than -5°C?', steps: ['-5 - 3 = -8'], answer: '-8°C'}
+            ],
+            tips: ['✅ Colder = subtract']
+        }
+    },
+    
+    // ============================================
+    // 13. SURDS
+    // ============================================
+    'surds': {
+        'beginner': {
+            title: 'Multiplying Surds',
+            introduction: 'Multiply square roots: √7 × √5',
+            principles: [
+                {title: 'Multiplication', content: '√a × √b = √(a×b)'}
+            ],
+            examples: [
+                {question: '√7 × √5', steps: ['√7 × √5 = √(7×5)', '= √35'], answer: '√35'}
+            ],
+            tips: ['✅ Multiply under the root']
+        },
+        'intermediate': {
+            title: 'Surds with Coefficients',
+            introduction: 'Multiply surds with numbers: 3√2 × 2√2',
+            principles: [
+                {title: 'Multiply Separately', content: 'Numbers together, surds together'}
+            ],
+            examples: [
+                {question: '3√2 × 2√2', steps: ['3 × 2 = 6', '√2 × √2 = 2', '6 × 2 = 12'], answer: '12'}
+            ],
+            tips: ['✅ √2 × √2 = 2']
+        },
+        'advanced': {
+            title: 'Expanding with Surds',
+            introduction: 'Use FOIL with surds: (3 + √2)(5 + √2)',
+            principles: [
+                {title: 'FOIL Method', content: 'Multiply all combinations'}
+            ],
+            examples: [
+                {question: '(3 + √2)(5 + √2)', steps: ['F: 3×5 = 15', 'O: 3×√2 = 3√2', 'I: √2×5 = 5√2', 'L: √2×√2 = 2', 'Sum: 17 + 8√2'], answer: '17 + 8√2'}
+            ],
+            tips: ['✅ Remember √2 × √2 = 2']
+        }
+    },
+    
+    // ============================================
+    // 14. COMPLEX NUMBERS INTRO
+    // ============================================
+    'complex_numbers_intro': {
+        'beginner': {
+            title: 'Imaginary Unit',
+            introduction: 'Meet i, the imaginary unit: i = √(-1)',
+            principles: [
+                {title: 'Definition', content: 'i is defined as √(-1)<br>i² = -1'}
+            ],
+            examples: [
+                {question: 'What is i²?', steps: ['By definition', 'i² = -1'], answer: '-1'}
+            ],
+            tips: ['✅ i² always equals -1']
+        },
+        'intermediate': {
+            title: 'Adding Complex Numbers',
+            introduction: 'Add complex numbers: (2 + 3i) + (4 + 5i)',
+            principles: [
+                {title: 'Add Parts', content: 'Add real parts, add imaginary parts separately'}
+            ],
+            examples: [
+                {question: '(2 + 3i) + (4 + 5i)', steps: ['Real: 2 + 4 = 6', 'Imaginary: 3i + 5i = 8i'], answer: '6 + 8i'}
+            ],
+            tips: ['✅ Keep real and imaginary separate']
+        },
+        'advanced': {
+            title: 'Dividing Complex Numbers',
+            introduction: 'Divide complex numbers',
+            principles: [
+                {title: 'Simplification', content: 'Divide real and imaginary parts'}
+            ],
+            examples: [
+                {question: '(6 + 3i) ÷ 3', steps: ['6/3 = 2', '3i/3 = i'], answer: '2 + i'}
+            ],
+            tips: ['✅ Divide each part']
+        }
+    },
+    
+    // ============================================
+    // 15. COMPLEX NUMBERS EXPANDED
+    // ============================================
+    'complex_numbers_expanded': {
+        'beginner': {
+            title: 'Argand Diagram',
+            introduction: 'Plot complex numbers on Argand diagram',
+            principles: [
+                {title: 'Axes', content: 'Horizontal = real, Vertical = imaginary'}
+            ],
+            examples: [
+                {question: 'Which axis is real?', steps: ['Real = horizontal (x-axis)'], answer: 'x-axis'}
+            ],
+            tips: ['✅ x = real, y = imaginary']
+        },
+        'intermediate': {
+            title: 'Multiplication by i',
+            introduction: 'Understand i × (complex number)',
+            principles: [
+                {title: 'Rotation', content: 'Multiplying by i rotates 90° counterclockwise'}
+            ],
+            examples: [
+                {question: 'i × (1 + 0i)', steps: ['i × 1 = i'], answer: 'i'}
+            ],
+            tips: ['✅ i rotates 90°']
+        },
+        'advanced': {
+            title: 'Conjugates',
+            introduction: 'Find conjugate of complex numbers',
+            principles: [
+                {title: 'Conjugate', content: 'Change sign of imaginary part'}
+            ],
+            examples: [
+                {question: 'Conjugate of 4 + 7i?', steps: ['Change imaginary sign', '4 - 7i'], answer: '4 - 7i'}
+            ],
+            tips: ['✅ Flip imaginary sign only']
+        }
+    },
+    
+    // ============================================
+    // 16. DESCRIPTIVE STATISTICS
+    // ============================================
+    'descriptive_statistics': {
+        'beginner': {
+            title: 'Finding the Mean (Simple)',
+            introduction: 'Calculate the mean (average) of small datasets',
+            principles: [
+                {title: 'Mean Formula', content: 'Add all numbers, divide by how many there are'}
+            ],
+            examples: [
+                {question: 'Mean of: 2, 2, 5, 12, 17', steps: ['Sum: 2+2+5+12+17 = 38', 'Count: 5 numbers', 'Mean: 38 ÷ 5 = 7.6'], answer: '7.6'}
+            ],
+            tips: ['✅ Add all, then divide by count']
+        },
+        'intermediate': {
+            title: 'Mean of Larger Datasets',
+            introduction: 'Calculate mean with more numbers',
+            principles: [
+                {title: 'Same Process', content: 'Still add and divide, just more numbers'}
+            ],
+            examples: [
+                {question: 'Mean of: 20, 27, 30, 34, 36, 39, 58', steps: ['Sum = 244', 'Count = 7', 'Mean = 244 ÷ 7 = 34.9'], answer: '34.9'}
+            ],
+            tips: ['✅ Be careful adding larger numbers']
+        },
+        'advanced': {
+            title: 'Mean with Decimals',
+            introduction: 'Calculate mean of decimal numbers',
+            principles: [
+                {title: 'Decimal Data', content: 'Same method, careful with decimal arithmetic'}
+            ],
+            examples: [
+                {question: 'Mean of: 12.1, 15.8, 20.0, 21.8, 41.8', steps: ['Sum = 111.5', 'Count = 5', 'Mean = 22.3'], answer: '22.3'}
+            ],
+            tips: ['✅ Use calculator for decimal sums']
+        }
+    },
+    
+    // ============================================
+    // 17. PROBABILITY
+    // ============================================
+    'probability': {
+        'beginner': {
+            title: 'Simple Probability',
+            introduction: 'Calculate basic probabilities: coin flips, dice',
+            principles: [
+                {title: 'Probability', content: 'P = favorable outcomes / total outcomes'}
+            ],
+            examples: [
+                {question: 'P(heads on coin flip)?', steps: ['Favorable: 1 (heads)', 'Total: 2 (heads or tails)', 'P = 1/2'], answer: '1/2'}
+            ],
+            tips: ['✅ Count carefully']
+        },
+        'intermediate': {
+            title: 'Compound Probability',
+            introduction: 'Two or more events: multiply probabilities',
+            principles: [
+                {title: 'AND Rule', content: 'P(A and B) = P(A) × P(B)'}
+            ],
+            examples: [
+                {question: 'Two heads in a row?', steps: ['P(H) = 1/2', 'P(H and H) = 1/2 × 1/2 = 1/4'], answer: '1/4'}
+            ],
+            tips: ['✅ Multiply for "and"']
+        },
+        'advanced': {
+            title: 'Conditional Probability',
+            introduction: 'Probability that depends on previous events',
+            principles: [
+                {title: 'Without Replacement', content: 'Probability changes after first draw'}
+            ],
+            examples: [
+                {question: 'Two aces without replacement', steps: ['P(1st ace) = 4/52', 'P(2nd ace) = 3/51', 'P(both) = 4/52 × 3/51 = 1/221'], answer: '1/221'}
+            ],
+            tips: ['✅ Update probabilities after each event']
+        }
+    },
+    
+    // ============================================
+    // 18. SETS
+    // ============================================
+    'sets': {
+        'beginner': {
+            title: 'Union and Intersection',
+            introduction: 'Combine sets or find common elements',
+            principles: [
+                {title: 'Union (∪)', content: 'All elements from both sets'},
+                {title: 'Intersection (∩)', content: 'Only common elements'}
+            ],
+            examples: [
+                {question: '{1,2,3} ∪ {3,4,5}?', steps: ['Combine all', 'Remove duplicates'], answer: '{1,2,3,4,5}'},
+                {question: '{1,2,3} ∩ {3,4,5}?', steps: ['Only common'], answer: '{3}'}
+            ],
+            tips: ['✅ Union = all, Intersection = common']
+        },
+        'intermediate': {
+            title: 'Set Difference',
+            introduction: 'Elements in A but not in B: A - B',
+            principles: [
+                {title: 'Difference', content: 'In first set but not second'}
+            ],
+            examples: [
+                {question: 'A={1,2,3,4}, B={3,4,5,6}, A-B?', steps: ['In A: 1,2,3,4', 'Remove what is in B: remove 3,4'], answer: '{1,2}'}
+            ],
+            tips: ['✅ Start with first set, remove second']
+        },
+        'advanced': {
+            title: 'Cardinality Formulas',
+            introduction: 'Count elements using formulas',
+            principles: [
+                {title: 'Formula', content: '|A ∪ B| = |A| + |B| - |A ∩ B|'}
+            ],
+            examples: [
+                {question: '|A|=5, |B|=7, |A∩B|=3, |A∪B|?', steps: ['5 + 7 - 3 = 9'], answer: '9'}
+            ],
+            tips: ['✅ Subtract intersection to avoid double counting']
+        }
+    }
+    
+    // FUTURE TOPICS - Just add them here following the same structure:
+    /*
+    'patterns': {
+        'beginner': { ... },
+        'intermediate': { ... },
+        'advanced': { ... }
+    },
+    'functions': {
+        'beginner': { ... },
+        'intermediate': { ... },
+        'advanced': { ... }
+    }
+    */
+};
+
+// Export for use in other scripts
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = TUTORIALS;
+}
+
+</script>
+
+<!-- TUTORIAL MODAL COMPONENT -->
+<!-- Add this to student_app.html, just before the closing </body> tag -->
+
+<!-- Tutorial Splash Screen Modal -->
+<div id="tutorialModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" style="display: none;">
+    <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <i class="fas fa-book-open text-2xl mr-3"></i>
+                <h2 id="tutorialTitle" class="text-2xl font-bold">Tutorial</h2>
+            </div>
+            <button onclick="closeTutorial()" class="text-white hover:text-gray-200 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Content (Scrollable) -->
+        <div class="flex-1 overflow-y-auto p-6">
+            <!-- Introduction -->
+            <div id="tutorialIntro" class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                <!-- Dynamic content -->
+            </div>
+            
+            <!-- Key Principles -->
+            <div class="mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                    Key Principles
+                </h3>
+                <div id="tutorialPrinciples" class="space-y-3">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+            
+            <!-- Worked Examples -->
+            <div class="mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    Worked Examples
+                </h3>
+                <div id="tutorialExamples" class="space-y-4">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+            
+            <!-- Tips -->
+            <div class="mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-star text-purple-500 mr-2"></i>
+                    Quick Tips
+                </h3>
+                <div id="tutorialTips" class="space-y-2">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="bg-gray-50 px-6 py-4 border-t">
+            <div class="flex items-center justify-between">
+                <label class="flex items-center cursor-pointer">
+                    <input type="checkbox" id="dontShowAgain" class="mr-2 w-4 h-4">
+                    <span class="text-sm text-gray-600">Don't show this automatically again</span>
+                </label>
+                <button onclick="startTutorialQuiz()" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+                    Got It - Start Quiz! 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Help Button (shown during quiz) -->
+<button id="tutorialHelpBtn" class="fixed bottom-6 right-6 bg-purple-600 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all z-40 hidden" onclick="showTutorialModal()">
+    <i class="fas fa-book-open mr-2"></i>
+    Need Help?
+</button>
+
+<style>
+/* Tutorial Modal Styles */
+#tutorialModal.flex {
+    display: flex !important;
+}
+
+.tutorial-principle {
+    background: white;
+    border-left: 4px solid #9333ea;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.tutorial-example {
+    background: #f0fdf4;
+    border: 2px solid #86efac;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+}
+
+.tutorial-example-question {
+    font-weight: 600;
+    color: #047857;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.tutorial-example-steps {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 0.75rem 0;
+}
+
+.tutorial-example-step {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: #374151;
+}
+
+.tutorial-example-step:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #9333ea;
+    font-weight: bold;
+}
+
+.tutorial-example-answer {
+    background: #dcfce7;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    color: #047857;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.tutorial-tip {
+    padding: 0.75rem;
+    padding-left: 2.5rem;
+    background: white;
+    border-radius: 0.5rem;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.tutorial-tip:before {
+    content: attr(data-icon);
+    position: absolute;
+    left: 0.75rem;
+    font-size: 1.2rem;
+}
+
+/* Floating Help Button Animation */
+#tutorialHelpBtn {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #tutorialModal > div {
+        max-width: 100%;
+        margin: 1rem;
+    }
+}
+</style>
+
+
+<!-- Tutorial Manager -->
+<script>
+/**
+ * TUTORIAL MANAGER
+ * 
+ * Handles showing/hiding tutorials based on topic and difficulty.
+ * Uses localStorage to remember user preferences.
+ * 
+ * HOW TO USE:
+ * 1. Include tutorial_data.js first
+ * 2. Include this script
+ * 3. Call initTutorial(topic, difficulty) when starting a quiz
+ * 
+ * Example: initTutorial('introductory_algebra', 'beginner')
+ */
+
+class TutorialManager {
+    constructor() {
+        this.currentTopic = null;
+        this.currentDifficulty = null;
+        this.storageKey = 'mathmaster_tutorial_prefs';
+    }
+    
+    /**
+     * Initialize tutorial for a topic/difficulty
+     * Shows tutorial if user hasn't disabled it
+     */
+    initTutorial(topic, difficulty) {
+        this.currentTopic = topic;
+        this.currentDifficulty = difficulty;
+        
+        // Check if tutorial exists for this topic/difficulty
+        if (!TUTORIALS[topic] || !TUTORIALS[topic][difficulty]) {
+            console.log(`No tutorial available for ${topic} - ${difficulty}`);
+            return;
+        }
+        
+        // Check if user has disabled auto-show for this combination
+        if (!this.shouldShowAuto(topic, difficulty)) {
+            console.log(`Tutorial auto-show disabled for ${topic} - ${difficulty}`);
+            this.showHelpButton(); // Still show the help button
+            return;
+        }
+        
+        // Show the tutorial
+        this.showTutorial(topic, difficulty);
+    }
+    
+    /**
+     * Check if tutorial should auto-show
+     */
+    shouldShowAuto(topic, difficulty) {
+        const prefs = this.getPreferences();
+        const key = `${topic}_${difficulty}`;
+        return !prefs[key]; // Show if NOT in preferences (not disabled)
+    }
+    
+    /**
+     * Get user preferences from localStorage
+     */
+    getPreferences() {
+        const stored = localStorage.getItem(this.storageKey);
+        return stored ? JSON.parse(stored) : {};
+    }
+    
+    /**
+     * Save preference to not show tutorial auto for this topic/difficulty
+     */
+    savePreference(topic, difficulty, dontShow) {
+        const prefs = this.getPreferences();
+        const key = `${topic}_${difficulty}`;
+        
+        if (dontShow) {
+            prefs[key] = true;
+        } else {
+            delete prefs[key];
+        }
+        
+        localStorage.setItem(this.storageKey, JSON.stringify(prefs));
+    }
+    
+    /**
+     * Show the tutorial modal
+     */
+    showTutorial(topic, difficulty) {
+        topic = topic || this.currentTopic;
+        difficulty = difficulty || this.currentDifficulty;
+        
+        const tutorialData = TUTORIALS[topic][difficulty];
+        if (!tutorialData) {
+            console.error(`No tutorial data found for ${topic} - ${difficulty}`);
+            return;
+        }
+        
+        // Populate modal content
+        this.populateModal(tutorialData);
+        
+        // Show modal
+        const modal = document.getElementById('tutorialModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Hide help button while modal is open
+        this.hideHelpButton();
+    }
+    
+    /**
+     * Populate the modal with tutorial content
+     */
+    populateModal(data) {
+        // Title
+        document.getElementById('tutorialTitle').textContent = data.title;
+        
+        // Introduction
+        document.getElementById('tutorialIntro').innerHTML = `
+            <p class="text-gray-700">${data.introduction}</p>
+        `;
+        
+        // Principles
+        const principlesHTML = data.principles.map(principle => `
+            <div class="tutorial-principle">
+                <h4 class="font-semibold text-purple-700 mb-2">${principle.title}</h4>
+                <p class="text-gray-700">${principle.content}</p>
+            </div>
+        `).join('');
+        document.getElementById('tutorialPrinciples').innerHTML = principlesHTML;
+        
+        // Examples
+        const examplesHTML = data.examples.map((example, idx) => `
+            <div class="tutorial-example">
+                <div class="tutorial-example-question">
+                    Example ${idx + 1}: ${example.question}
+                </div>
+                <div class="tutorial-example-steps">
+                    ${example.steps.map(step => `
+                        <div class="tutorial-example-step">${step}</div>
+                    `).join('')}
+                </div>
+                <div class="tutorial-example-answer">
+                    Answer: ${example.answer}
+                </div>
+            </div>
+        `).join('');
+        document.getElementById('tutorialExamples').innerHTML = examplesHTML;
+        
+        // Tips
+        const tipsHTML = data.tips.map(tip => {
+            const icon = tip.startsWith('✅') ? '✅' : '⚠️';
+            return `<div class="tutorial-tip" data-icon="${icon}">${tip.substring(2)}</div>`;
+        }).join('');
+        document.getElementById('tutorialTips').innerHTML = tipsHTML;
+    }
+    
+    /**
+     * Close the tutorial modal
+     */
+    closeTutorial() {
+        // Check if "don't show again" is checked
+        const dontShowAgain = document.getElementById('dontShowAgain').checked;
+        if (dontShowAgain && this.currentTopic && this.currentDifficulty) {
+            this.savePreference(this.currentTopic, this.currentDifficulty, true);
+        }
+        
+        // Hide modal
+        const modal = document.getElementById('tutorialModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        
+        // Show help button
+        this.showHelpButton();
+    }
+    
+    /**
+     * Start the quiz (close tutorial and begin)
+     */
+    startQuiz() {
+        this.closeTutorial();
+        // The quiz should already be loaded, just hidden behind modal
+    }
+    
+    /**
+     * Show the floating help button
+     */
+    showHelpButton() {
+        if (this.currentTopic && this.currentDifficulty) {
+            document.getElementById('tutorialHelpBtn').classList.remove('hidden');
+        }
+    }
+    
+    /**
+     * Hide the floating help button
+     */
+    hideHelpButton() {
+        document.getElementById('tutorialHelpBtn').classList.add('hidden');
+    }
+    
+    /**
+     * Reset all preferences (for testing)
+     */
+    resetAllPreferences() {
+        localStorage.removeItem(this.storageKey);
+        console.log('All tutorial preferences cleared');
+    }
+}
+
+// Create global instance
+const tutorialManager = new TutorialManager();
+
+// Global functions for onclick handlers
+function showTutorialModal() {
+    tutorialManager.showTutorial();
+}
+
+function closeTutorial() {
+    tutorialManager.closeTutorial();
+}
+
+function startTutorialQuiz() {
+    tutorialManager.startQuiz();
+}
+
+function initTutorial(topic, difficulty) {
+    tutorialManager.initTutorial(topic, difficulty);
+}
+
+// For debugging/testing
+function resetTutorialPreferences() {
+    tutorialManager.resetAllPreferences();
+}
+
+console.log('Tutorial Manager initialized');
+
+</script>
+
+<!-- ========================================== -->
+<!-- END TUTORIAL SYSTEM -->
+<!-- ========================================== -->
 
 </body>
 </html>
