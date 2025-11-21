@@ -153,7 +153,7 @@
             padding: 20px 15px;
             border-radius: 12px;
             transition: all 0.3s;
-            backdrop-filter: blur(10px);
+            /* backdrop-filter: blur(10px); */ /* REMOVED */
         }
 
         .badge-stat-box:hover {
@@ -182,7 +182,7 @@
             border-radius: 20px;
             margin: 5px;
             font-size: 0.9em;
-            backdrop-filter: blur(5px);
+            /* backdrop-filter: blur(5px); */ /* REMOVED */
         }
 
         .badge-widget-loading {
@@ -750,11 +750,11 @@
         }
 
         .milestone-badge {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 1.0);
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 12px;
             padding: 15px;
-            backdrop-filter: blur(10px);
+            /* backdrop-filter: blur(10px); */ /* REMOVED - CAUSED BLUR */
             transition: transform 0.2s;
         }
 
@@ -1023,6 +1023,13 @@
         let score = 0;
         let answered = false;
         let startTime = null;
+        
+        // Milestone Tracking (Client-Side for ALL users)
+        let consecutiveCorrect = 0;
+        let maxConsecutiveCorrect = 0;
+        let questionsAnsweredInQuiz = 0;
+        let shownMilestones = new Set(); // Track which milestones shown this quiz
+        
         let masteryData = {}; // Stores mastery status for all topics/difficulties
 
         const iconMap = {
@@ -1499,9 +1506,12 @@
             answered = false;
             startTime = Date.now();
 
-            // Initialize milestone celebration system
-            milestoneSystem.setDifficulty(difficulty);
-            milestoneSystem.reset();
+            // Reset milestone tracking for new quiz
+            consecutiveCorrect = 0;
+            maxConsecutiveCorrect = 0;
+            questionsAnsweredInQuiz = 0;
+            shownMilestones.clear();
+            console.log('✅ Milestone tracking reset for new quiz');
 
             document.getElementById('difficultyScreen').classList.add('hidden');
             document.getElementById('loadingScreen').classList.remove('hidden');
@@ -1590,8 +1600,42 @@
             const question = questions[currentQuestionIndex];
             const correct = selectedIndex === question.correct;
 
-            // Record answer in milestone system for celebrations
-            milestoneSystem.recordAnswer(correct);
+            // Track answer for milestone detection
+            questionsAnsweredInQuiz++;
+            if (correct) {
+                consecutiveCorrect++;
+                maxConsecutiveCorrect = Math.max(maxConsecutiveCorrect, consecutiveCorrect);
+                console.log(`✅ Correct! Streak: ${consecutiveCorrect}`);
+                
+                // Check for "10 in a Row" milestone
+                if (consecutiveCorrect === 10 && !shownMilestones.has('ten_streak')) {
+                    shownMilestones.add('ten_streak');
+                    setTimeout(() => {
+                        showAchievementPopup({
+                            icon: '🔥',
+                            title: '10 in a Row!',
+                            description: "Incredible! You've answered 10 questions correctly in a row!",
+                            points: 50
+                        });
+                    }, 800);
+                }
+            } else {
+                consecutiveCorrect = 0; // Reset streak on wrong answer
+                console.log(`❌ Incorrect. Streak reset.`);
+            }
+
+            // Check for "20 Questions Completed" milestone
+            if (questionsAnsweredInQuiz === 20 && !shownMilestones.has('twenty_questions')) {
+                shownMilestones.add('twenty_questions');
+                setTimeout(() => {
+                    showAchievementPopup({
+                        icon: '🎯',
+                        title: '20 Questions!',
+                        description: "You've answered 20 questions! Keep up the excellent work!",
+                        points: 30
+                    });
+                }, 800);
+            }
 
             if (correct) {
                 score++;
@@ -1734,6 +1778,53 @@
         async function submitAndShowResults() {
             const percentage = Math.round((score / questions.length) * 100);
             const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+
+            // Check for quiz completion milestones (FOR ALL USERS including guests)
+            const milestones = [];
+
+            // Perfect Score
+            if (percentage === 100 && !shownMilestones.has('perfect_score')) {
+                milestones.push({
+                    icon: '💯',
+                    title: 'Perfect Score!',
+                    description: 'Flawless! You got every single question correct!',
+                    points: 100
+                });
+                shownMilestones.add('perfect_score');
+            }
+
+            // First Quiz (always show for first quiz of session)
+            if (!shownMilestones.has('first_quiz')) {
+                milestones.push({
+                    icon: '🌟',
+                    title: 'First Quiz Complete!',
+                    description: 'Congratulations on completing your first quiz!',
+                    points: 25
+                });
+                shownMilestones.add('first_quiz');
+            }
+
+            // Quick Learner (under 5 minutes with 80%+)
+            const timeInMinutes = timeTaken / 60;
+            if (timeInMinutes < 5 && percentage >= 80 && !shownMilestones.has('quick_learner')) {
+                milestones.push({
+                    icon: '⚡',
+                    title: 'Quick Learner!',
+                    description: 'Amazing! You completed this quiz in under 5 minutes with a great score!',
+                    points: 40
+                });
+                shownMilestones.add('quick_learner');
+            }
+
+            // Show milestones if any were earned (with delays between multiple milestones)
+            if (milestones.length > 0) {
+                console.log('🎉 Quiz completion milestones earned:', milestones);
+                for (let i = 0; i < milestones.length; i++) {
+                    setTimeout(() => {
+                        showAchievementPopup(milestones[i]);
+                    }, i * 2500); // Show each milestone 2.5 seconds apart
+                }
+            }
 
             // Submit to backend
             try {
@@ -2014,7 +2105,7 @@
             align-items: center;
             justify-content: center;
             z-index: 10000;
-            backdrop-filter: blur(4px);
+            /* backdrop-filter: blur(4px); */ /* REMOVED */
         }
 
         .password-modal.hidden {
@@ -2266,11 +2357,11 @@
         }
 
         .milestone-badge {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 1.0);
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 12px;
             padding: 15px;
-            backdrop-filter: blur(10px);
+            /* backdrop-filter: blur(10px); */ /* REMOVED - CAUSED BLUR */
             transition: transform 0.2s;
         }
 
@@ -2625,6 +2716,178 @@
                 // Sound playback failed, that's okay
             }
         }
+
+        // ==================== CLIENT-SIDE ACHIEVEMENT POPUPS ====================
+        // High-contrast celebration popups for ALL users (guests and logged-in)
+
+        function showAchievementPopup(achievement) {
+            console.log('🎉 Showing achievement popup:', achievement);
+            
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.85);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                animation: fadeIn 0.3s ease-out;
+            `;
+            
+            // Create modal
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 20px;
+                padding: 40px;
+                max-width: 500px;
+                width: 90%;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                text-align: center;
+                position: relative;
+                animation: slideUp 0.5s ease-out;
+                color: #ffffff;
+            `;
+            
+            modal.innerHTML = `
+                <div style="font-size: 80px; margin-bottom: 20px; animation: bounce 1s ease-in-out infinite;">
+                    ${achievement.icon}
+                </div>
+                <h2 style="
+                    color: #ffffff;
+                    font-size: 32px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+                ">
+                    ${achievement.title}
+                </h2>
+                <p style="
+                    color: #ffffff;
+                    font-size: 18px;
+                    margin: 15px 0;
+                    line-height: 1.6;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+                ">
+                    ${achievement.description}
+                </p>
+                <div style="
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 10px;
+                    padding: 15px;
+                    margin: 20px 0;
+                ">
+                    <div style="
+                        color: #ffffff;
+                        font-size: 16px;
+                        font-weight: 600;
+                        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+                    ">
+                        Achievement Points
+                    </div>
+                    <div style="
+                        color: #ffd700;
+                        font-size: 36px;
+                        font-weight: bold;
+                        margin-top: 5px;
+                        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+                    ">
+                        +${achievement.points}
+                    </div>
+                </div>
+                <button onclick="this.closest('.achievement-overlay').remove()" style="
+                    background: rgba(255, 255, 255, 0.9);
+                    color: #667eea;
+                    border: none;
+                    padding: 12px 30px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    margin-top: 10px;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                " 
+                onmouseover="this.style.background='#ffffff'; this.style.transform='scale(1.05)';"
+                onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.transform='scale(1)';">
+                    Awesome! ✨
+                </button>
+            `;
+            
+            overlay.className = 'achievement-overlay';
+            overlay.appendChild(modal);
+            
+            // Add confetti
+            createAchievementConfetti(overlay);
+            
+            document.body.appendChild(overlay);
+            
+            // Add animations if not already added
+            if (!document.getElementById('achievement-animations')) {
+                const style = document.createElement('style');
+                style.id = 'achievement-animations';
+                style.textContent = `
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes slideUp {
+                        from {
+                            transform: translateY(50px);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateY(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes bounce {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-20px); }
+                    }
+                    @keyframes confettiFall {
+                        to {
+                            transform: translateY(100vh) rotate(360deg);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        function createAchievementConfetti(container) {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#ff9ff3'];
+            const confettiCount = 50;
+            
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.cssText = `
+                    position: fixed;
+                    width: 10px;
+                    height: 10px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    top: -10px;
+                    left: ${Math.random() * 100}%;
+                    opacity: ${Math.random() * 0.7 + 0.3};
+                    animation: confettiFall ${Math.random() * 3 + 2}s linear forwards;
+                    animation-delay: ${Math.random() * 0.5}s;
+                    border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+                    z-index: 9999;
+                `;
+                container.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => confetti.remove(), 5000);
+            }
+        }
+
+        console.log('✅ Client-side achievement system loaded!');
 
     </script>
 

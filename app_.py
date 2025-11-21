@@ -10,7 +10,7 @@ import uuid
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/mathquiz.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mathquiz.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Session configuration for guest mode
@@ -443,7 +443,7 @@ def role_required(*roles):
             # Repeat guests are considered students
             if 'guest_code' in session and 'student' in roles:
                 return f(*args, **kwargs)
-
+            
             # Full accounts and casual guests
             if 'user_id' not in session:
                 return jsonify({'error': 'Authentication required'}), 401
@@ -460,7 +460,7 @@ def approved_required(f):
         # Allow casual guests through
         if 'is_guest' in session:
             return f(*args, **kwargs)
-
+        
         # Allow repeat guests through
         if 'guest_code' in session:
             return f(*args, **kwargs)
@@ -1376,7 +1376,7 @@ def student_app():
     # Handle repeat guests (they don't have user_id)
     if 'guest_code' in session:
         return render_template('student_app.html')
-
+    
     # Handle full accounts and casual guests
     user = User.query.get(session['user_id'])
     if user.role != 'student':
@@ -1580,7 +1580,7 @@ def submit_quiz():
     if 'guest_code' in session:
         from sqlalchemy import text
         guest_code = session['guest_code']
-
+        
         # Save quiz attempt
         db.session.execute(text("""
             INSERT INTO guest_quiz_attempts (guest_code, topic, difficulty, score, total_questions, time_spent)
@@ -1593,7 +1593,7 @@ def submit_quiz():
             "total": total,
             "time": time_taken
         })
-
+        
         # Update guest stats
         db.session.execute(text("""
             UPDATE guest_users
@@ -1606,9 +1606,9 @@ def submit_quiz():
             "now": datetime.utcnow(),
             "code": guest_code
         })
-
+        
         db.session.commit()
-
+        
         return jsonify({
             'message': 'Quiz completed!',
             'score': score,
@@ -1740,19 +1740,19 @@ def get_student_badges():
 @approved_required
 def get_student_stats():
     """Get detailed statistics for the current student"""
-
+    
     # Handle repeat guests - fetch from guest tables
     if 'guest_code' in session:
         from sqlalchemy import text
         guest_code = session['guest_code']
-
+        
         # Get guest stats
         guest_stats = db.session.execute(text("""
             SELECT total_score, quizzes_completed
             FROM guest_users
             WHERE guest_code = :code
         """), {"code": guest_code}).fetchone()
-
+        
         # Get guest quiz attempts
         attempts = db.session.execute(text("""
             SELECT topic, difficulty, score, total_questions, completed_at
@@ -1761,17 +1761,17 @@ def get_student_stats():
             ORDER BY completed_at DESC
             LIMIT 10
         """), {"code": guest_code}).fetchall()
-
+        
         # Calculate accuracy
         total_correct = sum(a[2] for a in attempts) if attempts else 0
         total_questions = sum(a[3] for a in attempts) if attempts else 0
         accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
-
+        
         # Get badge count
         badge_count = db.session.execute(text("""
             SELECT COUNT(*) FROM guest_badges WHERE guest_code = :code
         """), {"code": guest_code}).fetchone()[0]
-
+        
         return jsonify({
             'stats': {
                 'total_quizzes': guest_stats[1] if guest_stats else 0,
@@ -1795,7 +1795,7 @@ def get_student_stats():
                 'completed_at': a[4]
             } for a in attempts]
         }), 200
-
+    
     # Handle casual guests - no stats
     if 'is_guest' in session:
         return jsonify({
@@ -3773,22 +3773,22 @@ ANIMALS = [
 def generate_guest_code():
     """Generate unique animal code (e.g., panda42)"""
     max_attempts = 100
-
+    
     for _ in range(max_attempts):
         animal = random.choice(ANIMALS)
         number = random.randint(0, 99)
         code = f"{animal}{number:02d}"
-
+        
         # Check if code is already taken
         from sqlalchemy import text
         existing = db.session.execute(
-            text("SELECT 1 FROM guest_users WHERE guest_code = :code"),
+            text("SELECT 1 FROM guest_users WHERE guest_code = :code"), 
             {"code": code}
         ).fetchone()
-
+        
         if not existing:
             return code
-
+    
     raise Exception("Could not generate unique guest code. Please try again.")
 
 
@@ -3810,7 +3810,7 @@ def get_current_user_info():
                 'total_score': getattr(user, 'total_score', 0),
                 'quizzes_completed': getattr(user, 'quizzes_completed', 0)
             }
-
+    
     # Check repeat guest
     if 'guest_code' in session:
         from sqlalchemy import text
@@ -3819,7 +3819,7 @@ def get_current_user_info():
                FROM guest_users WHERE guest_code = :code AND is_active = 1"""),
             {"code": session['guest_code']}
         ).fetchone()
-
+        
         if result:
             return {
                 'type': 'repeat_guest',
@@ -3830,7 +3830,7 @@ def get_current_user_info():
                 'created_at': result[3],
                 'last_active': result[4]
             }
-
+    
     # Check casual guest (shared guest@mathmaster.app user)
     if session.get('is_guest') and 'user_id' in session:
         user = User.query.get(session['user_id'])
@@ -3840,7 +3840,7 @@ def get_current_user_info():
                 'name': 'Guest User',
                 'session_id': session.get('guest_session_id', 'unknown')
             }
-
+    
     return None
 
 
@@ -3861,10 +3861,10 @@ def casual_guest_start():
     """Initialize casual guest session (temporary, no code)"""
     try:
         session.clear()
-
+        
         # Get or create the shared casual guest user
         guest_user = User.query.filter_by(email='guest@mathmaster.app').first()
-
+        
         if not guest_user:
             guest_user = User(
                 email='guest@mathmaster.app',
@@ -3875,20 +3875,20 @@ def casual_guest_start():
             )
             db.session.add(guest_user)
             db.session.commit()
-
+        
         # Set up casual guest session
         session['is_guest'] = True
         session['guest_session_id'] = str(uuid.uuid4())
         session['user_id'] = guest_user.id
         session['role'] = 'student'
         session['guest_type'] = 'casual'
-
+        
         return jsonify({
             'success': True,
             'message': 'Casual guest session started',
             'redirect': '/student'
         }), 200
-
+        
     except Exception as e:
         print(f"Error starting casual guest session: {e}")
         db.session.rollback()
@@ -3902,23 +3902,23 @@ def generate_repeat_guest():
     """Generate new repeat guest code"""
     try:
         from sqlalchemy import text
-
+        
         # Generate unique code
         code = generate_guest_code()
-
+        
         # Create guest user in database
         db.session.execute(text("""
             INSERT INTO guest_users (guest_code, created_at, last_active)
             VALUES (:code, :now, :now)
         """), {"code": code, "now": datetime.utcnow()})
         db.session.commit()
-
+        
         return jsonify({
             'success': True,
             'guest_code': code,
             'message': f'Your code is: {code}'
         }), 200
-
+        
     except Exception as e:
         print(f"Error generating guest code: {e}")
         db.session.rollback()
@@ -3932,22 +3932,22 @@ def repeat_guest_login():
         from sqlalchemy import text
         data = request.json
         code = data.get('guest_code', '').strip().lower()
-
+        
         if not code:
             return jsonify({'error': 'Please enter your guest code'}), 400
-
+        
         # Check if code exists and is active
         result = db.session.execute(
             text("SELECT guest_code FROM guest_users WHERE guest_code = :code AND is_active = 1"),
             {"code": code}
         ).fetchone()
-
+        
         if not result:
             return jsonify({'error': 'Code not found. Please check and try again.'}), 404
-
+        
         # Get or create the shared guest user for repeat guests
         guest_user = User.query.filter_by(email='guest@mathmaster.app').first()
-
+        
         if not guest_user:
             guest_user = User(
                 email='guest@mathmaster.app',
@@ -3958,23 +3958,23 @@ def repeat_guest_login():
             )
             db.session.add(guest_user)
             db.session.commit()
-
+        
         # Set up repeat guest session
         session.clear()
         session['guest_code'] = code
         session['user_id'] = guest_user.id  # CRITICAL: Set user_id for @login_required
         session['role'] = 'student'
         session['guest_type'] = 'repeat'
-
+        
         # Update last active
         update_guest_last_active(code)
-
+        
         return jsonify({
             'success': True,
             'message': 'Welcome back!',
             'redirect': '/student'
         }), 200
-
+        
     except Exception as e:
         print(f"Error logging in guest: {e}")
         db.session.rollback()
@@ -3986,30 +3986,30 @@ def repeat_guest_stats():
     """Get stats for current repeat guest"""
     if 'guest_code' not in session:
         return jsonify({'error': 'Not logged in'}), 401
-
+    
     try:
         from sqlalchemy import text
         code = session['guest_code']
-
+        
         # Get stats
         result = db.session.execute(text("""
-            SELECT
+            SELECT 
                 total_score,
                 quizzes_completed,
                 (SELECT COUNT(*) FROM guest_badges WHERE guest_code = :code) as badges_earned
             FROM guest_users
             WHERE guest_code = :code
         """), {"code": code}).fetchone()
-
+        
         if result:
             return jsonify({
                 'total_score': result[0] or 0,
                 'quizzes_completed': result[1] or 0,
                 'badges_earned': result[2] or 0
             }), 200
-
+        
         return jsonify({'error': 'Stats not found'}), 404
-
+        
     except Exception as e:
         print(f"Error getting guest stats: {e}")
         return jsonify({'error': 'Failed to load stats'}), 500
@@ -4020,36 +4020,36 @@ def convert_guest_to_full():
     """Convert repeat guest to full account"""
     if 'guest_code' not in session:
         return jsonify({'error': 'Not logged in as guest'}), 401
-
+    
     try:
         from sqlalchemy import text
         data = request.json
-
+        
         email = data.get('email', '').strip()
         password = data.get('password', '').strip()
         full_name = data.get('full_name', '').strip()
-
+        
         # Validation
         if not email or not password or not full_name:
             return jsonify({'error': 'All fields required'}), 400
-
+        
         if len(password) < 6:
             return jsonify({'error': 'Password must be at least 6 characters'}), 400
-
+        
         # Check if email already exists
         existing = User.query.filter_by(email=email).first()
         if existing:
             return jsonify({'error': 'Email already registered'}), 400
-
+        
         guest_code = session['guest_code']
-
+        
         # Get guest data
         guest_data = db.session.execute(text("""
             SELECT total_score, quizzes_completed
             FROM guest_users
             WHERE guest_code = :code
         """), {"code": guest_code}).fetchone()
-
+        
         # Create new full user account
         new_user = User(
             email=email,
@@ -4060,7 +4060,7 @@ def convert_guest_to_full():
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.flush()
-
+        
         # Migrate quiz attempts
         db.session.execute(text("""
             INSERT INTO quiz_attempts (user_id, topic, difficulty, score, total_questions, completed_at)
@@ -4068,7 +4068,7 @@ def convert_guest_to_full():
             FROM guest_quiz_attempts
             WHERE guest_code = :code
         """), {"user_id": new_user.id, "code": guest_code})
-
+        
         # Migrate badges
         db.session.execute(text("""
             INSERT INTO user_badges (user_id, badge_id, earned_at)
@@ -4076,26 +4076,26 @@ def convert_guest_to_full():
             FROM guest_badges
             WHERE guest_code = :code
         """), {"user_id": new_user.id, "code": guest_code})
-
+        
         # Deactivate guest account
         db.session.execute(
             text("UPDATE guest_users SET is_active = 0 WHERE guest_code = :code"),
             {"code": guest_code}
         )
-
+        
         db.session.commit()
-
+        
         # Switch session to full account
         session.clear()
         session['user_id'] = new_user.id
         session['role'] = 'student'
-
+        
         return jsonify({
             'success': True,
             'message': 'Account upgraded successfully!',
             'redirect': '/student'
         }), 200
-
+        
     except Exception as e:
         db.session.rollback()
         print(f"Error converting guest account: {e}")
@@ -4111,10 +4111,10 @@ def guest_leaderboard():
     """
     try:
         from sqlalchemy import text
-
+        
         # Query to get aggregated stats for each guest_code
         query = text("""
-            SELECT
+            SELECT 
                 guest_code,
                 COUNT(*) as total_quizzes,
                 SUM(score) as total_score,
@@ -4129,15 +4129,15 @@ def guest_leaderboard():
             ORDER BY total_score DESC
             LIMIT 20
         """)
-
+        
         results = db.session.execute(query).fetchall()
-
+        
         leaderboard = []
         for rank, row in enumerate(results, start=1):
             # Generate guest display name from code
             # Uses first 6 characters of code for anonymity
             guest_display = f"Guest-{row.guest_code[:6]}" if len(row.guest_code) > 6 else f"Guest-{row.guest_code}"
-
+            
             leaderboard.append({
                 'rank': rank,
                 'guest_code': row.guest_code,  # Full code (not displayed to others)
@@ -4149,13 +4149,13 @@ def guest_leaderboard():
                 'first_quiz': row.first_quiz_date.strftime('%Y-%m-%d') if row.first_quiz_date else None,
                 'last_quiz': row.last_quiz_date.strftime('%Y-%m-%d') if row.last_quiz_date else None
             })
-
+        
         return jsonify({
             'success': True,
             'leaderboard': leaderboard,
             'total_guests': len(leaderboard)
         })
-
+        
     except Exception as e:
         print(f"❌ Error fetching guest leaderboard: {str(e)}")
         return jsonify({
@@ -4172,12 +4172,12 @@ def cleanup_inactive_guests(days=30):
     """
     from sqlalchemy import text
     cutoff_date = datetime.utcnow() - timedelta(days=days)
-
+    
     result = db.session.execute(text("""
-        DELETE FROM guest_users
+        DELETE FROM guest_users 
         WHERE last_active < :cutoff AND is_active = 1
     """), {"cutoff": cutoff_date})
-
+    
     db.session.commit()
     return result.rowcount
 
