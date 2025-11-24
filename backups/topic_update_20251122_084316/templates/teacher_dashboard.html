@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - Math Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .domain-access-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 15px;
+            padding: 8px 15px;
+            margin: 5px;
+            font-size: 0.95em;
+        }
+        
+        .domain-access-badge i {
+            color: #2196f3;
+        }
+        
+        .pending-request-item {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        
+        .approved-request {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .denied-request {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <div class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">🎓 Math Master - Teacher Dashboard</h1>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-700" id="teacherName"></span>
+                <button onclick="openPasswordModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-key mr-2"></i>Change Password
+                </button>
+                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Tab Navigation -->
+        <div class="bg-white rounded-lg shadow-md mb-6">
+            <div class="flex border-b">
+                <button onclick="showTab('classes')" id="classesTab" class="tab-button px-6 py-3 font-semibold border-b-2 border-purple-600">
+                    <i class="fas fa-chalkboard mr-2"></i>My Classes
+                </button>
+                <button onclick="showTab('students')" id="studentsTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-users mr-2"></i>Student Search
+                </button>
+                <button onclick="showTab('progress')" id="progressTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-chart-bar mr-2"></i>Class Progress
+                </button>
+                <button onclick="showTab('access')" id="accessTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800">
+                    <i class="fas fa-shield-alt mr-2"></i>Domain Access
+                </button>
+            </div>
+        </div>
+
+        <!-- Classes Tab -->
+        <div id="classesContent" class="tab-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">My Classes</h2>
+                <button onclick="showCreateClassModal()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-plus mr-2"></i>Create New Class
+                </button>
+            </div>
+            <div id="classesList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- Students Tab -->
+        <div id="studentsContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-6">Search Students</h2>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <input type="text" id="studentSearch" placeholder="Search by name or email..."
+                       class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4">
+                <div id="studentResults"></div>
+            </div>
+        </div>
+
+        <!-- Progress Tab -->
+        <div id="progressContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-6">Real-time Class Progress</h2>
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <label class="block font-semibold mb-2">Select Class:</label>
+                <select id="progressClassSelect" onchange="loadClassProgress()"
+                        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">-- Select a class --</option>
+                </select>
+            </div>
+            <div id="progressData"></div>
+        </div>
+
+        <!-- Domain Access Tab -->
+        <div id="accessContent" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="flex justify-between items-center p-6 border-b">
+                    <h2 class="text-2xl font-bold">
+                        <i class="fas fa-shield-alt mr-2"></i>Student Access Permissions
+                    </h2>
+                    <button onclick="refreshTeacherDomainAccess()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-sync mr-2"></i>Refresh
+                    </button>
+                </div>
+                <div class="p-6">
+                    <!-- Access Status -->
+                    <div id="teacher-domain-status">
+                        <div class="text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-4xl text-purple-600"></i>
+                            <p class="mt-4 text-gray-600">Loading access information...</p>
+                        </div>
+                    </div>
+
+                    <!-- Assigned Domains -->
+                    <div id="teacher-assigned-domains" style="display: none;">
+                        <h3 class="text-lg font-semibold border-b pb-2 mb-4">Your Accessible Domains</h3>
+                        <div id="assigned-domains-display" class="mb-6">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Request New Access -->
+                    <div id="teacher-request-section" style="display: none;">
+                        <h3 class="text-lg font-semibold border-b pb-2 mb-4 mt-6">Request Additional Access</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            If you need access to students from other email domains, you can request it here.
+                            An administrator will review your request.
+                        </p>
+                        
+                        <div class="mb-4">
+                            <label class="block font-semibold mb-2">Select Domain:</label>
+                            <select class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" id="domain-to-request">
+                                <option value="">-- Select a domain --</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block font-semibold mb-2">Reason for Request: <span class="text-red-600">*</span></label>
+                            <textarea class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" 
+                                      id="request-reason" rows="3" 
+                                      placeholder="Please explain why you need access to this domain..."></textarea>
+                        </div>
+                        
+                        <button onclick="submitDomainRequest()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
+                            <i class="fas fa-paper-plane mr-2"></i>Submit Request
+                        </button>
+                    </div>
+
+                    <!-- Pending Requests -->
+                    <div id="teacher-pending-requests" style="display: none;">
+                        <h3 class="text-lg font-semibold border-b pb-2 mb-4 mt-6">Pending Requests</h3>
+                        <div id="pending-requests-display">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Request History -->
+                    <div id="teacher-request-history" style="display: none;">
+                        <button onclick="toggleRequestHistory()" class="text-purple-600 hover:text-purple-700 mt-4">
+                            <i class="fas fa-history mr-2"></i>View Request History
+                        </button>
+                        <div id="request-history-display" style="display: none;" class="mt-4">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Class Modal -->
+    <div id="createClassModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <h3 class="text-2xl font-bold mb-4">Create New Class</h3>
+            <input type="text" id="newClassName" placeholder="Class name (e.g., Math 7A)"
+                   class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 mb-4">
+            <div class="flex gap-4">
+                <button onclick="createClass()" class="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700">
+                    Create
+                </button>
+                <button onclick="hideCreateClassModal()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg hover:bg-gray-400">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Details Modal -->
+    <div id="classDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white rounded-lg p-8 max-w-4xl w-full mx-4 my-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="classDetailsTitle" class="text-2xl font-bold"></h3>
+                <button onclick="hideClassDetailsModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="classDetailsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentClass = null;
+        let classes = [];
+        let teacherDomainData = null;
+
+        window.onload = async function() {
+            await loadTeacherName();
+            await loadClasses();
+        };
+
+        async function loadTeacherName() {
+            try {
+                const response = await fetch('/api/current-user');
+                const user = await response.json();
+                document.getElementById('teacherName').textContent = user.full_name;
+            } catch (error) {
+                console.error('Error loading teacher name:', error);
+            }
+        }
+
+        async function loadClasses() {
+            try {
+                const response = await fetch('/api/teacher/my-classes');
+                classes = await response.json();
+
+                const list = document.getElementById('classesList');
+                const select = document.getElementById('progressClassSelect');
+
+                if (classes.length === 0) {
+                    list.innerHTML = '<p class="text-gray-600">No classes yet. Create your first class!</p>';
+                } else {
+                    list.innerHTML = classes.map(c => `
+                        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all">
+                            <h3 class="text-xl font-bold mb-2">${c.name}</h3>
+                            <p class="text-gray-600 mb-3"><i class="fas fa-users mr-2"></i>${c.student_count} students</p>
+                            <p class="text-gray-500 text-sm mb-4">Created: ${new Date(c.created_at).toLocaleDateString()}</p>
+                            <div class="flex gap-2">
+                                <button onclick="window.location.href='/teacher/class-dashboard/${c.id}'"
+                                        class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all">
+                                    <i class="fas fa-chart-bar mr-2"></i>Matrix Dashboard
+                                </button>
+                                <button onclick="event.stopPropagation(); showClassDetails(${c.id})"
+                                        class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-all">
+                                    <i class="fas fa-info-circle mr-2"></i>Details
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    select.innerHTML = '<option value="">-- Select a class --</option>' +
+                        classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Error loading classes:', error);
+            }
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(el => {
+                el.classList.remove('border-purple-600', 'text-gray-800');
+                el.classList.add('text-gray-600');
+            });
+
+            document.getElementById(`${tab}Content`).classList.remove('hidden');
+            const tabButton = document.getElementById(`${tab}Tab`);
+            tabButton.classList.remove('text-gray-600');
+            tabButton.classList.add('border-purple-600', 'text-gray-800');
+
+            // Load domain access when switching to access tab
+            if (tab === 'access') {
+                refreshTeacherDomainAccess();
+            }
+        }
+
+        function showCreateClassModal() {
+            document.getElementById('createClassModal').classList.remove('hidden');
+            document.getElementById('createClassModal').classList.add('flex');
+        }
+
+        function hideCreateClassModal() {
+            document.getElementById('createClassModal').classList.add('hidden');
+            document.getElementById('createClassModal').classList.remove('flex');
+            document.getElementById('newClassName').value = '';
+        }
+
+        async function createClass() {
+            const className = document.getElementById('newClassName').value.trim();
+            if (!className) {
+                alert('Please enter a class name');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/teacher/create-class', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name: className })
+                });
+
+                if (response.ok) {
+                    hideCreateClassModal();
+                    await loadClasses();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to create class');
+                }
+            } catch (error) {
+                console.error('Error creating class:', error);
+                alert('Error creating class');
+            }
+        }
+
+        async function showClassDetails(classId) {
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}/students`);
+                const data = await response.json();
+
+                const cls = classes.find(c => c.id === classId);
+                document.getElementById('classDetailsTitle').textContent = cls.name;
+
+                const content = document.getElementById('classDetailsContent');
+                if (data.students.length === 0) {
+                    content.innerHTML = '<p class="text-gray-600">No students enrolled yet.</p>';
+                } else {
+                    content.innerHTML = `
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="px-4 py-2 text-left">Name</th>
+                                        <th class="px-4 py-2 text-left">Email</th>
+                                        <th class="px-4 py-2 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.students.map(s => `
+                                        <tr class="border-b">
+                                            <td class="px-4 py-3">${s.full_name}</td>
+                                            <td class="px-4 py-3">${s.email}</td>
+                                            <td class="px-4 py-3 text-center">
+                                                <button onclick="removeStudent(${classId}, ${s.id})"
+                                                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                                    Remove
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('classDetailsModal').classList.remove('hidden');
+                document.getElementById('classDetailsModal').classList.add('flex');
+            } catch (error) {
+                console.error('Error loading class details:', error);
+            }
+        }
+
+        function hideClassDetailsModal() {
+            document.getElementById('classDetailsModal').classList.add('hidden');
+            document.getElementById('classDetailsModal').classList.remove('flex');
+        }
+
+        // Student search with debouncing
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('studentSearch');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function(e) {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => searchStudents(e.target.value), 300);
+                });
+            }
+        });
+
+        async function searchStudents(query) {
+            if (query.length < 2) {
+                document.getElementById('studentResults').innerHTML = '';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/teacher/students/search?q=${encodeURIComponent(query)}`);
+                const students = await response.json();
+
+                const results = document.getElementById('studentResults');
+                if (students.length === 0) {
+                    results.innerHTML = '<p class="text-gray-600">No students found.</p>';
+                } else {
+                    results.innerHTML = students.map(s => `
+                        <div class="flex justify-between items-center p-4 border-b hover:bg-gray-50">
+                            <div>
+                                <div class="font-semibold">${s.full_name}</div>
+                                <div class="text-sm text-gray-600">${s.email}</div>
+                            </div>
+                            <button onclick="showEnrollStudent(${s.id}, '${s.full_name}')"
+                                    class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                Add to Class
+                            </button>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error searching students:', error);
+            }
+        }
+
+        function showEnrollStudent(studentId, studentName) {
+            if (classes.length === 0) {
+                alert('Please create a class first');
+                return;
+            }
+
+            const classId = prompt(`Enroll ${studentName} in which class? Enter class number:\n\n` +
+                classes.map((c, i) => `${i + 1}. ${c.name}`).join('\n'));
+
+            if (classId && !isNaN(classId) && classId > 0 && classId <= classes.length) {
+                enrollStudent(classes[classId - 1].id, studentId);
+            }
+        }
+
+        async function enrollStudent(classId, studentId) {
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}/enroll`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ student_id: studentId })
+                });
+
+                if (response.ok) {
+                    alert('Student enrolled successfully!');
+                    await loadClasses();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to enroll student');
+                }
+            } catch (error) {
+                console.error('Error enrolling student:', error);
+                alert('Error enrolling student');
+            }
+        }
+
+        async function removeStudent(classId, studentId) {
+            if (!confirm('Remove this student from the class?')) return;
+
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}/remove-student/${studentId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showClassDetails(classId);
+                    await loadClasses();
+                } else {
+                    alert('Failed to remove student');
+                }
+            } catch (error) {
+                console.error('Error removing student:', error);
+            }
+        }
+
+        async function loadClassProgress() {
+            const classId = document.getElementById('progressClassSelect').value;
+            if (!classId) {
+                document.getElementById('progressData').innerHTML = '';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/teacher/class/${classId}/progress`);
+                const attempts = await response.json();
+
+                const progressDiv = document.getElementById('progressData');
+                if (attempts.length === 0) {
+                    progressDiv.innerHTML = '<div class="bg-white rounded-lg shadow-md p-6"><p class="text-gray-600">No quiz attempts yet.</p></div>';
+                } else {
+                    progressDiv.innerHTML = `
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-xl font-bold mb-4">Recent Activity</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="bg-gray-100">
+                                            <th class="px-4 py-2 text-left">Student</th>
+                                            <th class="px-4 py-2 text-left">Topic</th>
+                                            <th class="px-4 py-2 text-left">Difficulty</th>
+                                            <th class="px-4 py-2 text-center">Score</th>
+                                            <th class="px-4 py-2 text-left">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${attempts.slice(0, 50).map(a => `
+                                            <tr class="border-b">
+                                                <td class="px-4 py-3">${a.user_name}</td>
+                                                <td class="px-4 py-3">${a.topic}</td>
+                                                <td class="px-4 py-3">${a.difficulty}</td>
+                                                <td class="px-4 py-3 text-center">
+                                                    <span class="px-3 py-1 rounded-full text-sm ${
+                                                        a.percentage >= 80 ? 'bg-green-100 text-green-800' :
+                                                        a.percentage >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                                                        'bg-red-100 text-red-800'
+                                                    }">
+                                                        ${a.score}/${a.total_questions} (${a.percentage}%)
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-3">${new Date(a.completed_at).toLocaleString()}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading class progress:', error);
+            }
+        }
+
+        // ===== DOMAIN ACCESS MANAGEMENT =====
+
+        // Refresh domain access information
+        async function refreshTeacherDomainAccess() {
+            try {
+                const response = await fetch('/api/teacher/my-domain-access');
+                teacherDomainData = await response.json();
+                
+                renderTeacherDomainAccess(teacherDomainData);
+            } catch (error) {
+                console.error('Error loading domain access:', error);
+                document.getElementById('teacher-domain-status').innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        <i class="fas fa-exclamation-triangle mr-2"></i> 
+                        Failed to load access information. Please try again later.
+                    </div>
+                `;
+            }
+        }
+
+        // Render domain access information
+        function renderTeacherDomainAccess(data) {
+            // Show access status
+            const statusHtml = data.has_restrictions
+                ? `<div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-6">
+                       <i class="fas fa-lock mr-2"></i> 
+                       <strong>Limited Access:</strong> You can only see and enroll students from specific email domains.
+                       You currently have access to <strong>${data.assigned_domains.length}</strong> domain(s) 
+                       covering <strong>${data.accessible_student_count}</strong> students.
+                   </div>`
+                : `<div class="bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded mb-6">
+                       <i class="fas fa-unlock mr-2"></i> 
+                       <strong>Full Access:</strong> You have unrestricted access to all students in the system.
+                   </div>`;
+            
+            document.getElementById('teacher-domain-status').innerHTML = statusHtml;
+            
+            // Show assigned domains if any
+            if (data.assigned_domains.length > 0) {
+                document.getElementById('teacher-assigned-domains').style.display = 'block';
+                document.getElementById('assigned-domains-display').innerHTML = 
+                    data.assigned_domains.map(d => `
+                        <div class="domain-access-badge">
+                            <i class="fas fa-check-circle"></i> ${d.email_domain}
+                            <small class="text-gray-600 ml-2">
+                                (Granted ${new Date(d.granted_at).toLocaleDateString()})
+                            </small>
+                        </div>
+                    `).join('');
+            } else if (data.has_restrictions) {
+                document.getElementById('teacher-assigned-domains').style.display = 'block';
+                document.getElementById('assigned-domains-display').innerHTML = `
+                    <p class="text-gray-600">No domains assigned. Please request access from an administrator.</p>
+                `;
+            }
+            
+            // Show request section if domains available
+            if (data.available_to_request && data.available_to_request.length > 0) {
+                document.getElementById('teacher-request-section').style.display = 'block';
+                
+                const select = document.getElementById('domain-to-request');
+                select.innerHTML = '<option value="">-- Select a domain --</option>' +
+                    data.available_to_request.map(d => 
+                        `<option value="${d.domain}">${d.domain} (${d.student_count} students)</option>`
+                    ).join('');
+            }
+            
+            // Show pending requests
+            if (data.pending_requests && data.pending_requests.length > 0) {
+                document.getElementById('teacher-pending-requests').style.display = 'block';
+                document.getElementById('pending-requests-display').innerHTML = 
+                    data.pending_requests.map(req => `
+                        <div class="pending-request-item">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <strong>${req.email_domain}</strong>
+                                    <br><small class="text-gray-600">
+                                        Requested: ${new Date(req.requested_at).toLocaleString()}
+                                    </small>
+                                    <br><small>Reason: ${req.reason}</small>
+                                </div>
+                                <div>
+                                    <span class="bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-sm">
+                                        <i class="fas fa-clock"></i> Pending
+                                    </span>
+                                    <button onclick="cancelRequest(${req.id})"
+                                            class="text-red-600 hover:text-red-800 ml-2"
+                                            title="Cancel request">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+            }
+            
+            // Show history button if there are any requests
+            loadRequestHistory();
+        }
+
+        // Submit domain access request
+        async function submitDomainRequest() {
+            const domain = document.getElementById('domain-to-request').value;
+            const reason = document.getElementById('request-reason').value.trim();
+            
+            if (!domain) {
+                alert('Please select a domain');
+                return;
+            }
+            
+            if (!reason) {
+                alert('Please provide a reason for your request');
+                return;
+            }
+            
+            if (reason.length < 10) {
+                alert('Please provide a more detailed reason (at least 10 characters)');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/teacher/request-domain-access', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ domain, reason })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Request submitted successfully! An administrator will review your request.');
+                    
+                    // Clear form
+                    document.getElementById('domain-to-request').value = '';
+                    document.getElementById('request-reason').value = '';
+                    
+                    // Refresh display
+                    refreshTeacherDomainAccess();
+                } else {
+                    alert(data.error || 'Failed to submit request');
+                }
+            } catch (error) {
+                console.error('Error submitting request:', error);
+                alert('Failed to submit request. Please try again.');
+            }
+        }
+
+        // Cancel a pending request
+        async function cancelRequest(requestId) {
+            if (!confirm('Cancel this request?')) return;
+            
+            try {
+                const response = await fetch(`/api/teacher/domain-requests/${requestId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('Request cancelled');
+                    refreshTeacherDomainAccess();
+                } else {
+                    alert('Failed to cancel request');
+                }
+            } catch (error) {
+                console.error('Error cancelling request:', error);
+                alert('Failed to cancel request');
+            }
+        }
+
+        // Load request history
+        async function loadRequestHistory() {
+            try {
+                const response = await fetch('/api/teacher/domain-requests');
+                const data = await response.json();
+                
+                const completedRequests = data.requests.filter(r => r.status !== 'pending');
+                
+                if (completedRequests.length > 0) {
+                    document.getElementById('teacher-request-history').style.display = 'block';
+                    
+                    document.getElementById('request-history-display').innerHTML = 
+                        completedRequests.map(req => `
+                            <div class="pending-request-item ${req.status}-request mt-2">
+                                <strong>${req.email_domain}</strong>
+                                <span class="px-2 py-1 rounded text-sm ml-2 ${
+                                    req.status === 'approved' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                                }">
+                                    ${req.status.toUpperCase()}
+                                </span>
+                                <br><small class="text-gray-600">
+                                    Requested: ${new Date(req.requested_at).toLocaleDateString()}
+                                    | Reviewed: ${new Date(req.reviewed_at).toLocaleDateString()}
+                                </small>
+                                <br><small>Your reason: ${req.reason}</small>
+                                ${req.admin_notes ? `<br><small><strong>Admin response:</strong> ${req.admin_notes}</small>` : ''}
+                            </div>
+                        `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading request history:', error);
+            }
+        }
+
+        // Toggle request history visibility
+        function toggleRequestHistory() {
+            const display = document.getElementById('request-history-display');
+            display.style.display = display.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Error logging out:', error);
+            }
+        }
+    </script>
+    <!-- Password Change Modal -->
+    <div id="passwordModal" class="password-modal hidden">
+        <div class="password-modal-content">
+            <div class="password-modal-header">
+                <h2><i class="fas fa-key mr-2"></i>Change Password</h2>
+                <button onclick="closePasswordModal()" class="close-btn">&times;</button>
+            </div>
+            <form id="passwordForm" onsubmit="changePassword(event)" class="password-form">
+                <div class="form-group">
+                    <label for="currentPassword">
+                        <i class="fas fa-lock mr-2"></i>Current Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="currentPassword" 
+                        required
+                        minlength="6"
+                        class="form-input"
+                        placeholder="Enter current password"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">
+                        <i class="fas fa-key mr-2"></i>New Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="newPassword" 
+                        required
+                        minlength="6"
+                        class="form-input"
+                        placeholder="Enter new password (min 6 characters)"
+                    >
+                    <small class="form-hint">Minimum 6 characters</small>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">
+                        <i class="fas fa-check-circle mr-2"></i>Confirm New Password
+                    </label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        required
+                        minlength="6"
+                        class="form-input"
+                        placeholder="Confirm new password"
+                    >
+                </div>
+                <div id="passwordError" class="error-message hidden"></div>
+                <div id="passwordSuccess" class="success-message hidden"></div>
+                <div class="form-actions">
+                    <button type="button" onclick="closePasswordModal()" class="btn-cancel">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-check mr-2"></i>Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Password Modal Styles */
+        .password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(4px);
+        }
+
+        .password-modal.hidden {
+            display: none;
+        }
+
+        .password-modal-content {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .password-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .password-modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 32px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .password-form {
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-hint {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-message::before {
+            content: "⚠️";
+            font-size: 18px;
+        }
+
+        .success-message {
+            background: #efe;
+            border: 2px solid #cfc;
+            color: #3c3;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .success-message::before {
+            content: "✓";
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .error-message.hidden,
+        .success-message.hidden {
+            display: none;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .btn-cancel,
+        .btn-submit {
+            flex: 1;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-cancel {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-cancel:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+    </style>
+
+    <script>
+        // Password Modal Functions
+        function openPasswordModal() {
+            document.getElementById('passwordModal').classList.remove('hidden');
+            document.getElementById('currentPassword').focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+            document.getElementById('passwordForm').reset();
+            document.getElementById('passwordError').classList.add('hidden');
+            document.getElementById('passwordSuccess').classList.add('hidden');
+        }
+
+        async function changePassword(event) {
+            event.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            const errorDiv = document.getElementById('passwordError');
+            const successDiv = document.getElementById('passwordSuccess');
+            
+            // Clear previous messages
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+            
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                errorDiv.textContent = 'New passwords do not match';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            // Validate password length
+            if (newPassword.length < 6) {
+                errorDiv.textContent = 'Password must be at least 6 characters long';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword,
+                        confirm_password: confirmPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    successDiv.textContent = data.message;
+                    successDiv.classList.remove('hidden');
+                    document.getElementById('passwordForm').reset();
+                    
+                    // Auto-close after 2 seconds
+                    setTimeout(() => {
+                        closePasswordModal();
+                    }, 2000);
+                } else {
+                    errorDiv.textContent = data.error || 'Failed to change password';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                errorDiv.textContent = 'An error occurred. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('passwordModal');
+            if (event.target === modal) {
+                closePasswordModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('passwordModal');
+                if (!modal.classList.contains('hidden')) {
+                    closePasswordModal();
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

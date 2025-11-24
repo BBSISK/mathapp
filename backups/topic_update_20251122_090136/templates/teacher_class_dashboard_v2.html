@@ -1116,7 +1116,6 @@
 
         function formatTopicName(topic) {
             const names = {
-                // Number strand
                 'arithmetic': 'Arithmetic',
                 'fractions': 'Fractions',
                 'decimals': 'Decimals',
@@ -1124,21 +1123,15 @@
                 'multiplication_division': 'Mult/Div',
                 'number_systems': 'Number Systems',
                 'bodmas': 'BODMAS',
-                // Algebra and Functions strand
+                'probability': 'Probability',
+                'descriptive_statistics': 'Descriptive Stats',
                 'patterns': 'Patterns',
-                'introductory_algebra': 'Intro Algebra',
                 'functions': 'Functions',
                 'surds': 'Surds',
                 'sets': 'Sets',
                 'complex_numbers_intro': 'Complex Intro',
                 'complex_numbers_expanded': 'Complex Expanded',
-                'complex_numbers': 'Complex #',  // Legacy support
-                // Statistics and Probability strand
-                'descriptive_statistics': 'Descriptive Stats',
-                'probability': 'Probability',
-                // Geometry and Trigonometry strand
-                'geometry': 'Geometry',
-                'trigonometry': 'Trigonometry'
+                'complex_numbers': 'Complex #'  // Legacy support
             };
             return names[topic] || topic;
         }

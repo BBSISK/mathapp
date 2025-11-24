@@ -1,0 +1,388 @@
+/* WHO AM I: Reveal Grid Styles */
+
+.who-am-i-wrapper {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.who-am-i-header {
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.who-am-i-header h3 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.who-am-i-header p {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* Grid Container - NO GAPS between tiles */
+.reveal-grid {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto 20px;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Background Image - Full size behind tiles */
+.reveal-grid-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    z-index: 0;
+}
+
+/* Grid Overlay - 5×5 with NO GAPS */
+.reveal-grid-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 0; /* NO GAPS - tiles touch each other */
+    z-index: 1;
+}
+
+/* Individual Tile - Covers image completely when unrevealed */
+.reveal-tile {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    border: none; /* NO BORDER - eliminates all gaps */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 32px;
+    font-weight: bold;
+}
+
+/* Tile Number */
+.reveal-tile span {
+    opacity: 0.3;
+    font-family: 'Arial Black', sans-serif;
+}
+
+/* Hover Effect */
+.reveal-tile:not(.revealed):hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+/* Revealed Tile - Becomes transparent to show image */
+.reveal-tile.revealed {
+    background: transparent;
+    cursor: default;
+    animation: revealTile 0.5s ease-out;
+}
+
+.reveal-tile.revealed span {
+    display: none;
+}
+
+/* Reveal Animation */
+@keyframes revealTile {
+    0% {
+        transform: scale(1) rotateY(0deg);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1) rotateY(90deg);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1) rotateY(0deg);
+        opacity: 0;
+    }
+}
+
+/* Progress Section */
+.who-am-i-progress {
+    text-align: center;
+    color: white;
+    margin-bottom: 16px;
+}
+
+.who-am-i-progress p {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.who-am-i-progress .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.who-am-i-progress .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* Guess Button */
+.guess-button {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+}
+
+.guess-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(72, 187, 120, 0.5);
+    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+}
+
+.guess-button:active {
+    transform: translateY(0);
+}
+
+.guess-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Guess Modal */
+.guess-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.guess-modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.guess-modal h3 {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.guess-modal p {
+    color: #718096;
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 16px;
+}
+
+.guess-modal input {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 18px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s ease;
+}
+
+.guess-modal input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.guess-modal-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.guess-modal-buttons button {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.guess-modal-submit {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.guess-modal-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.guess-modal-cancel {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+.guess-modal-cancel:hover {
+    background: #cbd5e0;
+}
+
+/* Feedback Messages */
+.guess-feedback {
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    animation: feedbackSlideIn 0.3s ease-out;
+}
+
+@keyframes feedbackSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.guess-feedback.correct {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.guess-feedback.incorrect {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+}
+
+.guess-feedback.already-guessed {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    color: white;
+}
+
+/* Bonus Points Display */
+.bonus-points {
+    display: inline-block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #f6e05e;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    animation: bonusBounce 0.5s ease-out;
+}
+
+@keyframes bonusBounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+    .who-am-i-wrapper {
+        padding: 16px;
+    }
+
+    .who-am-i-header h3 {
+        font-size: 20px;
+    }
+
+    .reveal-tile {
+        font-size: 24px;
+    }
+
+    .guess-modal-content {
+        padding: 24px;
+    }
+
+    .guess-modal h3 {
+        font-size: 24px;
+    }
+}
+
+/* ========================================
+   NOTIFICATION ANIMATIONS
+   ======================================== */
+
+.who-am-i-notification {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+    }
+}

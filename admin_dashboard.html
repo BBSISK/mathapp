@@ -53,9 +53,6 @@
                 <button onclick="showTab('topicManagement')" id="topicManagementTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
                     <i class="fas fa-book-open mr-2"></i>Topic Management
                 </button>
-                <button onclick="location.href='/admin/who-am-i'" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fas fa-image mr-2"></i>Who Am I?
-                </button>
             
 
         </div>
@@ -581,95 +578,6 @@
                     <tr><td colspan="9" class="text-center py-4">Loading topics...</td></tr>
                 </tbody>
             </table>
-        </div>
-    </div>
-    
-    <!-- Question Generator Section -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-xl font-semibold"><i class="fas fa-magic mr-2 text-green-600"></i>AI Question Generator</h3>
-            <span id="apiKeyStatus" class="text-sm px-3 py-1 rounded-full bg-gray-100">Checking API key...</span>
-        </div>
-        
-        <div id="generatorContent">
-            <!-- Topic Selection -->
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Select Topic to Generate Questions For:</label>
-                <select id="generatorTopicSelect" onchange="onGeneratorTopicChange()" class="w-full md:w-1/2 border rounded-lg px-3 py-2">
-                    <option value="">-- Select a Topic --</option>
-                </select>
-                <div id="currentQuestionCounts" class="mt-2 text-sm text-gray-600 hidden">
-                    Current questions: <span id="countBeginner">0</span> beginner, 
-                    <span id="countIntermediate">0</span> intermediate, 
-                    <span id="countAdvanced">0</span> advanced
-                </div>
-            </div>
-            
-            <!-- Difficulty Level Descriptions -->
-            <div class="grid md:grid-cols-3 gap-4 mb-6">
-                <!-- Beginner -->
-                <div class="border rounded-lg p-4 bg-green-50">
-                    <h4 class="font-semibold text-green-700 mb-2"><i class="fas fa-seedling mr-1"></i> Beginner Level</h4>
-                    <p class="text-xs text-gray-600 mb-2">Describe what students should learn at this level:</p>
-                    <textarea id="beginnerDescription" rows="4" class="w-full border rounded-lg px-3 py-2 text-sm" 
-                        placeholder="Example: Simple one-step problems. Only addition and subtraction. Positive whole numbers only. Clear, straightforward questions."></textarea>
-                    <div class="mt-2">
-                        <label class="text-xs text-gray-600">Questions to generate:</label>
-                        <input type="number" id="beginnerCount" value="40" min="1" max="100" class="w-20 border rounded px-2 py-1 text-sm ml-2">
-                    </div>
-                </div>
-                
-                <!-- Intermediate -->
-                <div class="border rounded-lg p-4 bg-yellow-50">
-                    <h4 class="font-semibold text-yellow-700 mb-2"><i class="fas fa-chart-line mr-1"></i> Intermediate Level</h4>
-                    <p class="text-xs text-gray-600 mb-2">Describe what students should learn at this level:</p>
-                    <textarea id="intermediateDescription" rows="4" class="w-full border rounded-lg px-3 py-2 text-sm" 
-                        placeholder="Example: Two-step problems. Include multiplication and division. May include negative numbers. Some word problems."></textarea>
-                    <div class="mt-2">
-                        <label class="text-xs text-gray-600">Questions to generate:</label>
-                        <input type="number" id="intermediateCount" value="40" min="1" max="100" class="w-20 border rounded px-2 py-1 text-sm ml-2">
-                    </div>
-                </div>
-                
-                <!-- Advanced -->
-                <div class="border rounded-lg p-4 bg-red-50">
-                    <h4 class="font-semibold text-red-700 mb-2"><i class="fas fa-rocket mr-1"></i> Advanced Level</h4>
-                    <p class="text-xs text-gray-600 mb-2">Describe what students should learn at this level:</p>
-                    <textarea id="advancedDescription" rows="4" class="w-full border rounded-lg px-3 py-2 text-sm" 
-                        placeholder="Example: Multi-step complex problems. Fractions and decimals. Real-world application questions. Requires deeper understanding."></textarea>
-                    <div class="mt-2">
-                        <label class="text-xs text-gray-600">Questions to generate:</label>
-                        <input type="number" id="advancedCount" value="40" min="1" max="100" class="w-20 border rounded px-2 py-1 text-sm ml-2">
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Generate Button -->
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-gray-600">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    This will generate questions using AI. It may take 1-2 minutes for all 120 questions.
-                </div>
-                <button onclick="generateQuestions()" id="generateBtn" 
-                        class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                    <i class="fas fa-magic mr-2"></i>Generate Questions
-                </button>
-            </div>
-            
-            <!-- Progress/Results -->
-            <div id="generatorProgress" class="mt-4 hidden">
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <i class="fas fa-spinner fa-spin text-blue-600 mr-3"></i>
-                        <span id="progressText">Generating questions... This may take 1-2 minutes.</span>
-                    </div>
-                    <div class="mt-2 bg-blue-200 rounded-full h-2">
-                        <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="generatorResult" class="mt-4 hidden"></div>
         </div>
     </div>
 </div>
@@ -2273,10 +2181,7 @@ function updateRestrictedTeachersCount() {
             else if (tab === 'topicManagement') {
                 console.log('Topic Management tab activated');
                 loadStrandsAdmin();
-                // Await loadTopicsAdmin before initializing generator to ensure topicsData is populated
-                loadTopicsAdmin().then(() => {
-                    initQuestionGenerator();
-                });
+                loadTopicsAdmin();
             }
         }
 
@@ -2822,12 +2727,6 @@ function updateRestrictedTeachersCount() {
                     </td>
                     <td class="px-4 py-3 text-sm text-gray-600">${s.description || '-'}</td>
                     <td class="px-4 py-3">
-                        <button onclick="moveStrand(${s.id}, 'up')" class="text-gray-500 hover:text-gray-700 mr-1" title="Move Up">
-                            <i class="fas fa-arrow-up"></i>
-                        </button>
-                        <button onclick="moveStrand(${s.id}, 'down')" class="text-gray-500 hover:text-gray-700 mr-2" title="Move Down">
-                            <i class="fas fa-arrow-down"></i>
-                        </button>
                         <button onclick="editStrand(${s.id})" class="text-blue-600 hover:text-blue-800 mr-2">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -2875,22 +2774,6 @@ function updateRestrictedTeachersCount() {
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error deleting strand');
-            }
-        }
-        
-        async function moveStrand(id, direction) {
-            try {
-                const response = await fetch(`/api/admin/strands/${id}/reorder`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ direction })
-                });
-                
-                if (response.ok) {
-                    loadStrandsAdmin();
-                }
-            } catch (error) {
-                console.error('Error moving strand:', error);
             }
         }
         
@@ -2985,12 +2868,6 @@ function updateRestrictedTeachersCount() {
                         </button>
                     </td>
                     <td class="px-4 py-3">
-                        <button onclick="moveTopic(${t.id}, 'up')" class="text-gray-500 hover:text-gray-700 mr-1" title="Move Up">
-                            <i class="fas fa-arrow-up"></i>
-                        </button>
-                        <button onclick="moveTopic(${t.id}, 'down')" class="text-gray-500 hover:text-gray-700 mr-2" title="Move Down">
-                            <i class="fas fa-arrow-down"></i>
-                        </button>
                         <button onclick="editTopic(${t.id})" class="text-blue-600 hover:text-blue-800 mr-2" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -3062,22 +2939,6 @@ function updateRestrictedTeachersCount() {
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error deleting topic');
-            }
-        }
-        
-        async function moveTopic(id, direction) {
-            try {
-                const response = await fetch(`/api/admin/topics-management/${id}/reorder`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ direction })
-                });
-                
-                if (response.ok) {
-                    loadTopicsAdmin().then(() => populateGeneratorTopics());
-                }
-            } catch (error) {
-                console.error('Error moving topic:', error);
             }
         }
         
@@ -3265,212 +3126,6 @@ function updateRestrictedTeachersCount() {
                 alert('Error saving tutorial');
             }
         });
-        
-        // ==================== QUESTION GENERATOR FUNCTIONS ====================
-        
-        // Check API key status on load
-        async function checkApiKeyStatus() {
-            const statusEl = document.getElementById('apiKeyStatus');
-            try {
-                const response = await fetch('/api/admin/check-api-key');
-                
-                if (!response.ok) {
-                    // HTTP error - show status code
-                    const errorText = await response.text();
-                    console.error('API key check failed:', response.status, errorText);
-                    statusEl.textContent = `✗ Error (${response.status})`;
-                    statusEl.className = 'text-sm px-3 py-1 rounded-full bg-red-100 text-red-700';
-                    statusEl.title = errorText || 'Server error - check console';
-                    return;
-                }
-                
-                const result = await response.json();
-                console.log('API key check result:', result);  // Debug logging
-                
-                if (result.configured && result.valid) {
-                    statusEl.textContent = '✓ API Key Configured';
-                    statusEl.className = 'text-sm px-3 py-1 rounded-full bg-green-100 text-green-700';
-                } else if (result.configured) {
-                    statusEl.textContent = '⚠ API Key Invalid';
-                    statusEl.className = 'text-sm px-3 py-1 rounded-full bg-yellow-100 text-yellow-700';
-                    statusEl.title = result.error || 'Key is configured but validation failed';
-                } else {
-                    statusEl.textContent = '✗ API Key Not Configured';
-                    statusEl.className = 'text-sm px-3 py-1 rounded-full bg-red-100 text-red-700';
-                    // Show debug info if available
-                    let debugInfo = result.error || 'Add ANTHROPIC_API_KEY to environment variables';
-                    if (result.debug_env_keys && result.debug_env_keys.length > 0) {
-                        debugInfo += ` | Found env keys: ${result.debug_env_keys.join(', ')}`;
-                    } else if (result.debug_env_keys) {
-                        debugInfo += ' | No ANTHROPIC or API env vars found';
-                    }
-                    statusEl.title = debugInfo;
-                    console.log('API Key Debug:', debugInfo);
-                }
-            } catch (error) {
-                console.error('Error checking API key:', error);
-                statusEl.textContent = '✗ Check Failed';
-                statusEl.className = 'text-sm px-3 py-1 rounded-full bg-red-100 text-red-700';
-                statusEl.title = error.message || 'Network or parsing error';
-            }
-        }
-        
-        // Populate generator topic dropdown
-        function populateGeneratorTopics() {
-            const select = document.getElementById('generatorTopicSelect');
-            select.innerHTML = '<option value="">-- Select a Topic --</option>' +
-                topicsData.map(t => `<option value="${t.topic_id}" data-name="${t.display_name}">${t.display_name} (${t.topic_id})</option>`).join('');
-        }
-        
-        // When topic is selected, show current question counts
-        async function onGeneratorTopicChange() {
-            const topicId = document.getElementById('generatorTopicSelect').value;
-            const countsDiv = document.getElementById('currentQuestionCounts');
-            
-            if (!topicId) {
-                countsDiv.classList.add('hidden');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/admin/question-counts/${topicId}`);
-                const result = await response.json();
-                
-                document.getElementById('countBeginner').textContent = result.counts.beginner || 0;
-                document.getElementById('countIntermediate').textContent = result.counts.intermediate || 0;
-                document.getElementById('countAdvanced').textContent = result.counts.advanced || 0;
-                countsDiv.classList.remove('hidden');
-            } catch (error) {
-                console.error('Error fetching counts:', error);
-            }
-        }
-        
-        // Generate questions
-        async function generateQuestions() {
-            const topicId = document.getElementById('generatorTopicSelect').value;
-            const topicName = document.getElementById('generatorTopicSelect').selectedOptions[0]?.dataset?.name || topicId;
-            
-            if (!topicId) {
-                alert('Please select a topic first');
-                return;
-            }
-            
-            const beginnerDesc = document.getElementById('beginnerDescription').value.trim();
-            const intermediateDesc = document.getElementById('intermediateDescription').value.trim();
-            const advancedDesc = document.getElementById('advancedDescription').value.trim();
-            
-            if (!beginnerDesc || !intermediateDesc || !advancedDesc) {
-                alert('Please provide descriptions for all three difficulty levels');
-                return;
-            }
-            
-            const beginnerCount = parseInt(document.getElementById('beginnerCount').value) || 40;
-            const intermediateCount = parseInt(document.getElementById('intermediateCount').value) || 40;
-            const advancedCount = parseInt(document.getElementById('advancedCount').value) || 40;
-            
-            // Show progress
-            const progressDiv = document.getElementById('generatorProgress');
-            const resultDiv = document.getElementById('generatorResult');
-            const generateBtn = document.getElementById('generateBtn');
-            
-            progressDiv.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
-            generateBtn.disabled = true;
-            
-            // Animate progress bar (fake progress since we don't have real-time updates)
-            let progress = 0;
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            
-            const progressInterval = setInterval(() => {
-                if (progress < 90) {
-                    progress += Math.random() * 10;
-                    progressBar.style.width = Math.min(progress, 90) + '%';
-                    
-                    if (progress < 30) {
-                        progressText.textContent = 'Generating beginner questions...';
-                    } else if (progress < 60) {
-                        progressText.textContent = 'Generating intermediate questions...';
-                    } else {
-                        progressText.textContent = 'Generating advanced questions...';
-                    }
-                }
-            }, 2000);
-            
-            try {
-                const response = await fetch('/api/admin/generate-questions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        topic_id: topicId,
-                        topic_name: topicName,
-                        beginner_description: beginnerDesc,
-                        beginner_count: beginnerCount,
-                        intermediate_description: intermediateDesc,
-                        intermediate_count: intermediateCount,
-                        advanced_description: advancedDesc,
-                        advanced_count: advancedCount
-                    })
-                });
-                
-                clearInterval(progressInterval);
-                progressBar.style.width = '100%';
-                
-                const result = await response.json();
-                
-                progressDiv.classList.add('hidden');
-                generateBtn.disabled = false;
-                
-                if (response.ok) {
-                    resultDiv.innerHTML = `
-                        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <h4 class="font-semibold text-green-700 mb-2"><i class="fas fa-check-circle mr-2"></i>Success!</h4>
-                            <p class="text-green-700">${result.message}</p>
-                            <div class="mt-2 text-sm">
-                                <p><strong>Final counts:</strong></p>
-                                <ul class="list-disc list-inside ml-2">
-                                    <li>Beginner: ${result.counts.beginner} questions</li>
-                                    <li>Intermediate: ${result.counts.intermediate} questions</li>
-                                    <li>Advanced: ${result.counts.advanced} questions</li>
-                                    <li><strong>Total: ${result.total} questions</strong></li>
-                                </ul>
-                            </div>
-                        </div>
-                    `;
-                    resultDiv.classList.remove('hidden');
-                    
-                    // Refresh topic counts
-                    onGeneratorTopicChange();
-                    loadTopicsAdmin();
-                } else {
-                    resultDiv.innerHTML = `
-                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <h4 class="font-semibold text-red-700 mb-2"><i class="fas fa-exclamation-circle mr-2"></i>Error</h4>
-                            <p class="text-red-700">${result.error || 'Unknown error occurred'}</p>
-                        </div>
-                    `;
-                    resultDiv.classList.remove('hidden');
-                }
-            } catch (error) {
-                clearInterval(progressInterval);
-                progressDiv.classList.add('hidden');
-                generateBtn.disabled = false;
-                
-                resultDiv.innerHTML = `
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <h4 class="font-semibold text-red-700 mb-2"><i class="fas fa-exclamation-circle mr-2"></i>Error</h4>
-                        <p class="text-red-700">Network error: ${error.message}</p>
-                    </div>
-                `;
-                resultDiv.classList.remove('hidden');
-            }
-        }
-        
-        // Initialize question generator when tab is shown
-        function initQuestionGenerator() {
-            checkApiKeyStatus();
-            populateGeneratorTopics();
-        }
     </script>
 </body>
 </html>

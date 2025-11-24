@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who Am I? Management - Math Master Admin</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stats-card h3 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0;
+            color: #667eea;
+        }
+        .stats-card p {
+            margin: 5px 0 0 0;
+            color: #666;
+        }
+        .image-card {
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .image-card img {
+            height: 200px;
+            object-fit: cover;
+            width: 100%;
+        }
+        .image-checkbox {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 24px;
+            height: 24px;
+            z-index: 10;
+        }
+        .topic-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .bulk-actions-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
+        .bulk-actions-bar.show {
+            display: block;
+        }
+        .topics-checklist {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .topics-checklist label {
+            display: block;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .topics-checklist label:hover {
+            background: #f5f5f5;
+        }
+        .modal-backdrop.show {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-4 py-4">
+    <!-- Back Button -->
+    <div class="mb-3">
+        <a href="/admin" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Admin Dashboard
+        </a>
+    </div>
+
+    <!-- Header -->
+    <div class="header-section">
+        <h1><i class="fas fa-image"></i> Who Am I? Management</h1>
+        <p class="mb-0">Manage mystery images for all topics - Upload once, assign to multiple topics</p>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Stats Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ images|length }}</h3>
+                <p>Total Images</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ images|selectattr('active')|list|length }}</h3>
+                <p>Active Images</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ enabled_topics|length }}</h3>
+                <p>Topics with Images</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h3>{{ all_topics|length }}</h3>
+                <p>All Topics</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Bar -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <button class="btn btn-primary btn-lg" onclick="openUploadModal()">
+                <i class="fas fa-upload"></i> Upload New Image
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label>Filter by Topic:</label>
+                    <select class="form-select" id="filterTopic" onchange="filterImages()">
+                        <option value="">All Topics</option>
+                        {% for topic in all_topics %}
+                        <option value="{{ topic }}">{{ topic }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Filter by Difficulty:</label>
+                    <select class="form-select" id="filterDifficulty" onchange="filterImages()">
+                        <option value="">All Levels</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Filter by Status:</label>
+                    <select class="form-select" id="filterStatus" onchange="filterImages()">
+                        <option value="">All</option>
+                        <option value="active">Active Only</option>
+                        <option value="inactive">Inactive Only</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-secondary w-100" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Library -->
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-images"></i> Image Library 
+                (<span id="imageCount">{{ images|length }}</span> images)
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if images %}
+            <div class="row" id="imageGrid">
+                {% for image in images %}
+                <div class="col-md-4 mb-4 image-item" 
+                     data-topics="{{ image.topics|join(',') }}"
+                     data-difficulty="{{ image.difficulty }}"
+                     data-status="{{ 'active' if image.active else 'inactive' }}">
+                    <div class="card image-card h-100 {% if not image.active %}border-secondary{% else %}border-success{% endif %}">
+                        <input type="checkbox" class="form-check-input image-checkbox" 
+                               value="{{ image.id }}" onchange="updateBulkSelection()">
+                        <img src="{{ url_for('static', filename='who_am_i_images/' + image.image_filename) }}" 
+                             class="card-img-top" alt="{{ image.answer }}"
+                             onerror="this.src='https://via.placeholder.com/800x800?text=Image+Not+Found'">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ image.answer }}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <strong>Topics ({{ image.topics|length }}):</strong><br>
+                                    {% for topic in image.topics %}
+                                    <span class="topic-badge">{{ topic }}</span>
+                                    {% endfor %}
+                                    <br><br>
+                                    <strong>Difficulty:</strong> 
+                                    <span class="badge bg-{% if image.difficulty == 'beginner' %}success{% elif image.difficulty == 'intermediate' %}warning{% else %}danger{% endif %}">
+                                        {{ image.difficulty|capitalize }}
+                                    </span><br>
+                                    {% if image.hint %}
+                                    <strong>Hint:</strong> {{ image.hint }}<br>
+                                    {% endif %}
+                                    <strong>Status:</strong> 
+                                    <span class="badge bg-{% if image.active %}success{% else %}secondary{% endif %}">
+                                        {{ 'Active' if image.active else 'Inactive' }}
+                                    </span>
+                                </small>
+                            </p>
+                            <div class="btn-group w-100 mb-2" role="group">
+                                <button class="btn btn-sm btn-primary" onclick="openEditModal({{ image.id }})">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-sm {% if image.active %}btn-warning{% else %}btn-success{% endif %}" 
+                                        onclick="toggleActive({{ image.id }})">
+                                    <i class="fas fa-{% if image.active %}eye-slash{% else %}eye{% endif %}"></i>
+                                    {% if image.active %}Deactivate{% else %}Activate{% endif %}
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteImage({{ image.id }})">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No images uploaded yet. Click "Upload New Image" to add your first image!
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar (Fixed bottom) -->
+<div id="bulkActionsBar" class="bulk-actions-bar">
+    <span id="selectedCount">0</span> selected
+    <button class="btn btn-primary btn-sm ms-3" onclick="openBulkAssignModal()">
+        <i class="fas fa-tags"></i> Assign Topics
+    </button>
+    <button class="btn btn-warning btn-sm" onclick="bulkToggle()">
+        <i class="fas fa-eye"></i> Toggle Active
+    </button>
+    <button class="btn btn-danger btn-sm" onclick="bulkDelete()">
+        <i class="fas fa-trash"></i> Delete
+    </button>
+    <button class="btn btn-secondary btn-sm" onclick="clearSelection()">
+        <i class="fas fa-times"></i> Clear
+    </button>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload New Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_who_am_i_upload') }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Image File *</label>
+                        <input type="file" class="form-control" name="image" accept="image/*" required>
+                        <small class="text-muted">Accepted: JPG, PNG, GIF, WEBP. Recommended: 800x800px</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Answer (What is it?) *</label>
+                                <input type="text" class="form-control" name="answer" 
+                                       placeholder="e.g., Einstein" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Hint (Optional)</label>
+                                <input type="text" class="form-control" name="hint" 
+                                       placeholder="e.g., Famous physicist">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Difficulty *</label>
+                        <select class="form-select" name="difficulty" required>
+                            <option value="">Select Difficulty...</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Topics (Select Multiple) *</label>
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllTopics('upload')">
+                                <i class="fas fa-check-double"></i> Select All
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="unselectAllTopics('upload')">
+                                <i class="fas fa-times"></i> Unselect All
+                            </button>
+                        </div>
+                        <div class="topics-checklist" id="upload_topics_list">
+                            {% for topic in all_topics %}
+                            <label>
+                                <input type="checkbox" name="topics[]" value="{{ topic }}">
+                                {{ topic }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <small class="text-muted">Check all topics where this image should appear</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload Image
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editForm" onsubmit="saveEdit(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_image_id">
+                    <div class="mb-3">
+                        <label class="form-label">Answer *</label>
+                        <input type="text" class="form-control" id="edit_answer" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hint</label>
+                        <input type="text" class="form-control" id="edit_hint">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Difficulty *</label>
+                        <select class="form-select" id="edit_difficulty" required>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Topics *</label>
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllTopics('edit')">
+                                <i class="fas fa-check-double"></i> Select All
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="unselectAllTopics('edit')">
+                                <i class="fas fa-times"></i> Unselect All
+                            </button>
+                        </div>
+                        <div class="topics-checklist" id="edit_topics_list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Assign Modal -->
+<div class="modal fade" id="bulkAssignModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Assign Topics</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="saveBulkAssign(event)">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Action</label>
+                        <select class="form-select" id="bulk_action">
+                            <option value="add">Add to existing topics</option>
+                            <option value="replace">Replace all topics</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Topics to Assign</label>
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllTopics('bulk')">
+                                <i class="fas fa-check-double"></i> Select All
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="unselectAllTopics('bulk')">
+                                <i class="fas fa-times"></i> Unselect All
+                            </button>
+                        </div>
+                        <div class="topics-checklist" id="bulk_topics_list">
+                            {% for topic in all_topics %}
+                            <label>
+                                <input type="checkbox" value="{{ topic }}">
+                                {{ topic }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-tags"></i> Assign Topics
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+let uploadModal, editModal, bulkAssignModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
+    editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    bulkAssignModal = new bootstrap.Modal(document.getElementById('bulkAssignModal'));
+});
+
+function openUploadModal() {
+    uploadModal.show();
+}
+
+function closeUploadModal() {
+    uploadModal.hide();
+}
+
+function openEditModal(imageId) {
+    fetch(`/admin/who-am-i/edit/${imageId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('edit_image_id').value = data.image.id;
+                document.getElementById('edit_answer').value = data.image.answer;
+                document.getElementById('edit_hint').value = data.image.hint || '';
+                document.getElementById('edit_difficulty').value = data.image.difficulty;
+                
+                // Populate topics checkboxes
+                const topicsList = document.getElementById('edit_topics_list');
+                topicsList.innerHTML = '';
+                const allTopics = {{ all_topics|tojson }};
+                allTopics.forEach(topic => {
+                    const label = document.createElement('label');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = topic;
+                    if (data.image.topics.includes(topic)) {
+                        checkbox.checked = true;
+                    }
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(' ' + topic));
+                    topicsList.appendChild(label);
+                });
+                
+                editModal.show();
+            }
+        });
+}
+
+function saveEdit(event) {
+    event.preventDefault();
+    const imageId = document.getElementById('edit_image_id').value;
+    const formData = new FormData();
+    formData.append('answer', document.getElementById('edit_answer').value);
+    formData.append('hint', document.getElementById('edit_hint').value);
+    formData.append('difficulty', document.getElementById('edit_difficulty').value);
+    
+    const selectedTopics = Array.from(document.querySelectorAll('#edit_topics_list input:checked'))
+        .map(cb => cb.value);
+    selectedTopics.forEach(topic => formData.append('topics[]', topic));
+    
+    fetch(`/admin/who-am-i/edit/${imageId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function openBulkAssignModal() {
+    bulkAssignModal.show();
+}
+
+function saveBulkAssign(event) {
+    event.preventDefault();
+    const selectedImages = getSelectedImageIds();
+    const action = document.getElementById('bulk_action').value;
+    const selectedTopics = Array.from(document.querySelectorAll('#bulk_topics_list input:checked'))
+        .map(cb => cb.value);
+    
+    fetch('/admin/who-am-i/bulk-assign', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            image_ids: selectedImages,
+            topics: selectedTopics,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function updateBulkSelection() {
+    const selected = getSelectedImageIds();
+    const bar = document.getElementById('bulkActionsBar');
+    const count = document.getElementById('selectedCount');
+    
+    count.textContent = selected.length;
+    if (selected.length > 0) {
+        bar.classList.add('show');
+    } else {
+        bar.classList.remove('show');
+    }
+}
+
+function getSelectedImageIds() {
+    return Array.from(document.querySelectorAll('.image-checkbox:checked'))
+        .map(cb => parseInt(cb.value));
+}
+
+function clearSelection() {
+    document.querySelectorAll('.image-checkbox').forEach(cb => cb.checked = false);
+    updateBulkSelection();
+}
+
+function bulkDelete() {
+    const selected = getSelectedImageIds();
+    if (!confirm(`Delete ${selected.length} images? This cannot be undone.`)) return;
+    
+    fetch('/admin/who-am-i/bulk-delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({image_ids: selected})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) location.reload();
+    });
+}
+
+function bulkToggle() {
+    const selected = getSelectedImageIds();
+    // Implementation would need a bulk-toggle endpoint
+    alert('Bulk toggle not yet implemented');
+}
+
+function toggleActive(imageId) {
+    fetch(`/admin/who-am-i/toggle/${imageId}`, {
+        method: 'POST'
+    })
+    .then(() => location.reload());
+}
+
+function deleteImage(imageId) {
+    if (!confirm('Delete this image? This cannot be undone.')) return;
+    
+    fetch(`/admin/who-am-i/delete/${imageId}`, {
+        method: 'POST'
+    })
+    .then(() => location.reload());
+}
+
+function filterImages() {
+    const topicFilter = document.getElementById('filterTopic').value.toLowerCase();
+    const diffFilter = document.getElementById('filterDifficulty').value.toLowerCase();
+    const statusFilter = document.getElementById('filterStatus').value.toLowerCase();
+    
+    let visibleCount = 0;
+    document.querySelectorAll('.image-item').forEach(item => {
+        const topics = item.dataset.topics.toLowerCase();
+        const difficulty = item.dataset.difficulty.toLowerCase();
+        const status = item.dataset.status.toLowerCase();
+        
+        const topicMatch = !topicFilter || topics.includes(topicFilter);
+        const diffMatch = !diffFilter || difficulty === diffFilter;
+        const statusMatch = !statusFilter || status === statusFilter;
+        
+        if (topicMatch && diffMatch && statusMatch) {
+            item.style.display = '';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('imageCount').textContent = visibleCount;
+}
+
+function clearFilters() {
+    document.getElementById('filterTopic').value = '';
+    document.getElementById('filterDifficulty').value = '';
+    document.getElementById('filterStatus').value = '';
+    filterImages();
+}
+
+function selectAllTopics(context) {
+    const listId = context + '_topics_list';
+    document.querySelectorAll(`#${listId} input[type="checkbox"]`).forEach(cb => {
+        cb.checked = true;
+    });
+}
+
+function unselectAllTopics(context) {
+    const listId = context + '_topics_list';
+    document.querySelectorAll(`#${listId} input[type="checkbox"]`).forEach(cb => {
+        cb.checked = false;
+    });
+}
+</script>
+
+</body>
+</html>

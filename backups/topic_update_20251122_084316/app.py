@@ -7,12 +7,10 @@ import os
 import random
 import re
 import uuid
-from werkzeug.utils import secure_filename
-import json
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mathquiz.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/bbsisk/mathapp/instance/mathquiz.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Session configuration for guest mode
@@ -20,14 +18,6 @@ app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-
-
-# ==================== WHO AM I CONFIGURATION ====================
-UPLOAD_FOLDER = 'static/who_am_i_images'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 db = SQLAlchemy(app)
 
@@ -453,7 +443,7 @@ def role_required(*roles):
             # Repeat guests are considered students
             if 'guest_code' in session and 'student' in roles:
                 return f(*args, **kwargs)
-            
+
             # Full accounts and casual guests
             if 'user_id' not in session:
                 return jsonify({'error': 'Authentication required'}), 401
@@ -470,7 +460,7 @@ def approved_required(f):
         # Allow casual guests through
         if 'is_guest' in session:
             return f(*args, **kwargs)
-        
+
         # Allow repeat guests through
         if 'guest_code' in session:
             return f(*args, **kwargs)
@@ -1386,7 +1376,7 @@ def student_app():
     # Handle repeat guests (they don't have user_id)
     if 'guest_code' in session:
         return render_template('student_app.html')
-    
+
     # Handle full accounts and casual guests
     user = User.query.get(session['user_id'])
     if user.role != 'student':
@@ -1397,9 +1387,112 @@ def student_app():
 @guest_or_login_required
 @approved_required
 def get_topics():
-    """Get topics grouped by strands - reads from topics table (admin managed)"""
-    from sqlalchemy import text
-    
+    """Get topics grouped by Junior Cycle strands"""
+
+    # Topic metadata (icons and display titles)
+    topic_info = {
+        'arithmetic': {'title': 'Arithmetic', 'icon': 'calculator'},
+        'fractions': {'title': 'Fractions', 'icon': 'divide'},
+        'decimals': {'title': 'Decimals', 'icon': 'percent'},
+        'multiplication_division': {'title': 'Multiplication & Division', 'icon': 'x'},
+        'number_systems': {'title': 'Number Systems', 'icon': 'hash'},
+        'bodmas': {'title': 'BODMAS', 'icon': 'book'},
+        'introductory_algebra': {'title': 'Introductory Algebra', 'icon': 'book-open'},
+        'functions': {'title': 'Functions', 'icon': 'chart'},
+        'patterns': {'title': 'Patterns', 'icon': 'trending-up'},
+        'solving_equations': {'title': 'Solving Equations', 'icon': 'equals'},
+        'simplifying_expressions': {'title': 'Simplifying Expressions', 'icon': 'calculator'},
+        'expanding_factorising': {'title': 'Expanding & Factorising', 'icon': 'brackets'},
+        'probability': {'title': 'Probability', 'icon': 'dice'},
+        'descriptive_statistics': {'title': 'Descriptive Statistics', 'icon': 'chart-bar'},
+        'sets': {'title': 'Sets', 'icon': 'layers'},
+        'surds': {'title': 'Surds', 'icon': 'radical'},
+        'complex_numbers_intro': {'title': 'Complex Numbers Intro', 'icon': 'infinity'},
+        'complex_numbers_expanded': {'title': 'Complex Numbers - Expanded', 'icon': 'rotate'}
+    }
+
+    # Build response with strands
+    strands = {}
+    topics_flat = {}
+
+    # Try to query database for topics with their strands
+    try:
+        from sqlalchemy import text
+        topics_query = db.session.execute(text("""
+            SELECT DISTINCT topic, strand
+            FROM questions
+            WHERE strand IS NOT NULL
+            ORDER BY
+                CASE strand
+                    WHEN 'Number' THEN 1
+                    WHEN 'Algebra and Functions' THEN 2
+                    WHEN 'Statistics and Probability' THEN 3
+                    WHEN 'Senior Cycle - Algebra' THEN 4
+                    WHEN 'Geometry and Trigonometry' THEN 5
+                    ELSE 6
+                END,
+                CASE topic
+                    -- Order for Number strand
+                    WHEN 'arithmetic' THEN 1
+                    WHEN 'multiplication_division' THEN 2
+                    WHEN 'number_systems' THEN 3
+                    WHEN 'bodmas' THEN 4
+                    WHEN 'fractions' THEN 5
+                    WHEN 'decimals' THEN 6
+                    WHEN 'sets' THEN 7
+                    -- Order for Algebra and Functions strand (Junior Cycle)
+                    WHEN 'introductory_algebra' THEN 1
+                    WHEN 'functions' THEN 2
+                    WHEN 'patterns' THEN 3
+                    WHEN 'solving_equations' THEN 4
+                    WHEN 'simplifying_expressions' THEN 5
+                    WHEN 'expanding_factorising' THEN 6
+                    -- Order for Statistics and Probability strand
+                    WHEN 'probability' THEN 1
+                    WHEN 'descriptive_statistics' THEN 2
+                    -- Order for Senior Cycle - Algebra strand
+                    WHEN 'surds' THEN 1
+                    WHEN 'complex_numbers_intro' THEN 2
+                    WHEN 'complex_numbers_expanded' THEN 3
+                    -- Default order for other topics
+                    ELSE 10
+                END,
+                topic
+        """)).fetchall()
+
+        for topic, strand in topics_query:
+            if strand not in strands:
+                strands[strand] = []
+
+            # Add topic to strand list
+            strands[strand].append(topic)
+
+            # Add topic metadata to flat dict
+            if topic in topic_info:
+                topics_flat[topic] = topic_info[topic]
+            else:
+                # Fallback for topics not in metadata
+                topics_flat[topic] = {
+                    'title': topic.replace('_', ' ').title(),
+                    'icon': 'book'
+                }
+    except Exception as e:
+        # If strand column doesn't exist or query fails, use fallback
+        print(f"Warning: Could not query strand column: {e}")
+        strands = {}
+
+    # If no strands found (before migration or error), use fallback
+    if not strands:
+        strands = {
+            'Number': ['arithmetic', 'multiplication_division', 'number_systems',
+                      'bodmas', 'fractions', 'decimals', 'sets'],
+            'Algebra and Functions': ['introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising'],
+            'Statistics and Probability': ['probability', 'descriptive_statistics'],
+            'Senior Cycle - Algebra': ['surds', 'complex_numbers_intro',
+                                        'complex_numbers_expanded']
+        }
+        topics_flat = topic_info
+
     # Strand colors and descriptions
     strand_info = {
         'Number': {
@@ -1428,121 +1521,7 @@ def get_topics():
             'description': 'Explore shapes, measurements, and spatial reasoning'
         }
     }
-    
-    strands = {}
-    topics_flat = {}
-    
-    try:
-        # Query topics from the topics table (managed by admin)
-        # Only get visible topics, ordered by strand and sort_order
-        topics_query = db.session.execute(text("""
-            SELECT t.topic_id, t.display_name, t.icon, s.name as strand_name, t.sort_order
-            FROM topics t
-            LEFT JOIN strands s ON t.strand_id = s.id
-            WHERE t.is_visible = 1
-            ORDER BY 
-                CASE s.name
-                    WHEN 'Number' THEN 1
-                    WHEN 'Algebra and Functions' THEN 2
-                    WHEN 'Statistics and Probability' THEN 3
-                    WHEN 'Senior Cycle - Algebra' THEN 4
-                    WHEN 'Geometry and Trigonometry' THEN 5
-                    ELSE 6
-                END,
-                t.sort_order,
-                t.display_name
-        """)).fetchall()
-        
-        if topics_query:
-            for topic_id, display_name, icon, strand_name, sort_order in topics_query:
-                # Use strand name or 'Other' for unassigned topics
-                strand = strand_name or 'Other'
-                
-                if strand not in strands:
-                    strands[strand] = []
-                
-                # Add topic to strand list
-                strands[strand].append(topic_id)
-                
-                # Add topic metadata to flat dict
-                topics_flat[topic_id] = {
-                    'title': display_name,
-                    'icon': icon or 'book'
-                }
-            
-            # Add any new strands to strand_info with default styling
-            for strand_name in strands.keys():
-                if strand_name not in strand_info:
-                    strand_info[strand_name] = {
-                        'color': '#6b7280',
-                        'icon': '📚',
-                        'description': f'Topics in {strand_name}'
-                    }
-        else:
-            # No topics in database, use fallback
-            raise Exception("No topics found in topics table")
-            
-    except Exception as e:
-        # Fallback: Query from questions table (old method)
-        topic_info = {
-            'arithmetic': {'title': 'Arithmetic', 'icon': 'calculator'},
-            'fractions': {'title': 'Fractions', 'icon': 'divide'},
-            'decimals': {'title': 'Decimals', 'icon': 'percent'},
-            'multiplication_division': {'title': 'Multiplication & Division', 'icon': 'x'},
-            'number_systems': {'title': 'Number Systems', 'icon': 'hash'},
-            'bodmas': {'title': 'BODMAS', 'icon': 'book'},
-            'introductory_algebra': {'title': 'Introductory Algebra', 'icon': 'book-open'},
-            'functions': {'title': 'Functions', 'icon': 'chart'},
-            'patterns': {'title': 'Patterns', 'icon': 'trending-up'},
-            'solving_equations': {'title': 'Solving Equations', 'icon': 'equals'},
-            'simplifying_expressions': {'title': 'Simplifying Expressions', 'icon': 'calculator'},
-            'expanding_factorising': {'title': 'Expanding & Factorising', 'icon': 'brackets'},
-            'probability': {'title': 'Probability', 'icon': 'dice'},
-            'descriptive_statistics': {'title': 'Descriptive Statistics', 'icon': 'chart-bar'},
-            'sets': {'title': 'Sets', 'icon': 'layers'},
-            'surds': {'title': 'Surds', 'icon': 'radical'},
-            'complex_numbers_intro': {'title': 'Complex Numbers Intro', 'icon': 'infinity'},
-            'complex_numbers_expanded': {'title': 'Complex Numbers - Expanded', 'icon': 'rotate'},
-            'percentages': {'title': 'Percentages', 'icon': 'percent'},
-            'geometry': {'title': 'Geometry', 'icon': 'shapes'},
-            'trigonometry': {'title': 'Trigonometry', 'icon': 'ruler'}
-        }
-        
-        try:
-            # Try to get topics from questions table
-            topics_query = db.session.execute(text("""
-                SELECT DISTINCT topic, strand
-                FROM questions
-                WHERE strand IS NOT NULL
-                ORDER BY strand, topic
-            """)).fetchall()
-            
-            for topic, strand in topics_query:
-                if strand not in strands:
-                    strands[strand] = []
-                strands[strand].append(topic)
-                
-                if topic in topic_info:
-                    topics_flat[topic] = topic_info[topic]
-                else:
-                    topics_flat[topic] = {
-                        'title': topic.replace('_', ' ').title(),
-                        'icon': 'book'
-                    }
-        except:
-            # Ultimate fallback - hardcoded
-            strands = {
-                'Number': ['arithmetic', 'multiplication_division', 'number_systems',
-                          'bodmas', 'fractions', 'decimals', 'sets'],
-                'Algebra and Functions': ['introductory_algebra', 'functions', 'patterns', 
-                                         'solving_equations', 'simplifying_expressions', 
-                                         'expanding_factorising'],
-                'Statistics and Probability': ['probability', 'descriptive_statistics'],
-                'Senior Cycle - Algebra': ['surds', 'complex_numbers_intro',
-                                           'complex_numbers_expanded']
-            }
-            topics_flat = topic_info
-    
+
     return jsonify({
         'topics': topics_flat,
         'strands': strands,
@@ -1566,42 +1545,6 @@ def get_questions(topic, difficulty):
 
     # Return 25 questions (or all available if less than 25)
     return jsonify(questions_list[:25])
-
-@app.route('/api/create-quiz-attempt', methods=['POST'])
-@login_required
-@approved_required
-def create_quiz_attempt():
-    """
-    Create a quiz attempt and return the ID for Who Am I tracking.
-    Called when student starts a quiz in student_app.html.
-    """
-    data = request.json
-    
-    try:
-        # Create new quiz attempt record
-        quiz_attempt = QuizAttempt(
-            user_id=session['user_id'],
-            topic=data.get('topic'),
-            difficulty=data.get('difficulty'),
-            score=0,  # Will be updated when quiz completes
-            total_questions=0,
-            percentage=0
-        )
-        db.session.add(quiz_attempt)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'quiz_attempt_id': quiz_attempt.id
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"Error creating quiz attempt: {e}")
-        print(f"Full traceback: {error_details}")
-        return jsonify({'error': str(e), 'details': error_details}), 500
 
 @app.route('/api/submit-quiz', methods=['POST'])
 @guest_or_login_required
@@ -1637,7 +1580,7 @@ def submit_quiz():
     if 'guest_code' in session:
         from sqlalchemy import text
         guest_code = session['guest_code']
-        
+
         # Save quiz attempt
         db.session.execute(text("""
             INSERT INTO guest_quiz_attempts (guest_code, topic, difficulty, score, total_questions, time_spent)
@@ -1650,7 +1593,7 @@ def submit_quiz():
             "total": total,
             "time": time_taken
         })
-        
+
         # Update guest stats
         db.session.execute(text("""
             UPDATE guest_users
@@ -1663,9 +1606,9 @@ def submit_quiz():
             "now": datetime.utcnow(),
             "code": guest_code
         })
-        
+
         db.session.commit()
-        
+
         return jsonify({
             'message': 'Quiz completed!',
             'score': score,
@@ -1686,48 +1629,18 @@ def submit_quiz():
         }), 200
 
     # For registered users, save to database
-    # WHO AM I: Get quiz_attempt_id and bonus if provided
-    quiz_attempt_id = data.get('quiz_attempt_id')
-    who_am_i_bonus = data.get('who_am_i_bonus', 0)
-    
-    # If quiz_attempt_id is provided, update that record instead of creating new
-    if quiz_attempt_id:
-        attempt = QuizAttempt.query.get(quiz_attempt_id)
-        if attempt and attempt.user_id == session['user_id']:
-            # Update existing quiz attempt
-            attempt.score = score
-            attempt.total_questions = total
-            attempt.percentage = percentage
-            attempt.time_taken = time_taken
-            attempt.who_am_i_bonus = who_am_i_bonus
-            attempt.completed_at = datetime.utcnow()
-        else:
-            # Quiz attempt not found or doesn't belong to user, create new
-            attempt = QuizAttempt(
-                user_id=session['user_id'],
-                topic=topic,
-                difficulty=difficulty,
-                score=score,
-                total_questions=total,
-                percentage=percentage,
-                time_taken=time_taken,
-                who_am_i_bonus=who_am_i_bonus
-            )
-            db.session.add(attempt)
-    else:
-        # Create new quiz attempt
-        attempt = QuizAttempt(
-            user_id=session['user_id'],
-            topic=topic,
-            difficulty=difficulty,
-            score=score,
-            total_questions=total,
-            percentage=percentage,
-            time_taken=time_taken,
-            who_am_i_bonus=who_am_i_bonus
-        )
-        db.session.add(attempt)
+    # Create quiz attempt
+    attempt = QuizAttempt(
+        user_id=session['user_id'],
+        topic=topic,
+        difficulty=difficulty,
+        score=score,
+        total_questions=total,
+        percentage=percentage,
+        time_taken=time_taken
+    )
 
+    db.session.add(attempt)
     db.session.commit()
 
     # Update stats and check for badges
@@ -1827,19 +1740,19 @@ def get_student_badges():
 @approved_required
 def get_student_stats():
     """Get detailed statistics for the current student"""
-    
+
     # Handle repeat guests - fetch from guest tables
     if 'guest_code' in session:
         from sqlalchemy import text
         guest_code = session['guest_code']
-        
+
         # Get guest stats
         guest_stats = db.session.execute(text("""
             SELECT total_score, quizzes_completed
             FROM guest_users
             WHERE guest_code = :code
         """), {"code": guest_code}).fetchone()
-        
+
         # Get guest quiz attempts
         attempts = db.session.execute(text("""
             SELECT topic, difficulty, score, total_questions, completed_at
@@ -1848,17 +1761,17 @@ def get_student_stats():
             ORDER BY completed_at DESC
             LIMIT 10
         """), {"code": guest_code}).fetchall()
-        
+
         # Calculate accuracy
         total_correct = sum(a[2] for a in attempts) if attempts else 0
         total_questions = sum(a[3] for a in attempts) if attempts else 0
         accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
-        
+
         # Get badge count
         badge_count = db.session.execute(text("""
             SELECT COUNT(*) FROM guest_badges WHERE guest_code = :code
         """), {"code": guest_code}).fetchone()[0]
-        
+
         return jsonify({
             'stats': {
                 'total_quizzes': guest_stats[1] if guest_stats else 0,
@@ -1882,7 +1795,7 @@ def get_student_stats():
                 'completed_at': a[4]
             } for a in attempts]
         }), 200
-    
+
     # Handle casual guests - no stats
     if 'is_guest' in session:
         return jsonify({
@@ -3860,22 +3773,22 @@ ANIMALS = [
 def generate_guest_code():
     """Generate unique animal code (e.g., panda42)"""
     max_attempts = 100
-    
+
     for _ in range(max_attempts):
         animal = random.choice(ANIMALS)
         number = random.randint(0, 99)
         code = f"{animal}{number:02d}"
-        
+
         # Check if code is already taken
         from sqlalchemy import text
         existing = db.session.execute(
-            text("SELECT 1 FROM guest_users WHERE guest_code = :code"), 
+            text("SELECT 1 FROM guest_users WHERE guest_code = :code"),
             {"code": code}
         ).fetchone()
-        
+
         if not existing:
             return code
-    
+
     raise Exception("Could not generate unique guest code. Please try again.")
 
 
@@ -3897,7 +3810,7 @@ def get_current_user_info():
                 'total_score': getattr(user, 'total_score', 0),
                 'quizzes_completed': getattr(user, 'quizzes_completed', 0)
             }
-    
+
     # Check repeat guest
     if 'guest_code' in session:
         from sqlalchemy import text
@@ -3906,7 +3819,7 @@ def get_current_user_info():
                FROM guest_users WHERE guest_code = :code AND is_active = 1"""),
             {"code": session['guest_code']}
         ).fetchone()
-        
+
         if result:
             return {
                 'type': 'repeat_guest',
@@ -3917,7 +3830,7 @@ def get_current_user_info():
                 'created_at': result[3],
                 'last_active': result[4]
             }
-    
+
     # Check casual guest (shared guest@mathmaster.app user)
     if session.get('is_guest') and 'user_id' in session:
         user = User.query.get(session['user_id'])
@@ -3927,7 +3840,7 @@ def get_current_user_info():
                 'name': 'Guest User',
                 'session_id': session.get('guest_session_id', 'unknown')
             }
-    
+
     return None
 
 
@@ -3948,10 +3861,10 @@ def casual_guest_start():
     """Initialize casual guest session (temporary, no code)"""
     try:
         session.clear()
-        
+
         # Get or create the shared casual guest user
         guest_user = User.query.filter_by(email='guest@mathmaster.app').first()
-        
+
         if not guest_user:
             guest_user = User(
                 email='guest@mathmaster.app',
@@ -3962,20 +3875,20 @@ def casual_guest_start():
             )
             db.session.add(guest_user)
             db.session.commit()
-        
+
         # Set up casual guest session
         session['is_guest'] = True
         session['guest_session_id'] = str(uuid.uuid4())
         session['user_id'] = guest_user.id
         session['role'] = 'student'
         session['guest_type'] = 'casual'
-        
+
         return jsonify({
             'success': True,
             'message': 'Casual guest session started',
             'redirect': '/student'
         }), 200
-        
+
     except Exception as e:
         print(f"Error starting casual guest session: {e}")
         db.session.rollback()
@@ -3989,23 +3902,23 @@ def generate_repeat_guest():
     """Generate new repeat guest code"""
     try:
         from sqlalchemy import text
-        
+
         # Generate unique code
         code = generate_guest_code()
-        
+
         # Create guest user in database
         db.session.execute(text("""
             INSERT INTO guest_users (guest_code, created_at, last_active)
             VALUES (:code, :now, :now)
         """), {"code": code, "now": datetime.utcnow()})
         db.session.commit()
-        
+
         return jsonify({
             'success': True,
             'guest_code': code,
             'message': f'Your code is: {code}'
         }), 200
-        
+
     except Exception as e:
         print(f"Error generating guest code: {e}")
         db.session.rollback()
@@ -4019,22 +3932,22 @@ def repeat_guest_login():
         from sqlalchemy import text
         data = request.json
         code = data.get('guest_code', '').strip().lower()
-        
+
         if not code:
             return jsonify({'error': 'Please enter your guest code'}), 400
-        
+
         # Check if code exists and is active
         result = db.session.execute(
             text("SELECT guest_code FROM guest_users WHERE guest_code = :code AND is_active = 1"),
             {"code": code}
         ).fetchone()
-        
+
         if not result:
             return jsonify({'error': 'Code not found. Please check and try again.'}), 404
-        
+
         # Get or create the shared guest user for repeat guests
         guest_user = User.query.filter_by(email='guest@mathmaster.app').first()
-        
+
         if not guest_user:
             guest_user = User(
                 email='guest@mathmaster.app',
@@ -4045,23 +3958,23 @@ def repeat_guest_login():
             )
             db.session.add(guest_user)
             db.session.commit()
-        
+
         # Set up repeat guest session
         session.clear()
         session['guest_code'] = code
         session['user_id'] = guest_user.id  # CRITICAL: Set user_id for @login_required
         session['role'] = 'student'
         session['guest_type'] = 'repeat'
-        
+
         # Update last active
         update_guest_last_active(code)
-        
+
         return jsonify({
             'success': True,
             'message': 'Welcome back!',
             'redirect': '/student'
         }), 200
-        
+
     except Exception as e:
         print(f"Error logging in guest: {e}")
         db.session.rollback()
@@ -4073,30 +3986,30 @@ def repeat_guest_stats():
     """Get stats for current repeat guest"""
     if 'guest_code' not in session:
         return jsonify({'error': 'Not logged in'}), 401
-    
+
     try:
         from sqlalchemy import text
         code = session['guest_code']
-        
+
         # Get stats
         result = db.session.execute(text("""
-            SELECT 
+            SELECT
                 total_score,
                 quizzes_completed,
                 (SELECT COUNT(*) FROM guest_badges WHERE guest_code = :code) as badges_earned
             FROM guest_users
             WHERE guest_code = :code
         """), {"code": code}).fetchone()
-        
+
         if result:
             return jsonify({
                 'total_score': result[0] or 0,
                 'quizzes_completed': result[1] or 0,
                 'badges_earned': result[2] or 0
             }), 200
-        
+
         return jsonify({'error': 'Stats not found'}), 404
-        
+
     except Exception as e:
         print(f"Error getting guest stats: {e}")
         return jsonify({'error': 'Failed to load stats'}), 500
@@ -4107,36 +4020,36 @@ def convert_guest_to_full():
     """Convert repeat guest to full account"""
     if 'guest_code' not in session:
         return jsonify({'error': 'Not logged in as guest'}), 401
-    
+
     try:
         from sqlalchemy import text
         data = request.json
-        
+
         email = data.get('email', '').strip()
         password = data.get('password', '').strip()
         full_name = data.get('full_name', '').strip()
-        
+
         # Validation
         if not email or not password or not full_name:
             return jsonify({'error': 'All fields required'}), 400
-        
+
         if len(password) < 6:
             return jsonify({'error': 'Password must be at least 6 characters'}), 400
-        
+
         # Check if email already exists
         existing = User.query.filter_by(email=email).first()
         if existing:
             return jsonify({'error': 'Email already registered'}), 400
-        
+
         guest_code = session['guest_code']
-        
+
         # Get guest data
         guest_data = db.session.execute(text("""
             SELECT total_score, quizzes_completed
             FROM guest_users
             WHERE guest_code = :code
         """), {"code": guest_code}).fetchone()
-        
+
         # Create new full user account
         new_user = User(
             email=email,
@@ -4147,7 +4060,7 @@ def convert_guest_to_full():
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.flush()
-        
+
         # Migrate quiz attempts
         db.session.execute(text("""
             INSERT INTO quiz_attempts (user_id, topic, difficulty, score, total_questions, completed_at)
@@ -4155,7 +4068,7 @@ def convert_guest_to_full():
             FROM guest_quiz_attempts
             WHERE guest_code = :code
         """), {"user_id": new_user.id, "code": guest_code})
-        
+
         # Migrate badges
         db.session.execute(text("""
             INSERT INTO user_badges (user_id, badge_id, earned_at)
@@ -4163,26 +4076,26 @@ def convert_guest_to_full():
             FROM guest_badges
             WHERE guest_code = :code
         """), {"user_id": new_user.id, "code": guest_code})
-        
+
         # Deactivate guest account
         db.session.execute(
             text("UPDATE guest_users SET is_active = 0 WHERE guest_code = :code"),
             {"code": guest_code}
         )
-        
+
         db.session.commit()
-        
+
         # Switch session to full account
         session.clear()
         session['user_id'] = new_user.id
         session['role'] = 'student'
-        
+
         return jsonify({
             'success': True,
             'message': 'Account upgraded successfully!',
             'redirect': '/student'
         }), 200
-        
+
     except Exception as e:
         db.session.rollback()
         print(f"Error converting guest account: {e}")
@@ -4198,10 +4111,10 @@ def guest_leaderboard():
     """
     try:
         from sqlalchemy import text
-        
+
         # Query to get aggregated stats for each guest_code
         query = text("""
-            SELECT 
+            SELECT
                 guest_code,
                 COUNT(*) as total_quizzes,
                 SUM(score) as total_score,
@@ -4216,33 +4129,45 @@ def guest_leaderboard():
             ORDER BY total_score DESC
             LIMIT 20
         """)
-        
+
         results = db.session.execute(query).fetchall()
-        
+
         leaderboard = []
         for rank, row in enumerate(results, start=1):
+            # Use array indexing [0], [1], etc. instead of row.attribute
+            guest_code = row[0]
+            total_quizzes = row[1]
+            total_score = row[2]
+            total_questions = row[3]
+            avg_percentage = row[4]
+            first_quiz_date = row[5]
+            last_quiz_date = row[6]
+
             # Generate guest display name from code
-            # Uses first 6 characters of code for anonymity
-            guest_display = f"Guest-{row.guest_code[:6]}" if len(row.guest_code) > 6 else f"Guest-{row.guest_code}"
-            
+            guest_display = f"Guest-{guest_code[:6]}"
+
+            # Handle dates safely (they might be strings already)
+            first_quiz = str(first_quiz_date)[:10] if first_quiz_date else None
+            last_quiz = str(last_quiz_date)[:10] if last_quiz_date else None
+
             leaderboard.append({
                 'rank': rank,
-                'guest_code': row.guest_code,  # Full code (not displayed to others)
-                'display_name': guest_display,  # Public display name
-                'total_quizzes': row.total_quizzes,
-                'total_score': row.total_score,
-                'total_questions': row.total_questions_attempted,
-                'avg_percentage': float(row.avg_percentage) if row.avg_percentage else 0.0,
-                'first_quiz': row.first_quiz_date[:10] if row.first_quiz_date else None,  # Extract date part from string
-                'last_quiz': row.last_quiz_date[:10] if row.last_quiz_date else None  # Extract date part from string
+                'guest_code': guest_code,
+                'display_name': guest_display,
+                'total_quizzes': int(total_quizzes),
+                'total_score': int(total_score),
+                'total_questions': int(total_questions),
+                'avg_percentage': float(avg_percentage) if avg_percentage else 0.0,
+                'first_quiz': first_quiz,
+                'last_quiz': last_quiz
             })
-        
+
         return jsonify({
             'success': True,
             'leaderboard': leaderboard,
             'total_guests': len(leaderboard)
         })
-        
+
     except Exception as e:
         print(f"❌ Error fetching guest leaderboard: {str(e)}")
         return jsonify({
@@ -4259,692 +4184,12 @@ def cleanup_inactive_guests(days=30):
     """
     from sqlalchemy import text
     cutoff_date = datetime.utcnow() - timedelta(days=days)
-    
+
     result = db.session.execute(text("""
-        DELETE FROM guest_users 
+        DELETE FROM guest_users
         WHERE last_active < :cutoff AND is_active = 1
     """), {"cutoff": cutoff_date})
-    
+
     db.session.commit()
     return result.rowcount
 
-
-
-# ==================== WHO AM I? FEATURE ====================
-# Progressive image reveal gamification feature
-
-def admin_required(f):
-    """Decorator to ensure only admins can access these routes"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            flash('Please log in first.', 'warning')
-            return redirect(url_for('login'))
-        
-        user = User.query.get(session['user_id'])
-        if not user or user.role != 'admin':
-            flash('Admin access required.', 'danger')
-            return redirect(url_for('dashboard'))
-        
-        return f(*args, **kwargs)
-    return decorated_function
-
-
-@app.route('/admin/who-am-i')
-@admin_required
-def admin_who_am_i():
-    """Display all Who Am I images with multi-topic support"""
-    from sqlalchemy import text
-    
-    # Get all images with their topics
-    query = text("""
-        SELECT 
-            i.id, 
-            i.difficulty, 
-            i.image_filename, 
-            i.answer, 
-            i.hint, 
-            i.active, 
-            i.created_at,
-            i.topic as primary_topic,
-            GROUP_CONCAT(t.topic) as all_topics
-        FROM who_am_i_images i
-        LEFT JOIN who_am_i_image_topics t ON i.id = t.image_id
-        GROUP BY i.id
-        ORDER BY i.created_at DESC
-    """)
-    
-    results = db.session.execute(query).fetchall()
-    
-    images = []
-    for row in results:
-        # Parse comma-separated topics
-        topics = row.all_topics.split(',') if row.all_topics else []
-        images.append({
-            'id': row.id,
-            'primary_topic': row.primary_topic,
-            'topics': topics,  # List of all assigned topics
-            'difficulty': row.difficulty,
-            'image_filename': row.image_filename,
-            'answer': row.answer,
-            'hint': row.hint,
-            'active': row.active,
-            'created_at': row.created_at
-        })
-    
-    # Get ALL topics from questions table
-    topics = db.session.execute(text("SELECT DISTINCT topic FROM questions ORDER BY topic")).fetchall()
-    all_topics = [row.topic for row in topics]
-    
-    # Get enabled topics (topics that have at least one image)
-    enabled_query = text("""
-        SELECT DISTINCT topic 
-        FROM who_am_i_image_topics 
-        ORDER BY topic
-    """)
-    enabled_results = db.session.execute(enabled_query).fetchall()
-    enabled_topics = [row.topic for row in enabled_results]
-    
-    return render_template('admin_who_am_i.html', 
-                         images=images, 
-                         all_topics=all_topics,
-                         enabled_topics=enabled_topics)
-
-
-@app.route('/admin/who-am-i/upload', methods=['POST'])
-@admin_required
-def admin_who_am_i_upload():
-    """Handle image upload with multi-topic support"""
-    from sqlalchemy import text
-    
-    # Validate form data
-    if 'image' not in request.files:
-        flash('No image file provided', 'danger')
-        return redirect(url_for('admin_who_am_i'))
-    
-    file = request.files['image']
-    primary_topic = request.form.get('topic')  # Primary topic for backward compatibility
-    selected_topics = request.form.getlist('topics[]')  # Multiple topics
-    difficulty = request.form.get('difficulty')
-    answer = request.form.get('answer')
-    hint = request.form.get('hint', '')
-    
-    if file.filename == '':
-        flash('No file selected', 'danger')
-        return redirect(url_for('admin_who_am_i'))
-    
-    # Handle both single topic and multi-topic selection
-    if not selected_topics and not primary_topic:
-        flash('At least one topic is required', 'danger')
-        return redirect(url_for('admin_who_am_i'))
-    
-    if not difficulty or not answer:
-        flash('Difficulty and answer are required', 'danger')
-        return redirect(url_for('admin_who_am_i'))
-    
-    # If only single topic selected (old form), use it
-    if not selected_topics and primary_topic:
-        selected_topics = [primary_topic]
-    # If multi-topics selected but no primary, use first as primary
-    elif selected_topics and not primary_topic:
-        primary_topic = selected_topics[0]
-    
-    if file and allowed_file(file.filename):
-        # Create upload directory if it doesn't exist
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        
-        # Generate secure filename
-        filename = secure_filename(file.filename)
-        # Add timestamp to avoid conflicts
-        import time
-        timestamp = int(time.time())
-        name, ext = os.path.splitext(filename)
-        filename = f"{name}_{timestamp}{ext}"
-        
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(filepath)
-        
-        # Save to database
-        query = text("""
-            INSERT INTO who_am_i_images (topic, difficulty, image_filename, answer, hint)
-            VALUES (:topic, :difficulty, :filename, :answer, :hint)
-        """)
-        result = db.session.execute(query, {
-            'topic': primary_topic,
-            'difficulty': difficulty,
-            'filename': filename,
-            'answer': answer,
-            'hint': hint
-        })
-        db.session.commit()
-        
-        # Get the new image ID
-        image_id = result.lastrowid
-        
-        # Add topic associations
-        for topic in selected_topics:
-            db.session.execute(text("""
-                INSERT OR IGNORE INTO who_am_i_image_topics (image_id, topic)
-                VALUES (:image_id, :topic)
-            """), {'image_id': image_id, 'topic': topic})
-        
-        db.session.commit()
-        
-        flash(f'Image uploaded successfully! Answer: {answer} | Topics: {", ".join(selected_topics)}', 'success')
-    else:
-        flash('Invalid file type. Allowed types: png, jpg, jpeg, gif, webp', 'danger')
-    
-    return redirect(url_for('admin_who_am_i'))
-
-
-@app.route('/admin/who-am-i/toggle/<int:image_id>', methods=['POST'])
-@admin_required
-def admin_who_am_i_toggle(image_id):
-    """Toggle active status of an image"""
-    from sqlalchemy import text
-    
-    result = db.session.execute(
-        text("SELECT active FROM who_am_i_images WHERE id = :id"),
-        {'id': image_id}
-    ).fetchone()
-    
-    if result:
-        new_status = 0 if result.active == 1 else 1
-        db.session.execute(
-            text("UPDATE who_am_i_images SET active = :status WHERE id = :id"),
-            {'status': new_status, 'id': image_id}
-        )
-        db.session.commit()
-        flash('Image status updated', 'success')
-    else:
-        flash('Image not found', 'danger')
-    
-    return redirect(url_for('admin_who_am_i'))
-
-
-@app.route('/admin/who-am-i/delete/<int:image_id>', methods=['POST'])
-@admin_required
-def admin_who_am_i_delete(image_id):
-    """Delete an image"""
-    from sqlalchemy import text
-    
-    result = db.session.execute(
-        text("SELECT image_filename FROM who_am_i_images WHERE id = :id"),
-        {'id': image_id}
-    ).fetchone()
-    
-    if result:
-        # Delete file
-        filepath = os.path.join(UPLOAD_FOLDER, result.image_filename)
-        if os.path.exists(filepath):
-            os.remove(filepath)
-        
-        # Delete from database
-        db.session.execute(
-            text("DELETE FROM who_am_i_images WHERE id = :id"),
-            {'id': image_id}
-        )
-        db.session.commit()
-        flash('Image deleted successfully', 'success')
-    else:
-        flash('Image not found', 'danger')
-    
-    return redirect(url_for('admin_who_am_i'))
-
-
-@app.route('/admin/who-am-i/edit/<int:image_id>', methods=['GET', 'POST'])
-@admin_required
-def admin_who_am_i_edit(image_id):
-    """Edit an existing image's details"""
-    from sqlalchemy import text
-    
-    if request.method == 'POST':
-        # Update image details
-        answer = request.form.get('answer')
-        hint = request.form.get('hint', '')
-        difficulty = request.form.get('difficulty')
-        selected_topics = request.form.getlist('topics[]')
-        primary_topic = request.form.get('primary_topic') or (selected_topics[0] if selected_topics else None)
-        
-        if not answer or not difficulty or not selected_topics:
-            return jsonify({'success': False, 'error': 'Answer, difficulty, and at least one topic required'}), 400
-        
-        # Update main image record
-        db.session.execute(text("""
-            UPDATE who_am_i_images 
-            SET answer = :answer, hint = :hint, difficulty = :difficulty, topic = :primary_topic
-            WHERE id = :id
-        """), {
-            'answer': answer,
-            'hint': hint,
-            'difficulty': difficulty,
-            'primary_topic': primary_topic,
-            'id': image_id
-        })
-        
-        # Delete existing topic associations
-        db.session.execute(text("DELETE FROM who_am_i_image_topics WHERE image_id = :id"), {'id': image_id})
-        
-        # Add new topic associations
-        for topic in selected_topics:
-            db.session.execute(text("""
-                INSERT INTO who_am_i_image_topics (image_id, topic)
-                VALUES (:image_id, :topic)
-            """), {'image_id': image_id, 'topic': topic})
-        
-        db.session.commit()
-        
-        return jsonify({'success': True, 'message': 'Image updated successfully'})
-    
-    # GET request - return image data
-    result = db.session.execute(text("""
-        SELECT id, topic, difficulty, image_filename, answer, hint, active
-        FROM who_am_i_images
-        WHERE id = :id
-    """), {'id': image_id}).fetchone()
-    
-    if not result:
-        return jsonify({'success': False, 'error': 'Image not found'}), 404
-    
-    # Get associated topics
-    topics_result = db.session.execute(text("""
-        SELECT topic FROM who_am_i_image_topics WHERE image_id = :id
-    """), {'id': image_id}).fetchall()
-    
-    topics = [row.topic for row in topics_result]
-    
-    return jsonify({
-        'success': True,
-        'image': {
-            'id': result.id,
-            'primary_topic': result.topic,
-            'topics': topics,
-            'difficulty': result.difficulty,
-            'image_filename': result.image_filename,
-            'answer': result.answer,
-            'hint': result.hint,
-            'active': result.active
-        }
-    })
-
-
-@app.route('/admin/who-am-i/bulk-assign', methods=['POST'])
-@admin_required
-def admin_who_am_i_bulk_assign():
-    """Bulk assign images to topics"""
-    from sqlalchemy import text
-    
-    data = request.json
-    image_ids = data.get('image_ids', [])
-    topics = data.get('topics', [])
-    action = data.get('action', 'add')  # 'add' or 'replace'
-    
-    if not image_ids or not topics:
-        return jsonify({'success': False, 'error': 'Image IDs and topics required'}), 400
-    
-    if action == 'replace':
-        # Remove existing topics for these images
-        for image_id in image_ids:
-            db.session.execute(text("""
-                DELETE FROM who_am_i_image_topics WHERE image_id = :id
-            """), {'id': image_id})
-    
-    # Add new topic associations
-    for image_id in image_ids:
-        for topic in topics:
-            db.session.execute(text("""
-                INSERT OR IGNORE INTO who_am_i_image_topics (image_id, topic)
-                VALUES (:image_id, :topic)
-            """), {'image_id': image_id, 'topic': topic})
-        
-        # Update primary topic if replacing
-        if action == 'replace' and topics:
-            db.session.execute(text("""
-                UPDATE who_am_i_images SET topic = :topic WHERE id = :id
-            """), {'topic': topics[0], 'id': image_id})
-    
-    db.session.commit()
-    
-    action_text = 'replaced with' if action == 'replace' else 'added to'
-    return jsonify({
-        'success': True, 
-        'message': f'{len(image_ids)} images {action_text} {len(topics)} topics'
-    })
-
-
-@app.route('/admin/who-am-i/bulk-delete', methods=['POST'])
-@admin_required
-def admin_who_am_i_bulk_delete():
-    """Bulk delete images"""
-    from sqlalchemy import text
-    
-    data = request.json
-    image_ids = data.get('image_ids', [])
-    
-    if not image_ids:
-        return jsonify({'success': False, 'error': 'No images selected'}), 400
-    
-    # Get filenames for deletion
-    placeholders = ','.join([':id' + str(i) for i in range(len(image_ids))])
-    params = {f'id{i}': image_id for i, image_id in enumerate(image_ids)}
-    
-    results = db.session.execute(text(f"""
-        SELECT image_filename FROM who_am_i_images WHERE id IN ({placeholders})
-    """), params).fetchall()
-    
-    # Delete files
-    for row in results:
-        filepath = os.path.join(UPLOAD_FOLDER, row.image_filename)
-        if os.path.exists(filepath):
-            os.remove(filepath)
-    
-    # Delete from database
-    db.session.execute(text(f"""
-        DELETE FROM who_am_i_images WHERE id IN ({placeholders})
-    """), params)
-    
-    db.session.commit()
-    
-    return jsonify({'success': True, 'message': f'{len(image_ids)} images deleted'})
-
-
-# ==================== WHO AM I? API ENDPOINTS ====================
-
-@app.route('/api/who-am-i/start', methods=['POST'])
-def who_am_i_start():
-    """Initialize a new Who Am I session for a quiz"""
-    from sqlalchemy import text
-    
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    
-    data = request.json
-    topic = data.get('topic')
-    difficulty = data.get('difficulty')
-    quiz_attempt_id = data.get('quiz_attempt_id')
-    
-    # Get a random active image for this topic/difficulty
-    # Now uses the junction table for multi-topic support
-    result = db.session.execute(text("""
-        SELECT DISTINCT i.id, i.image_filename, i.answer, i.hint
-        FROM who_am_i_images i
-        JOIN who_am_i_image_topics t ON i.id = t.image_id
-        WHERE t.topic = :topic AND i.difficulty = :difficulty AND i.active = 1
-        ORDER BY RANDOM()
-        LIMIT 1
-    """), {'topic': topic, 'difficulty': difficulty}).fetchone()
-    
-    if not result:
-        return jsonify({'error': 'No images available for this topic/difficulty'}), 404
-    
-    image_id = result.id
-    image_filename = result.image_filename
-    answer = result.answer
-    hint = result.hint
-    
-    # Create session
-    insert_result = db.session.execute(text("""
-        INSERT INTO who_am_i_sessions (user_id, quiz_attempt_id, image_id, tiles_revealed, guesses_made)
-        VALUES (:user_id, :quiz_attempt_id, :image_id, '[]', 0)
-    """), {
-        'user_id': session['user_id'],
-        'quiz_attempt_id': quiz_attempt_id,
-        'image_id': image_id
-    })
-    
-    db.session.commit()
-    session_id = insert_result.lastrowid
-    
-    return jsonify({
-        'session_id': session_id,
-        'image_url': url_for('static', filename=f'who_am_i_images/{image_filename}'),
-        'hint': hint,
-        'total_tiles': 25
-    })
-
-
-@app.route('/api/who-am-i/reveal', methods=['POST'])
-def who_am_i_reveal():
-    """Reveal a tile after correct answer"""
-    from sqlalchemy import text
-    
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    
-    data = request.json
-    session_id = data.get('session_id')
-    
-    # Get current session
-    result = db.session.execute(text("""
-        SELECT tiles_revealed FROM who_am_i_sessions
-        WHERE id = :session_id AND user_id = :user_id
-    """), {'session_id': session_id, 'user_id': session['user_id']}).fetchone()
-    
-    if not result:
-        return jsonify({'error': 'Session not found'}), 404
-    
-    tiles_revealed = json.loads(result.tiles_revealed)
-    
-    # Find next unrevealed tile
-    all_tiles = list(range(16))
-    available_tiles = [t for t in all_tiles if t not in tiles_revealed]
-    
-    if not available_tiles:
-        return jsonify({'tiles_revealed': tiles_revealed, 'all_revealed': True})
-    
-    # Pick random tile to reveal
-    new_tile = random.choice(available_tiles)
-    tiles_revealed.append(new_tile)
-    
-    # Update session
-    db.session.execute(text("""
-        UPDATE who_am_i_sessions
-        SET tiles_revealed = :tiles
-        WHERE id = :session_id
-    """), {'tiles': json.dumps(tiles_revealed), 'session_id': session_id})
-    
-    db.session.commit()
-    
-    return jsonify({
-        'tiles_revealed': tiles_revealed,
-        'new_tile': new_tile,
-        'all_revealed': len(tiles_revealed) >= 25
-    })
-
-
-@app.route('/api/who-am-i/guess', methods=['POST'])
-def who_am_i_guess():
-    """Submit a guess for Who Am I"""
-    from sqlalchemy import text
-    
-    if 'user_id' not in session:
-        return jsonify({'error': 'Not logged in'}), 401
-    
-    data = request.json
-    session_id = data.get('session_id')
-    guess = data.get('guess', '').strip()
-    
-    # Get session and image details - IMPORTANT: Include quiz_attempt_id!
-    result = db.session.execute(text("""
-        SELECT s.tiles_revealed, s.guesses_made, s.correct_guess, s.quiz_attempt_id, i.answer
-        FROM who_am_i_sessions s
-        JOIN who_am_i_images i ON s.image_id = i.id
-        WHERE s.id = :session_id AND s.user_id = :user_id
-    """), {'session_id': session_id, 'user_id': session['user_id']}).fetchone()
-    
-    if not result:
-        return jsonify({'error': 'Session not found'}), 404
-    
-    tiles_revealed = json.loads(result.tiles_revealed)
-    guesses_made = result.guesses_made
-    correct_guess = result.correct_guess
-    quiz_attempt_id = result.quiz_attempt_id  # NOW IT'S RETRIEVED!
-    correct_answer = result.answer
-    
-    # Check if already guessed correctly
-    if correct_guess:
-        return jsonify({'error': 'Already guessed correctly'}), 400
-    
-    # Check guess limit
-    if guesses_made >= 3:
-        return jsonify({'error': 'No guesses remaining', 'correct': False, 'answer': correct_answer}), 400
-    
-    # Check if guess is correct (case-insensitive)
-    is_correct = guess.lower() == correct_answer.lower()
-    guesses_made += 1
-    
-    # Calculate bonus points if correct
-    bonus_points = 0
-    if is_correct:
-        tiles_hidden = 25 - len(tiles_revealed)  # 5×5 grid = 25 tiles
-        if tiles_hidden >= 20:      # Guessed with 80%+ hidden (very early)
-            bonus_points = 100
-        elif tiles_hidden >= 15:    # Guessed with 60-79% hidden (early)
-            bonus_points = 75
-        elif tiles_hidden >= 10:    # Guessed with 40-59% hidden (moderate)
-            bonus_points = 50
-        elif tiles_hidden >= 5:     # Guessed with 20-39% hidden (late)
-            bonus_points = 25
-        else:                        # Less than 5 tiles hidden (very late)
-            bonus_points = 10
-        
-        # Update session
-        db.session.execute(text("""
-            UPDATE who_am_i_sessions
-            SET guesses_made = :guesses, correct_guess = 1, bonus_points_earned = :bonus, completed_at = CURRENT_TIMESTAMP
-            WHERE id = :session_id
-        """), {'guesses': guesses_made, 'bonus': bonus_points, 'session_id': session_id})
-    else:
-        # Just increment guesses
-        db.session.execute(text("""
-            UPDATE who_am_i_sessions
-            SET guesses_made = :guesses
-            WHERE id = :session_id
-        """), {'guesses': guesses_made, 'session_id': session_id})
-    
-    db.session.commit()
-    
-    # If correct, try to load another image automatically
-    next_session_data = None
-    if is_correct:
-        try:
-            # Get the current quiz topic and difficulty
-            quiz_info = db.session.execute(text("""
-                SELECT topic, difficulty FROM quiz_attempts WHERE id = :quiz_id
-            """), {'quiz_id': quiz_attempt_id}).fetchone()
-            
-            print(f"🔍 Looking for next image - quiz_id: {quiz_attempt_id}, topic: {quiz_info.topic if quiz_info else 'None'}, difficulty: {quiz_info.difficulty if quiz_info else 'None'}")
-            
-            if quiz_info:
-                # Get list of images already shown in this quiz
-                shown_images = db.session.execute(text("""
-                    SELECT image_id FROM who_am_i_sessions 
-                    WHERE quiz_attempt_id = :quiz_id
-                """), {'quiz_id': quiz_attempt_id}).fetchall()
-                
-                shown_image_ids = [row.image_id for row in shown_images]
-                print(f"🚫 Already shown image IDs: {shown_image_ids}")
-                
-                # Build query to exclude already-shown images
-                if shown_image_ids:
-                    # Create string of IDs for NOT IN clause
-                    id_list = ','.join([str(id) for id in shown_image_ids])
-                    
-                    print(f"🔎 Searching with: topic={quiz_info.topic}, difficulty={quiz_info.difficulty}, excluding IDs: {id_list}")
-                    
-                    next_image = db.session.execute(text(f"""
-                        SELECT DISTINCT i.id, i.image_filename, i.answer, i.hint
-                        FROM who_am_i_images i
-                        JOIN who_am_i_image_topics t ON i.id = t.image_id
-                        WHERE t.topic = :topic 
-                        AND LOWER(i.difficulty) = LOWER(:difficulty)
-                        AND i.active = 1
-                        AND i.id NOT IN ({id_list})
-                        ORDER BY RANDOM()
-                        LIMIT 1
-                    """), {
-                        'topic': quiz_info.topic,
-                        'difficulty': quiz_info.difficulty
-                    }).fetchone()
-                else:
-                    print(f"🔎 First image search with: topic={quiz_info.topic}, difficulty={quiz_info.difficulty}")
-                    # First image, get any
-                    next_image = db.session.execute(text("""
-                        SELECT DISTINCT i.id, i.image_filename, i.answer, i.hint
-                        FROM who_am_i_images i
-                        JOIN who_am_i_image_topics t ON i.id = t.image_id
-                        WHERE t.topic = :topic 
-                        AND LOWER(i.difficulty) = LOWER(:difficulty)
-                        AND i.active = 1
-                        ORDER BY RANDOM()
-                        LIMIT 1
-                    """), {
-                        'topic': quiz_info.topic,
-                        'difficulty': quiz_info.difficulty
-                    }).fetchone()
-                
-                if next_image:
-                    print(f"✅ Next image found! ID: {next_image.id}, Answer: {next_image.answer}")
-                    # Create new session for next image
-                    new_session = db.session.execute(text("""
-                        INSERT INTO who_am_i_sessions (user_id, quiz_attempt_id, image_id, tiles_revealed, guesses_made)
-                        VALUES (:user_id, :quiz_attempt_id, :image_id, '[]', 0)
-                    """), {
-                        'user_id': session['user_id'],
-                        'quiz_attempt_id': quiz_attempt_id,
-                        'image_id': next_image.id
-                    })
-                    db.session.commit()
-                    
-                    next_session_data = {
-                        'session_id': new_session.lastrowid,
-                        'image_url': url_for('static', filename=f'who_am_i_images/{next_image.image_filename}'),
-                        'hint': next_image.hint,
-                        'total_tiles': 25
-                    }
-                    print(f"✅ New session created: {new_session.lastrowid}")
-                else:
-                    print(f"ℹ️ No more images available for topic={quiz_info.topic}, difficulty={quiz_info.difficulty}")
-        except Exception as e:
-            # Log error but don't break the guess response
-            print(f"❌ Error loading next Who Am I image: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    response_data = {
-        'correct': is_correct,
-        'bonus_points': bonus_points,
-        'guesses_remaining': 3 - guesses_made,
-        'answer': correct_answer if is_correct or guesses_made >= 3 else None
-    }
-    
-    # Add next session info if available
-    if next_session_data:
-        response_data['next_session'] = next_session_data
-    
-    return jsonify(response_data)
-
-# ==================== TOPIC MANAGEMENT MODULE ====================
-# Import and register topic management routes
-try:
-    from topic_management import register_topic_routes
-    register_topic_routes(app, db)
-except ImportError:
-    print("Warning: topic_management.py not found - topic management disabled")
-except Exception as e:
-    print(f"Warning: Could not load topic management: {e}")
-
-# ==================== QUESTION GENERATOR MODULE ====================
-# Import and register AI question generator routes
-try:
-    from question_generator import register_generator_routes
-    register_generator_routes(app, db)
-except ImportError:
-    print("Warning: question_generator.py not found - question generator disabled")
-except Exception as e:
-    print(f"Warning: Could not load question generator: {e}")
-
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)

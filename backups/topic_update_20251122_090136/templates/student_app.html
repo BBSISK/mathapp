@@ -8,19 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Quiz Milestone Celebration System -->
     <script src="{{ url_for('static', filename='quiz_milestones.js') }}"></script>
-    <!-- WHO AM I: CSS for reveal grid -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/who_am_i.css') }}">
     <style>
-        /* WHO AM I: Ensure container fits nicely in side-by-side layout */
-        @media (min-width: 1024px) {
-            #who-am-i-container {
-                position: sticky;
-                top: 20px;
-                max-height: calc(100vh - 150px);
-                overflow-y: auto;
-            }
-        }
-        
         .number-line-container {
             margin: 20px 0;
             padding: 20px;
@@ -970,8 +958,8 @@
         </div>
 
         <!-- Quiz Screen -->
-        <div id="quizScreen" class="hidden mx-auto" style="max-width: 1400px;">
-            <div class="mb-6 flex justify-between items-center px-4">
+        <div id="quizScreen" class="hidden max-w-3xl mx-auto">
+            <div class="mb-6 flex justify-between items-center">
                 <button onclick="backToDifficulty()" class="bg-white text-gray-700 px-6 py-2 rounded-lg shadow hover:shadow-md transition-all">
                     ← Back
                 </button>
@@ -980,43 +968,29 @@
                 </div>
             </div>
 
-            <!-- Flex container for side-by-side layout -->
-            <div class="flex flex-col lg:flex-row gap-6 px-4">
-                
-                <!-- WHO AM I: Reveal Grid - Left side on desktop, top on mobile -->
-                <div id="who-am-i-container" class="who-am-i-container w-full lg:w-5/12 flex-shrink-0" style="display: none;">
-                    <div class="text-center">
-                        <i class="fas fa-spinner fa-spin fa-2x text-white"></i>
-                        <p class="text-white mt-2">Loading mystery image...</p>
+            <div class="bg-white rounded-2xl p-8 shadow-2xl">
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="quizTopicTitle" class="text-2xl font-bold text-gray-800"></h2>
+                        <span class="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-semibold">
+                            Question <span id="currentQuestion">1</span>/<span id="totalQuestions">20</span>
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
 
-                <!-- Question Card - Right side on desktop, bottom on mobile -->
-                <div class="bg-white rounded-2xl p-8 shadow-2xl flex-1">
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 id="quizTopicTitle" class="text-2xl font-bold text-gray-800"></h2>
-                            <span class="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-semibold">
-                                Question <span id="currentQuestion">1</span>/<span id="totalQuestions">20</span>
-                            </span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
-                            <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <div class="mb-8">
-                        <h3 id="questionText" class="text-3xl font-semibold text-gray-800 mb-6" style="white-space: pre-wrap; line-height: 1.8;"></h3>
-                        <div id="optionsContainer" class="space-y-3"></div>
-                    </div>
-
-                    <div id="feedbackContainer" class="hidden mb-6"></div>
-
-                    <button id="nextButton" onclick="nextQuestion()" class="hidden w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg">
-                        Next Question →
-                    </button>
+                <div class="mb-8">
+                    <h3 id="questionText" class="text-3xl font-semibold text-gray-800 mb-6" style="white-space: pre-wrap; line-height: 1.8;"></h3>
+                    <div id="optionsContainer" class="space-y-3"></div>
                 </div>
-                
+
+                <div id="feedbackContainer" class="hidden mb-6"></div>
+
+                <button id="nextButton" onclick="nextQuestion()" class="hidden w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg">
+                    Next Question →
+                </button>
             </div>
         </div>
 
@@ -1028,17 +1002,6 @@
                 <div id="percentage" class="text-6xl font-bold text-purple-600 mb-4"></div>
                 <p id="scoreText" class="text-2xl text-gray-700 mb-8"></p>
                 <div id="performanceMessage" class="text-xl font-semibold mb-6"></div>
-
-                <!-- WHO AM I: Bonus display -->
-                <div id="who-am-i-bonus-display" style="display: none;" class="bg-yellow-100 border-2 border-yellow-500 rounded-xl p-4 mb-6">
-                    <div class="flex items-center justify-center">
-                        <i class="fas fa-star text-yellow-600 text-3xl mr-3"></i>
-                        <div>
-                            <p class="font-bold text-lg text-yellow-800">Who Am I? Bonus!</p>
-                            <p class="text-yellow-700">+<span id="bonus-points-display">0</span> points</p>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="space-y-4">
                     <button onclick="retryQuiz()" class="w-full bg-purple-600 text-white py-4 rounded-xl font-semibold hover:bg-purple-700 transition-colors">
@@ -1066,10 +1029,6 @@
         let maxConsecutiveCorrect = 0;
         let questionsAnsweredInQuiz = 0;
         let shownMilestones = new Set(); // Track which milestones shown this quiz
-        
-        // WHO AM I: Track quiz attempt ID and enable state
-        let currentQuizAttemptId = null;
-        let whoAmIEnabled = false;
         
         let masteryData = {}; // Stores mastery status for all topics/difficulties
 
@@ -1582,42 +1541,6 @@
                 }
 
                 showQuestion();
-                
-                // WHO AM I: Enable for ALL topics (backend will check if images exist)
-                whoAmIEnabled = true;  // Changed from checking specific topic
-                if (whoAmIEnabled && typeof initializeWhoAmI === 'function') {
-                    // Show the container
-                    const container = document.getElementById('who-am-i-container');
-                    if (container) {
-                        container.style.display = 'block';
-                        
-                        // Create quiz attempt and initialize
-                        fetch('/api/create-quiz-attempt', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                topic: currentTopic,
-                                difficulty: currentDifficulty
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.quiz_attempt_id) {
-                                currentQuizAttemptId = data.quiz_attempt_id;
-                                initializeWhoAmI(currentTopic, currentDifficulty, currentQuizAttemptId);
-                                console.log('✅ Who Am I initialized for quiz attempt:', currentQuizAttemptId);
-                            }
-                        })
-                        .catch(error => console.error('Error creating quiz attempt:', error));
-                    }
-                } else {
-                    // Hide container for non-Who Am I topics
-                    const container = document.getElementById('who-am-i-container');
-                    if (container) {
-                        container.style.display = 'none';
-                    }
-                }
-                
             } catch (error) {
                 console.error('Error loading questions:', error);
                 alert('Error loading questions. Please try again.');
@@ -1717,11 +1640,6 @@
             if (correct) {
                 score++;
                 document.getElementById('score').textContent = score;
-                
-                // WHO AM I: Reveal tile on correct answer
-                if (whoAmIEnabled && typeof onCorrectAnswer === 'function') {
-                    onCorrectAnswer();
-                }
             }
 
             const allChildren = document.getElementById('optionsContainer').children;
@@ -1908,13 +1826,6 @@
                 }
             }
 
-            // WHO AM I: Get bonus points if enabled
-            let whoAmIBonus = 0;
-            if (whoAmIEnabled && typeof getWhoAmIBonusPoints === 'function') {
-                whoAmIBonus = getWhoAmIBonusPoints();
-                console.log('🎯 Who Am I bonus points:', whoAmIBonus);
-            }
-
             // Submit to backend
             try {
                 const response = await fetch('/api/submit-quiz', {
@@ -1926,9 +1837,7 @@
                         score: score,
                         total_questions: questions.length,
                         percentage: percentage,
-                        time_taken: timeTaken,
-                        quiz_attempt_id: currentQuizAttemptId,
-                        who_am_i_bonus: whoAmIBonus
+                        time_taken: timeTaken
                     })
                 });
 
@@ -1984,19 +1893,6 @@
             } else {
                 messageEl.className = 'text-xl text-red-600 font-semibold mb-6';
                 messageEl.textContent = '💪 Keep trying! Practice makes perfect!';
-            }
-            
-            // WHO AM I: Show bonus if earned
-            if (whoAmIEnabled && typeof getWhoAmIBonusPoints === 'function') {
-                const whoAmIBonus = getWhoAmIBonusPoints();
-                if (whoAmIBonus > 0) {
-                    const bonusDisplay = document.getElementById('who-am-i-bonus-display');
-                    const bonusPoints = document.getElementById('bonus-points-display');
-                    if (bonusDisplay && bonusPoints) {
-                        bonusPoints.textContent = whoAmIBonus;
-                        bonusDisplay.style.display = 'block';
-                    }
-                }
             }
         }
 
@@ -4447,9 +4343,6 @@ console.log('Tutorial Manager initialized');
 <!-- ========================================== -->
 <!-- END TUTORIAL SYSTEM -->
 <!-- ========================================== -->
-
-<!-- WHO AM I: JavaScript for reveal functionality -->
-<script src="{{ url_for('static', filename='js/who_am_i.js') }}"></script>
 
 </body>
 </html>
