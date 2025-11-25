@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar Shop - Math Master</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/avatar.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .shop-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .shop-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .shop-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .shop-header p {
+            opacity: 0.9;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .preview-section {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .preview-avatar {
+            margin: 0 auto 20px;
+        }
+        
+        .preview-info {
+            color: white;
+        }
+        
+        .preview-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .preview-level {
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+        
+        .points-display {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .points-icon {
+            font-size: 1.2em;
+        }
+        
+        .shop-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .section-icon {
+            font-size: 1.8em;
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .toast {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast.success {
+            border-left: 4px solid #28a745;
+        }
+        
+        .toast.error {
+            border-left: 4px solid #dc3545;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .shop-header h1 {
+                font-size: 1.8em;
+            }
+            
+            .items-grid {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            }
+            
+            .preview-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shop-container" id="avatar-shop">
+        <!-- Back button -->
+        <a href="{{ url_for('student_app') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            Back to Dashboard
+        </a>
+        
+        <!-- Header -->
+        <div class="shop-header">
+            <h1>🎨 Avatar Shop</h1>
+            <p>Customize your avatar with items you've earned!</p>
+        </div>
+        
+        <!-- Preview Section -->
+        <div class="preview-section">
+            <div id="avatar-preview" class="preview-avatar avatar-container avatar-xlarge"></div>
+            <div class="preview-info">
+                <div class="preview-name">{{ user_name or guest_code or 'Student' }}</div>
+                <div class="preview-level">Level {{ level or 1 }}</div>
+                <div class="points-display">
+                    <span class="points-icon">⭐</span>
+                    <span id="avatar-points">{{ points or 0 }}</span>
+                    <span>points</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Animals Section -->
+        <div class="shop-section">
+            <div class="section-header">
+                <span class="section-icon">🐾</span>
+                <span class="section-title">Choose Your Animal</span>
+            </div>
+            <div class="items-grid" id="shop-animal"></div>
+        </div>
+        
+        <!-- Hats Section -->
+        <div class="shop-section">
+            <div class="section-header">
+                <span class="section-icon">🎩</span>
+                <span class="section-title">Hats</span>
+            </div>
+            <div class="items-grid" id="shop-hat"></div>
+        </div>
+        
+        <!-- Glasses Section -->
+        <div class="shop-section">
+            <div class="section-header">
+                <span class="section-icon">👓</span>
+                <span class="section-title">Glasses</span>
+            </div>
+            <div class="items-grid" id="shop-glasses"></div>
+        </div>
+        
+        <!-- Backgrounds Section -->
+        <div class="shop-section">
+            <div class="section-header">
+                <span class="section-icon">🌄</span>
+                <span class="section-title">Backgrounds</span>
+            </div>
+            <div class="items-grid" id="shop-background"></div>
+        </div>
+        
+        <!-- Accessories Section -->
+        <div class="shop-section">
+            <div class="section-header">
+                <span class="section-icon">📐</span>
+                <span class="section-title">Math Accessories</span>
+            </div>
+            <div class="items-grid" id="shop-accessory"></div>
+        </div>
+        
+        <!-- Toast container for notifications -->
+        <div class="toast-container" id="toast-container"></div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/avatar.js') }}"></script>
+    <script>
+        // Override the showMessage function to use toast notifications
+        AvatarShop.showMessage = function(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                ${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}
+                ${message}
+            `;
+            container.appendChild(toast);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            AvatarShop.init();
+        });
+    </script>
+</body>
+</html>

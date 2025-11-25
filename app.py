@@ -11,6 +11,20 @@ from werkzeug.utils import secure_filename
 import json
 
 app = Flask(__name__)
+
+# ==================== FEATURE FLAGS ====================
+# Avatar system can be disabled instantly by setting these to False
+# Set via environment variables or change defaults here
+FEATURE_FLAGS = {
+    'AVATAR_SYSTEM_ENABLED': os.environ.get('AVATAR_SYSTEM_ENABLED', 'false').lower() == 'true',
+    'AVATAR_SHOP_ENABLED': os.environ.get('AVATAR_SHOP_ENABLED', 'false').lower() == 'true',
+    'AVATAR_ON_QUIZ_ENABLED': os.environ.get('AVATAR_ON_QUIZ_ENABLED', 'false').lower() == 'true',
+    'AVATAR_ON_LEADERBOARD_ENABLED': os.environ.get('AVATAR_ON_LEADERBOARD_ENABLED', 'false').lower() == 'true',
+}
+
+def get_feature_flag(flag_name):
+    """Get a feature flag value"""
+    return FEATURE_FLAGS.get(flag_name, False)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mathquiz.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -30,6 +44,15 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 db = SQLAlchemy(app)
+
+# ==================== TEMPLATE CONTEXT PROCESSOR ====================
+@app.context_processor
+def inject_feature_flags():
+    """Make feature flags available in all templates"""
+    return {
+        'feature_flags': FEATURE_FLAGS,
+        'avatar_enabled': FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False)
+    }
 
 # ==================== DATABASE MODELS ====================
 
@@ -334,6 +357,116 @@ class UserStats(db.Model):
             'updated_at': self.updated_at.isoformat()
         }
 
+# ==================== AVATAR SYSTEM MODELS ====================
+# These models support the avatar customization feature
+# BACKOUT: Set AVATAR_SYSTEM_ENABLED=false to disable without removing code
+
+class AvatarItem(db.Model):
+    """Shop items - animals, hats, glasses, backgrounds, accessories"""
+    __tablename__ = 'avatar_items'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    item_type = db.Column(db.String(50), nullable=False)  # 'animal', 'hat', 'glasses', 'background', 'accessory'
+    item_key = db.Column(db.String(50), nullable=False)   # 'panda', 'crown', etc.
+    display_name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    point_cost = db.Column(db.Integer, nullable=False, default=0)
+    rarity = db.Column(db.String(20), default='common')  # 'common', 'rare', 'epic', 'legendary'
+    is_default = db.Column(db.Boolean, default=False)    # Free starter items
+    is_active = db.Column(db.Boolean, default=True)      # Can hide items without deleting
+    sort_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (db.UniqueConstraint('item_type', 'item_key', name='unique_item_type_key'),)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'item_type': self.item_type,
+            'item_key': self.item_key,
+            'display_name': self.display_name,
+            'description': self.description,
+            'point_cost': self.point_cost,
+            'rarity': self.rarity,
+            'is_default': self.is_default,
+            'is_active': self.is_active,
+            'sort_order': self.sort_order
+        }
+
+class UserAvatarInventory(db.Model):
+    """Tracks which items users/guests have purchased"""
+    __tablename__ = 'user_avatar_inventory'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    guest_code = db.Column(db.String(50), nullable=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('avatar_items.id'), nullable=False)
+    purchased_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    item = db.relationship('AvatarItem', backref='purchases')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'guest_code': self.guest_code,
+            'item': self.item.to_dict() if self.item else None,
+            'purchased_at': self.purchased_at.isoformat() if self.purchased_at else None
+        }
+
+class UserAvatarEquipped(db.Model):
+    """Tracks currently equipped avatar configuration"""
+    __tablename__ = 'user_avatar_equipped'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    guest_code = db.Column(db.String(50), nullable=True)
+    animal_key = db.Column(db.String(50), default='panda')
+    hat_key = db.Column(db.String(50), default='none')
+    glasses_key = db.Column(db.String(50), default='none')
+    background_key = db.Column(db.String(50), default='none')
+    accessory_key = db.Column(db.String(50), default='none')
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'user_id': self.user_id,
+            'guest_code': self.guest_code,
+            'animal': self.animal_key,
+            'hat': self.hat_key,
+            'glasses': self.glasses_key,
+            'background': self.background_key,
+            'accessory': self.accessory_key,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class AvatarPurchaseLog(db.Model):
+    """Audit log for all purchases - useful for debugging and potential refunds"""
+    __tablename__ = 'avatar_purchase_log'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=True)
+    guest_code = db.Column(db.String(50), nullable=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('avatar_items.id'), nullable=False)
+    points_spent = db.Column(db.Integer, nullable=False)
+    points_before = db.Column(db.Integer, nullable=False)
+    points_after = db.Column(db.Integer, nullable=False)
+    purchased_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    item = db.relationship('AvatarItem')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'guest_code': self.guest_code,
+            'item': self.item.to_dict() if self.item else None,
+            'points_spent': self.points_spent,
+            'points_before': self.points_before,
+            'points_after': self.points_after,
+            'purchased_at': self.purchased_at.isoformat() if self.purchased_at else None
+        }
+
 # ==================== DOMAIN RESTRICTION MODELS ====================
 
 class TeacherDomainAccess(db.Model):
@@ -494,6 +627,103 @@ def guest_or_login_required(f):
             return jsonify({'error': 'Authentication required'}), 401
         return f(*args, **kwargs)
     return decorated_function
+
+# ==================== AVATAR HELPER FUNCTIONS ====================
+
+def get_avatar_user_points(user_id=None, guest_code=None):
+    """
+    Get current points for user or guest.
+    Returns (points, level) tuple.
+    """
+    from sqlalchemy import text
+    
+    if user_id:
+        # Registered user - get from UserStats
+        result = db.session.execute(text(
+            "SELECT total_points FROM user_stats WHERE user_id = :uid"
+        ), {"uid": user_id}).fetchone()
+        points = result[0] if result else 0
+    elif guest_code:
+        # Guest user - get from guest_stats
+        result = db.session.execute(text(
+            "SELECT total_score FROM guest_stats WHERE guest_code = :code"
+        ), {"code": guest_code}).fetchone()
+        points = result[0] if result else 0
+    else:
+        points = 0
+    
+    level = (points // 100) + 1
+    return points, level
+
+def avatar_owns_item(item_id, user_id=None, guest_code=None):
+    """Check if user/guest owns a specific item"""
+    query = UserAvatarInventory.query.filter_by(item_id=item_id)
+    
+    if user_id:
+        return query.filter_by(user_id=user_id).first() is not None
+    elif guest_code:
+        return query.filter_by(guest_code=guest_code).first() is not None
+    
+    return False
+
+def get_equipped_avatar(user_id=None, guest_code=None):
+    """Get currently equipped avatar configuration"""
+    if user_id:
+        equipped = UserAvatarEquipped.query.filter_by(user_id=user_id).first()
+    elif guest_code:
+        equipped = UserAvatarEquipped.query.filter_by(guest_code=guest_code).first()
+    else:
+        equipped = None
+    
+    # Return default configuration if none exists
+    if not equipped:
+        return {
+            'animal': 'panda',
+            'hat': 'none',
+            'glasses': 'none',
+            'background': 'none',
+            'accessory': 'none'
+        }
+    
+    return equipped.to_dict()
+
+def grant_default_avatar_items(user_id=None, guest_code=None):
+    """Grant all default items to a new user/guest"""
+    if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
+        return
+    
+    default_items = AvatarItem.query.filter_by(is_default=True).all()
+    
+    for item in default_items:
+        if not avatar_owns_item(item.id, user_id, guest_code):
+            inventory_entry = UserAvatarInventory(
+                user_id=user_id,
+                guest_code=guest_code,
+                item_id=item.id
+            )
+            db.session.add(inventory_entry)
+    
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
+
+def get_animal_from_guest_code(guest_code):
+    """
+    Extract animal name from guest code like 'panda42'.
+    Returns animal key if valid, None otherwise.
+    """
+    if not guest_code:
+        return None
+    
+    valid_animals = ['panda', 'fox', 'cat', 'owl']
+    code_lower = guest_code.lower()
+    
+    for animal in valid_animals:
+        if code_lower.startswith(animal):
+            return animal
+    
+    return None
 
 # ==================== BADGES HELPER FUNCTIONS ====================
 
@@ -5350,6 +5580,294 @@ def who_am_i_guess():
         response_data['next_session'] = next_session_data
 
     return jsonify(response_data)
+
+# ==================== AVATAR SYSTEM ROUTES ====================
+# All avatar routes check FEATURE_FLAGS before executing
+# BACKOUT: Set AVATAR_SYSTEM_ENABLED=false to disable all routes
+
+@app.route('/avatar/shop')
+def avatar_shop_page():
+    """Avatar customization shop page"""
+    if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
+        flash('Avatar shop is currently unavailable', 'warning')
+        return redirect(url_for('student_app'))
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
+        flash('Please log in to access the avatar shop', 'warning')
+        return redirect(url_for('login'))
+    
+    # Get user info
+    user_name = None
+    if user_id:
+        user = User.query.get(user_id)
+        user_name = user.full_name if user else None
+    
+    points, level = get_avatar_user_points(user_id, guest_code)
+    
+    return render_template('avatar_shop.html',
+        user_name=user_name,
+        guest_code=guest_code,
+        points=points,
+        level=level
+    )
+
+@app.route('/api/avatar/items', methods=['GET'])
+def api_avatar_items():
+    """Get all available shop items"""
+    if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
+        return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
+    
+    item_type = request.args.get('type')  # Optional filter
+    
+    query = AvatarItem.query.filter_by(is_active=True)
+    if item_type:
+        query = query.filter_by(item_type=item_type)
+    
+    items = query.order_by(AvatarItem.sort_order).all()
+    
+    return jsonify({
+        'success': True,
+        'items': [item.to_dict() for item in items]
+    })
+
+@app.route('/api/avatar/inventory', methods=['GET'])
+def api_avatar_inventory():
+    """Get current user's inventory and points"""
+    if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
+        return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
+        return jsonify({
+            'success': False,
+            'message': 'Not logged in',
+            'inventory': [],
+            'points': 0
+        })
+    
+    # Get inventory
+    query = UserAvatarInventory.query
+    if user_id:
+        query = query.filter_by(user_id=user_id)
+    elif guest_code:
+        query = query.filter_by(guest_code=guest_code)
+    
+    inventory = query.all()
+    points, level = get_avatar_user_points(user_id, guest_code)
+    
+    return jsonify({
+        'success': True,
+        'inventory': [inv.to_dict() for inv in inventory],
+        'points': points,
+        'level': level
+    })
+
+@app.route('/api/avatar/equipped', methods=['GET'])
+def api_avatar_equipped():
+    """Get currently equipped avatar configuration"""
+    if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
+        return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    equipped = get_equipped_avatar(user_id, guest_code)
+    
+    return jsonify({
+        'success': True,
+        'equipped': equipped
+    })
+
+@app.route('/api/avatar/purchase', methods=['POST'])
+def api_avatar_purchase():
+    """Purchase an item"""
+    if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
+        return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
+    
+    if not FEATURE_FLAGS.get('AVATAR_SHOP_ENABLED', False):
+        return jsonify({'success': False, 'message': 'Avatar shop disabled'}), 503
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
+        return jsonify({'success': False, 'message': 'You must be logged in to purchase items'}), 401
+    
+    data = request.get_json()
+    item_id = data.get('item_id')
+    
+    if not item_id:
+        return jsonify({'success': False, 'message': 'Item ID is required'}), 400
+    
+    # Get the item
+    item = AvatarItem.query.get(item_id)
+    if not item:
+        return jsonify({'success': False, 'message': 'Item not found'}), 404
+    
+    if not item.is_active:
+        return jsonify({'success': False, 'message': 'Item is not available'}), 400
+    
+    # Check if already owned
+    if avatar_owns_item(item_id, user_id, guest_code):
+        return jsonify({'success': False, 'message': 'You already own this item'}), 400
+    
+    # Check if it's a free/default item
+    if item.is_default or item.point_cost == 0:
+        # Just add to inventory, no points needed
+        inventory_entry = UserAvatarInventory(
+            user_id=user_id,
+            guest_code=guest_code,
+            item_id=item_id
+        )
+        db.session.add(inventory_entry)
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'message': f"Added {item.display_name} to your collection!",
+            'new_points': None
+        })
+    
+    # Get current points
+    current_points, _ = get_avatar_user_points(user_id, guest_code)
+    
+    # Check if enough points
+    if current_points < item.point_cost:
+        return jsonify({
+            'success': False,
+            'message': f"Not enough points. You need {item.point_cost} but have {current_points}"
+        }), 400
+    
+    # Deduct points
+    from sqlalchemy import text
+    new_points = current_points - item.point_cost
+    
+    if user_id:
+        db.session.execute(text(
+            "UPDATE user_stats SET total_points = :points WHERE user_id = :uid"
+        ), {"points": new_points, "uid": user_id})
+    elif guest_code:
+        db.session.execute(text(
+            "UPDATE guest_stats SET total_score = :points WHERE guest_code = :code"
+        ), {"points": new_points, "code": guest_code})
+    
+    # Add to inventory
+    inventory_entry = UserAvatarInventory(
+        user_id=user_id,
+        guest_code=guest_code,
+        item_id=item_id
+    )
+    db.session.add(inventory_entry)
+    
+    # Log the purchase
+    purchase_log = AvatarPurchaseLog(
+        user_id=user_id,
+        guest_code=guest_code,
+        item_id=item_id,
+        points_spent=item.point_cost,
+        points_before=current_points,
+        points_after=new_points
+    )
+    db.session.add(purchase_log)
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f"Purchased {item.display_name} for {item.point_cost} points!",
+        'new_points': new_points
+    })
+
+@app.route('/api/avatar/equip', methods=['POST'])
+def api_avatar_equip():
+    """Equip an item"""
+    if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
+        return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
+        return jsonify({'success': False, 'message': 'You must be logged in to equip items'}), 401
+    
+    data = request.get_json()
+    item_type = data.get('item_type')
+    item_key = data.get('item_key')
+    
+    if not item_type or not item_key:
+        return jsonify({'success': False, 'message': 'Item type and key are required'}), 400
+    
+    # Verify item exists
+    item = AvatarItem.query.filter_by(
+        item_type=item_type,
+        item_key=item_key
+    ).first()
+    
+    if not item:
+        return jsonify({'success': False, 'message': 'Item not found'}), 404
+    
+    # Check ownership (default items are always available)
+    if not item.is_default and not avatar_owns_item(item.id, user_id, guest_code):
+        return jsonify({'success': False, 'message': "You don't own this item"}), 400
+    
+    # Get or create equipped record
+    if user_id:
+        equipped = UserAvatarEquipped.query.filter_by(user_id=user_id).first()
+        if not equipped:
+            equipped = UserAvatarEquipped(user_id=user_id)
+            db.session.add(equipped)
+    elif guest_code:
+        equipped = UserAvatarEquipped.query.filter_by(guest_code=guest_code).first()
+        if not equipped:
+            equipped = UserAvatarEquipped(guest_code=guest_code)
+            db.session.add(equipped)
+    else:
+        return jsonify({'success': False, 'message': 'No user or guest identified'}), 400
+    
+    # Update the appropriate slot
+    if item_type == 'animal':
+        equipped.animal_key = item_key
+    elif item_type == 'hat':
+        equipped.hat_key = item_key
+    elif item_type == 'glasses':
+        equipped.glasses_key = item_key
+    elif item_type == 'background':
+        equipped.background_key = item_key
+    elif item_type == 'accessory':
+        equipped.accessory_key = item_key
+    else:
+        return jsonify({'success': False, 'message': f'Unknown item type: {item_type}'}), 400
+    
+    equipped.updated_at = datetime.utcnow()
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f"Equipped {item.display_name}!"
+    })
+
+@app.route('/api/avatar/grant-defaults', methods=['POST'])
+def api_avatar_grant_defaults():
+    """Grant default items to current user (call on first login)"""
+    if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
+        return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
+        return jsonify({'success': False, 'message': 'Not logged in'}), 401
+    
+    grant_default_avatar_items(user_id, guest_code)
+    
+    return jsonify({
+        'success': True,
+        'message': 'Default items granted'
+    })
 
 # ==================== TOPIC MANAGEMENT MODULE ====================
 # Import and register topic management routes
