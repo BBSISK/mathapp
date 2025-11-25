@@ -1066,6 +1066,7 @@
         let maxConsecutiveCorrect = 0;
         let questionsAnsweredInQuiz = 0;
         let shownMilestones = new Set(); // Track which milestones shown this quiz
+        let totalMilestonePoints = 0; // Track total milestone points earned in this quiz
         
         // WHO AM I: Track quiz attempt ID and enable state
         let currentQuizAttemptId = null;
@@ -1435,14 +1436,25 @@
 
         async function loadBadgeWidget() {
             try {
+                console.log('🔄 Loading badge widget...');
+                
                 // Fetch badge and stats data in parallel
                 const [badgesResponse, statsResponse] = await Promise.all([
                     fetch('/api/student/badges'),
                     fetch('/api/student/stats')
                 ]);
 
+                console.log('📊 Badge response status:', badgesResponse.status);
+                console.log('📊 Stats response status:', statsResponse.status);
+
                 const badgesData = await badgesResponse.json();
                 const statsData = await statsResponse.json();
+
+                console.log('🎯 Badges data received:', badgesData);
+                console.log('📈 Stats data received:', statsData);
+                console.log('💰 Total points from API:', badgesData.total_points);
+                console.log('🏆 Level from API:', badgesData.level);
+                console.log('🎖️ Quizzes from API:', statsData.stats.total_quizzes);
 
                 // Update widget values
                 document.getElementById('stat-level').textContent = badgesData.level;
@@ -1451,6 +1463,11 @@
                 document.getElementById('stat-quizzes').textContent = statsData.stats.total_quizzes;
                 document.getElementById('stat-streak').textContent = statsData.stats.current_streak_days;
                 document.getElementById('stat-accuracy').textContent = statsData.stats.overall_accuracy + '%';
+
+                console.log('✅ Badge widget updated successfully');
+                console.log('   - Points displayed:', document.getElementById('stat-points').textContent);
+                console.log('   - Level displayed:', document.getElementById('stat-level').textContent);
+                console.log('   - Quizzes displayed:', document.getElementById('stat-quizzes').textContent);
 
                 // Show recent badges if any
                 if (badgesData.earned.length > 0) {
@@ -1468,7 +1485,8 @@
                 document.getElementById('badge-widget').style.display = 'block';
 
             } catch (error) {
-                console.error('Error loading badge widget:', error);
+                console.error('❌ Error loading badge widget:', error);
+                console.error('Error details:', error.message, error.stack);
                 // Hide widget if there's an error
                 document.getElementById('badge-widget').style.display = 'none';
             }
@@ -1552,6 +1570,7 @@
             maxConsecutiveCorrect = 0;
             questionsAnsweredInQuiz = 0;
             shownMilestones.clear();
+            totalMilestonePoints = 0;  // Reset milestone points
             console.log('✅ Milestone tracking reset for new quiz');
 
             document.getElementById('difficultyScreen').classList.add('hidden');
@@ -1912,11 +1931,23 @@
             let whoAmIBonus = 0;
             if (whoAmIEnabled && typeof getWhoAmIBonusPoints === 'function') {
                 whoAmIBonus = getWhoAmIBonusPoints();
-                console.log('🎯 Who Am I bonus points:', whoAmIBonus);
+                console.log('🎯 Who Am I bonus points to submit:', whoAmIBonus);
             }
 
             // Submit to backend
             try {
+                console.log('📤 Submitting quiz with data:', {
+                    topic: currentTopic,
+                    difficulty: currentDifficulty,
+                    score: score,
+                    total_questions: questions.length,
+                    percentage: percentage,
+                    time_taken: timeTaken,
+                    quiz_attempt_id: currentQuizAttemptId,
+                    who_am_i_bonus: whoAmIBonus,
+                    milestone_points: totalMilestonePoints  // Include milestone points!
+                });
+                
                 const response = await fetch('/api/submit-quiz', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -1928,18 +1959,24 @@
                         percentage: percentage,
                         time_taken: timeTaken,
                         quiz_attempt_id: currentQuizAttemptId,
-                        who_am_i_bonus: whoAmIBonus
+                        who_am_i_bonus: whoAmIBonus,
+                        milestone_points: totalMilestonePoints  // Include milestone points!
                     })
                 });
 
+                console.log('📥 Submit quiz response status:', response.status);
                 const result = await response.json();
+                console.log('📥 Submit quiz result:', result);
                 
                 // Check if user is a guest
                 if (result.is_guest || result.prompt_register) {
+                    console.log('⚠️ User is guest - showing guest modal');
                     // Show guest modal with registration prompt
                     showGuestResultModal(score, questions.length, percentage);
                     return;
                 }
+                
+                console.log('✅ Quiz submitted for registered user');
                 
                 // ✨ NEW: Show milestone celebration if badges were earned
                 if (result.newly_earned_badges && result.newly_earned_badges.length > 0) {
@@ -2826,6 +2863,12 @@
 
         function showAchievementPopup(achievement) {
             console.log('🎉 Showing achievement popup:', achievement);
+            
+            // Track milestone points
+            if (achievement.points) {
+                totalMilestonePoints += achievement.points;
+                console.log(`💰 Milestone points earned: +${achievement.points} (Total milestones: ${totalMilestonePoints})`);
+            }
             
             // Create overlay
             const overlay = document.createElement('div');

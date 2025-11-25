@@ -11,6 +11,8 @@
  * - Changed from 4×4 to 5×5 grid
  * - Removed tile gaps for more obscured image
  * - Fixed "Make a Guess" button functionality
+ * - FIXED: loadNextImage() now uses correct HTML structure
+ * - FIXED: Hint now displays properly at top of image
  */
 
 // ========================================
@@ -87,6 +89,7 @@ async function initializeWhoAmI(topic, difficulty, quizAttemptId) {
         whoAmIState.hint = data.hint;
         
         console.log('✅ Who Am I session started:', data.session_id);
+        console.log('💡 Hint:', whoAmIState.hint || 'No hint available');
         
         // Create the reveal grid
         createRevealGrid();
@@ -103,7 +106,7 @@ async function initializeWhoAmI(topic, difficulty, quizAttemptId) {
 }
 
 /**
- * Create the 5×5 reveal grid
+ * Create the 5×5 reveal grid with hint display
  */
 function createRevealGrid() {
     const container = document.getElementById('who-am-i-container');
@@ -115,6 +118,27 @@ function createRevealGrid() {
         return;
     }
     
+    // Build hint HTML if available (trim whitespace from hint)
+    console.log('🔍 Creating grid - hint check:');
+    console.log('  - Raw hint:', whoAmIState.hint);
+    console.log('  - Hint type:', typeof whoAmIState.hint);
+    
+    const trimmedHint = whoAmIState.hint ? whoAmIState.hint.trim() : '';
+    console.log('  - Trimmed hint:', trimmedHint);
+    console.log('  - Trimmed length:', trimmedHint.length);
+    console.log('  - Will create hint HTML:', !!trimmedHint);
+    
+    const hintHTML = trimmedHint ? `
+        <div class="who-am-i-hint">
+            💡 <strong>Hint:</strong> ${trimmedHint}
+        </div>
+    ` : '';
+    
+    console.log('  - Hint HTML length:', hintHTML.length);
+    if (hintHTML.length > 0) {
+        console.log('  - Hint HTML preview:', hintHTML.substring(0, 100));
+    }
+    
     // Build the grid HTML
     container.innerHTML = `
         <div class="who-am-i-wrapper">
@@ -122,6 +146,8 @@ function createRevealGrid() {
                 <h3>🎭 Who Am I?</h3>
                 <p>Answer correctly to reveal the mystery mathematician!</p>
             </div>
+            
+            ${hintHTML}
             
             <div class="reveal-grid">
                 <!-- Background Image (hidden behind tiles) -->
@@ -145,6 +171,18 @@ function createRevealGrid() {
             </button>
         </div>
     `;
+    
+    console.log('✅ Grid created with hint:', whoAmIState.hint ? 'Yes' : 'No');
+    
+    // Check if hint element actually made it into the DOM
+    setTimeout(() => {
+        const hintElement = document.querySelector('.who-am-i-hint');
+        console.log('🔍 DOM check - hint element exists:', !!hintElement);
+        if (hintElement) {
+            console.log('  - Content:', hintElement.textContent);
+            console.log('  - Visible:', hintElement.offsetHeight > 0);
+        }
+    }, 50);
 }
 
 /**
@@ -264,26 +302,26 @@ function openGuessModal() {
     const modalHTML = `
         <div class="guess-modal" id="guess-modal">
             <div class="guess-modal-content">
-                <h3>🤔 Who do you think it is?</h3>
-                <p>Enter the name of the mathematician you see:</p>
+                <h3>🤔 Who Am I?</h3>
+                <p>Think you know? Make your guess!</p>
                 
                 <input 
                     type="text" 
                     id="guess-input" 
-                    placeholder="e.g., Isaac Newton" 
+                    placeholder="Type your answer..."
                     autocomplete="off"
-                />
-                
-                <div id="guess-feedback-area"></div>
+                >
                 
                 <div class="guess-modal-buttons">
-                    <button class="guess-modal-cancel" onclick="closeGuessModal()">
-                        Cancel
-                    </button>
                     <button class="guess-modal-submit" onclick="submitGuess()">
                         Submit Guess
                     </button>
+                    <button class="guess-modal-cancel" onclick="closeGuessModal()">
+                        Cancel
+                    </button>
                 </div>
+                
+                <div id="guess-feedback-area"></div>
             </div>
         </div>
     `;
@@ -297,7 +335,7 @@ function openGuessModal() {
         input.focus();
         
         // Allow Enter key to submit
-        input.addEventListener('keypress', function(e) {
+        input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 submitGuess();
             }
@@ -320,10 +358,12 @@ function closeGuessModal() {
  */
 async function submitGuess() {
     const input = document.getElementById('guess-input');
-    const guess = input ? input.value.trim() : '';
+    if (!input) return;
+    
+    const guess = input.value.trim();
     
     if (!guess) {
-        showGuessFeedback('Please enter a name!', 'incorrect');
+        showGuessFeedback('Please enter a guess!', 'incorrect');
         return;
     }
     
@@ -355,7 +395,7 @@ async function submitGuess() {
         if (data.correct) {
             // Correct guess!
             whoAmIState.correctGuess = true;
-            whoAmIState.bonusPoints = data.bonus_points || 0;
+            whoAmIState.bonusPoints = (whoAmIState.bonusPoints || 0) + (data.bonus_points || 0);  // Accumulate bonus points
             
             const answerName = data.answer || guess;
             
@@ -479,21 +519,22 @@ function resetWhoAmI() {
 }
 
 // ========================================
-// AUTOMATIC NEXT IMAGE LOADING
+// AUTOMATIC NEXT IMAGE LOADING - FIXED!
 // ========================================
 
 /**
  * Load the next mystery image automatically after solving one
+ * FIXED: Now properly recreates the reveal grid structure WITH HINT
  */
 function loadNextImage(nextSessionData) {
     console.log('🔄 Loading next mystery image...');
     console.log('📦 Next session data:', nextSessionData);
     
-    // Update state with new session data - CRITICAL: Use correct property names!
+    // Update state with new session data
     whoAmIState.sessionId = nextSessionData.session_id;
     whoAmIState.imageUrl = nextSessionData.image_url;
     whoAmIState.hint = nextSessionData.hint || '';
-    whoAmIState.revealedTiles = new Set();  // FIXED: Was tilesRevealed
+    whoAmIState.revealedTiles = new Set();  // Clear revealed tiles
     whoAmIState.correctGuess = false;
     whoAmIState.guessedNames.clear();
     
@@ -503,8 +544,8 @@ function loadNextImage(nextSessionData) {
         hint: whoAmIState.hint
     });
     
-    // Find or ensure container exists
-    let container = document.getElementById('who-am-i-container');
+    // Find container
+    const container = document.getElementById('who-am-i-container');
     if (!container) {
         console.error('❌ Could not find who-am-i-container!');
         return;
@@ -513,52 +554,18 @@ function loadNextImage(nextSessionData) {
     // Make sure container is visible
     container.style.display = 'block';
     
-    // Reset the grid visually
-    let grid = document.getElementById('who-am-i-grid');
-    if (!grid) {
-        console.warn('⚠️ Grid element not found, searching in container...');
-        grid = container.querySelector('.who-am-i-grid');
-        if (!grid) {
-            console.error('❌ Could not find grid element anywhere!');
-            console.log('Container HTML:', container.innerHTML.substring(0, 200));
-            return;
-        }
-    }
+    console.log('🎨 Recreating entire grid structure with hint...');
     
-    console.log('🎨 Recreating grid...');
-    grid.innerHTML = '';
+    // FIXED: Recreate the entire grid structure using the same method as initial creation
+    // This now includes the hint display!
+    createRevealGrid();
     
-    // Recreate 25 tiles (5×5 grid) - NUMBERED 1-25 to match other code
-    for (let i = 1; i <= 25; i++) {
-        const tile = document.createElement('div');
-        tile.className = 'who-am-i-tile';
-        tile.id = `who-am-i-tile-${i}`;  // FIXED: Now 1-25 instead of 0-24
-        tile.style.backgroundImage = `url('${whoAmIState.imageUrl}')`;
-        
-        // Calculate background position for 5×5 grid (0-indexed for positioning)
-        const row = Math.floor((i - 1) / 5);
-        const col = (i - 1) % 5;
-        tile.style.backgroundPosition = `${-col * 20}% ${-row * 20}%`;
-        
-        grid.appendChild(tile);
-    }
-    console.log('✅ Grid recreated with 25 tiles');
-    
-    // Update hint display
-    const hintElement = document.getElementById('who-am-i-hint');
-    if (hintElement && whoAmIState.hint) {
-        hintElement.textContent = `💡 Hint: ${whoAmIState.hint}`;
-        hintElement.style.display = 'block';
-        console.log('✅ Hint updated');
-    } else if (hintElement) {
-        hintElement.style.display = 'none';
-        console.log('ℹ️ No hint for this image');
-    }
+    console.log('✅ Grid structure recreated with 25 unrevealed tiles and hint');
     
     // Show notification that new image loaded
     const notification = document.createElement('div');
     notification.className = 'who-am-i-notification';
-    notification.innerHTML = '🎯 <strong>New Mystery Image!</strong> Keep going!';
+    notification.innerHTML = '🎯 <strong>New Mystery Image!</strong> Keep answering to reveal it!';
     notification.style.cssText = `
         position: fixed;
         top: 20px;
@@ -578,11 +585,11 @@ function loadNextImage(nextSessionData) {
     document.body.appendChild(notification);
     console.log('✅ Notification shown');
     
-    // Remove notification after 2 seconds
+    // Remove notification after 2.5 seconds
     setTimeout(() => {
         notification.style.animation = 'slideUp 0.3s ease-out';
         setTimeout(() => notification.remove(), 300);
-    }, 2000);
+    }, 2500);
     
     console.log('✅ Next image loaded successfully!');
 }
@@ -591,4 +598,4 @@ function loadNextImage(nextSessionData) {
 // EXPORTS (for use in student_app.html)
 // ========================================
 
-console.log('✅ Who Am I system loaded (5×5 grid, no gaps)');
+console.log('✅ Who Am I system loaded (5×5 grid, no gaps, with hints)');

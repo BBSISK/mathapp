@@ -1623,7 +1623,8 @@ def submit_quiz():
         'arithmetic', 'fractions', 'decimals', 'multiplication_division',
         'number_systems',
         'bodmas', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'sets', 'probability', 'descriptive_statistics', 'surds',
-        'complex_numbers_intro', 'complex_numbers_expanded'
+        'complex_numbers_intro', 'complex_numbers_expanded',
+        'trigonometry', 'coordinate_geometry', 'simultaneous_equations'  # Added missing topics
     ]
     valid_difficulties = ['beginner', 'intermediate', 'advanced']
 
@@ -1638,28 +1639,64 @@ def submit_quiz():
         from sqlalchemy import text
         guest_code = session['guest_code']
         
-        # Save quiz attempt
-        db.session.execute(text("""
-            INSERT INTO guest_quiz_attempts (guest_code, topic, difficulty, score, total_questions, time_spent)
-            VALUES (:code, :topic, :diff, :score, :total, :time)
-        """), {
-            "code": guest_code,
-            "topic": topic,
-            "diff": difficulty,
-            "score": score,
-            "total": total,
-            "time": time_taken
-        })
+        # Get all bonus points
+        who_am_i_bonus = data.get('who_am_i_bonus', 0)
+        milestone_points = data.get('milestone_points', 0)  # NEW: In-quiz milestone points
+        total_points = score + who_am_i_bonus + milestone_points  # Score + all bonuses!
         
-        # Update guest stats
+        # Save quiz attempt (try with bonus columns, fallback without them)
+        try:
+            db.session.execute(text("""
+                INSERT INTO guest_quiz_attempts (guest_code, topic, difficulty, score, total_questions, time_spent, who_am_i_bonus, milestone_points)
+                VALUES (:code, :topic, :diff, :score, :total, :time, :bonus, :milestone)
+            """), {
+                "code": guest_code,
+                "topic": topic,
+                "diff": difficulty,
+                "score": score,
+                "total": total,
+                "time": time_taken,
+                "bonus": who_am_i_bonus,
+                "milestone": milestone_points
+            })
+        except:
+            # Fallback: table doesn't have bonus columns
+            try:
+                db.session.execute(text("""
+                    INSERT INTO guest_quiz_attempts (guest_code, topic, difficulty, score, total_questions, time_spent, who_am_i_bonus)
+                    VALUES (:code, :topic, :diff, :score, :total, :time, :bonus)
+                """), {
+                    "code": guest_code,
+                    "topic": topic,
+                    "diff": difficulty,
+                    "score": score,
+                    "total": total,
+                    "time": time_taken,
+                    "bonus": who_am_i_bonus
+                })
+            except:
+                # Final fallback: no bonus columns at all
+                db.session.execute(text("""
+                    INSERT INTO guest_quiz_attempts (guest_code, topic, difficulty, score, total_questions, time_spent)
+                    VALUES (:code, :topic, :diff, :score, :total, :time)
+                """), {
+                    "code": guest_code,
+                    "topic": topic,
+                    "diff": difficulty,
+                    "score": score,
+                    "total": total,
+                    "time": time_taken
+                })
+        
+        # Update guest stats (including ALL bonuses!)
         db.session.execute(text("""
             UPDATE guest_users
-            SET total_score = total_score + :score,
+            SET total_score = total_score + :total_points,
                 quizzes_completed = quizzes_completed + 1,
                 last_active = :now
             WHERE guest_code = :code
         """), {
-            "score": score,
+            "total_points": total_points,  # Score + who_am_i_bonus + milestone_points!
             "now": datetime.utcnow(),
             "code": guest_code
         })
@@ -1671,6 +1708,9 @@ def submit_quiz():
             'score': score,
             'total': total,
             'percentage': percentage,
+            'who_am_i_bonus': who_am_i_bonus,
+            'milestone_points': milestone_points,
+            'total_points_earned': total_points,
             'is_repeat_guest': True
         }), 200
 
@@ -1757,16 +1797,196 @@ def my_progress():
 @approved_required
 def get_student_badges():
     """Get all badges (earned and available) for the current student"""
-    # Guest users don't have badges
-    if 'is_guest' in session:
+    from sqlalchemy import text
+    
+    # =====================================================================
+    # CASUAL GUESTS - Quick Try users (no persistence)
+    # =====================================================================
+    if 'is_guest' in session and 'guest_code' not in session:
         return jsonify({
             'earned': [],
             'available': [],
             'level': 1,
             'total_points': 0,
-            'total_badges': 0
+            'total_badges': 0,
+            'is_casual_guest': True
         }), 200
-
+    
+    # =====================================================================
+    # REPEAT GUESTS - Users with guest_code (persistent points & badges)
+    # =====================================================================
+    if 'guest_code' in session:
+        guest_code = session['guest_code']
+        
+        # Ensure guest_badges table exists
+        ensure_guest_badges_table()
+        
+        # Get guest stats with error handling
+        try:
+            guest_stats = db.session.execute(text("""
+                SELECT total_score, quizzes_completed
+                FROM guest_users
+                WHERE guest_code = :code
+            """), {"code": guest_code}).fetchone()
+        except Exception as e:
+            # If query fails, return default values
+            guest_stats = None
+        
+        # Get guest badges (simplified query - only essential columns)
+        try:
+            guest_badges = db.session.execute(text("""
+                SELECT badge_name, earned_at
+                FROM guest_badges
+                WHERE guest_code = :code
+                ORDER BY earned_at DESC
+            """), {"code": guest_code}).fetchall()
+        except Exception as e:
+            # If guest_badges table doesn't exist or has issues, just return empty
+            guest_badges = []
+        
+        # Calculate level (1 level per 100 points)
+        total_points = guest_stats[0] if guest_stats else 0
+        quizzes_completed = guest_stats[1] if guest_stats and len(guest_stats) > 1 else 0
+        level = (total_points // 100) + 1
+        
+        # Format earned badges for frontend
+        earned_badges_list = []
+        earned_badge_names = set()
+        for badge in guest_badges:
+            earned_badges_list.append({
+                'name': badge[0],
+                'earned_at': badge[1].isoformat() if badge[1] else None,
+                'icon': 'fa-trophy'
+            })
+            earned_badge_names.add(badge[0])
+        
+        # GET ALL BADGES FROM DATABASE (same as registered users!)
+        try:
+            all_badges = Badge.query.all()
+        except:
+            all_badges = []
+        
+        available_badges_list = []
+        
+        # Calculate progress for each badge (same logic as registered users)
+        for badge in all_badges:
+            # Skip if already earned
+            if badge.name in earned_badge_names:
+                continue
+            
+            progress = 0
+            
+            # Calculate progress based on badge requirement
+            if badge.requirement_type == 'quizzes_completed':
+                progress = min(100, int((quizzes_completed / badge.requirement_value) * 100))
+            elif badge.requirement_type == 'perfect_scores':
+                # Count perfect scores from guest_quiz_attempts
+                try:
+                    perfect_count = db.session.execute(text("""
+                        SELECT COUNT(*) FROM guest_quiz_attempts
+                        WHERE guest_code = :code AND score = total_questions
+                    """), {"code": guest_code}).fetchone()[0]
+                    progress = min(100, int((perfect_count / badge.requirement_value) * 100))
+                except:
+                    progress = 0
+            elif badge.requirement_type == 'streak_days':
+                # Guests don't track daily streaks yet
+                progress = 0
+            elif badge.requirement_type == 'topics_mastered':
+                # Count distinct topics with 90%+ average
+                try:
+                    topics_result = db.session.execute(text("""
+                        SELECT topic, AVG(CAST(score AS FLOAT) / total_questions) as avg_score
+                        FROM guest_quiz_attempts
+                        WHERE guest_code = :code
+                        GROUP BY topic
+                        HAVING AVG(CAST(score AS FLOAT) / total_questions) >= 0.9
+                    """), {"code": guest_code}).fetchall()
+                    topics_mastered = len(topics_result)  # Count how many topics meet criteria
+                    progress = min(100, int((topics_mastered / badge.requirement_value) * 100))
+                except Exception as e:
+                    print(f"Error calculating topics_mastered: {e}")
+                    progress = 0
+            elif badge.requirement_type == 'high_scores':
+                # Count quizzes with 90%+ score
+                try:
+                    high_scores = db.session.execute(text("""
+                        SELECT COUNT(*) FROM guest_quiz_attempts
+                        WHERE guest_code = :code
+                        AND CAST(score AS FLOAT) / total_questions >= 0.9
+                    """), {"code": guest_code}).fetchone()[0]
+                    progress = min(100, int((high_scores / badge.requirement_value) * 100))
+                except:
+                    progress = 0
+            else:
+                progress = 0
+            
+            # AUTO-AWARD: If progress is 100%, award the badge!
+            if progress >= 100:
+                try:
+                    # Check if badge already exists
+                    existing = db.session.execute(text("""
+                        SELECT COUNT(*) FROM guest_badges
+                        WHERE guest_code = :code AND badge_name = :badge_name
+                    """), {"code": guest_code, "badge_name": badge.name}).fetchone()[0]
+                    
+                    if existing == 0:
+                        # Award the badge!
+                        db.session.execute(text("""
+                            INSERT INTO guest_badges (guest_code, badge_name, earned_at)
+                            VALUES (:code, :badge_name, :earned_at)
+                        """), {
+                            "code": guest_code,
+                            "badge_name": badge.name,
+                            "earned_at": datetime.utcnow()
+                        })
+                        db.session.commit()
+                        
+                        # Add to earned badges instead of available
+                        earned_badges_list.append({
+                            'name': badge.name,
+                            'earned_at': datetime.utcnow().isoformat(),
+                            'icon': badge.icon
+                        })
+                        earned_badge_names.add(badge.name)
+                        
+                        print(f'🎉 Auto-awarded badge: {badge.name} to guest {guest_code}')
+                        continue  # Skip adding to available badges
+                    else:
+                        print(f'Badge {badge.name} already awarded to {guest_code}, skipping')
+                        continue  # Skip adding to available if already earned
+                except Exception as e:
+                    # Log error but don't crash
+                    print(f'❌ Error auto-awarding badge {badge.name}: {str(e)}')
+                    # Fall through to add to available badges
+            
+            # Add to available badges
+            available_badges_list.append({
+                'id': badge.id,
+                'name': badge.name,
+                'description': badge.description,
+                'icon': badge.icon,
+                'category': badge.category,
+                'requirement_type': badge.requirement_type,
+                'requirement_value': badge.requirement_value,
+                'points': badge.points,
+                'color': badge.color,
+                'progress': progress,
+                'earned_at': None
+            })
+        
+        return jsonify({
+            'earned': earned_badges_list,
+            'available': available_badges_list,  # ALL badges from database!
+            'level': level,
+            'total_points': total_points,
+            'total_badges': len(earned_badges_list) + len(available_badges_list),
+            'is_repeat_guest': True
+        }), 200
+    
+    # =====================================================================
+    # REGISTERED USERS - Full badge system
+    # =====================================================================
     user_id = session['user_id']
 
     # Get all badges
@@ -1785,7 +2005,8 @@ def get_student_badges():
         'earned': [],
         'available': [],
         'total_points': stats.total_points,
-        'level': stats.level
+        'level': stats.level,
+        'is_registered_user': True
     }
 
     for badge in all_badges:
@@ -2011,6 +2232,175 @@ def get_student_mastery():
 
     return jsonify(mastery_data)
 
+
+# ==================== MANUAL BADGE AWARD ROUTE ====================
+@app.route('/api/award-badges-now')
+@login_required
+def award_badges_now():
+    """
+    Manually trigger badge awarding for current guest code user
+    Useful for testing and fixing badges that should be earned
+    """
+    from sqlalchemy import text
+    
+    if 'guest_code' not in session:
+        return jsonify({
+            'error': 'Only available for guest code users',
+            'message': 'Please log in with a guest code to use this feature'
+        }), 400
+        
+    guest_code = session['guest_code']
+    
+    try:
+        # Ensure guest_badges table exists
+        ensure_guest_badges_table()
+        
+        # Get guest stats
+        guest_stats = db.session.execute(text("""
+            SELECT total_score, quizzes_completed
+            FROM guest_users
+            WHERE guest_code = :code
+        """), {"code": guest_code}).fetchone()
+        
+        if not guest_stats:
+            return jsonify({'error': 'Guest not found'}), 404
+            
+        quizzes = guest_stats[1]
+        points = guest_stats[0]
+        
+        # Get all badges
+        all_badges = Badge.query.all()
+        
+        awarded = []
+        skipped = []
+        errors = []
+        
+        for badge in all_badges:
+            try:
+                # Calculate if badge is earned
+                earned = False
+                progress = 0
+                
+                if badge.requirement_type == 'quizzes_completed':
+                    progress = (quizzes / badge.requirement_value) * 100 if badge.requirement_value > 0 else 0
+                    if quizzes >= badge.requirement_value:
+                        earned = True
+                        
+                elif badge.requirement_type == 'perfect_scores':
+                    perfect_count = db.session.execute(text("""
+                        SELECT COUNT(*) FROM guest_quiz_attempts
+                        WHERE guest_code = :code AND score = total_questions
+                    """), {"code": guest_code}).fetchone()[0]
+                    progress = (perfect_count / badge.requirement_value) * 100 if badge.requirement_value > 0 else 0
+                    if perfect_count >= badge.requirement_value:
+                        earned = True
+                        
+                elif badge.requirement_type == 'high_scores':
+                    high_scores = db.session.execute(text("""
+                        SELECT COUNT(*) FROM guest_quiz_attempts
+                        WHERE guest_code = :code
+                        AND CAST(score AS FLOAT) / total_questions >= 0.9
+                    """), {"code": guest_code}).fetchone()[0]
+                    progress = (high_scores / badge.requirement_value) * 100 if badge.requirement_value > 0 else 0
+                    if high_scores >= badge.requirement_value:
+                        earned = True
+                
+                elif badge.requirement_type == 'topics_mastered':
+                    topics_result = db.session.execute(text("""
+                        SELECT topic, AVG(CAST(score AS FLOAT) / total_questions) as avg_score
+                        FROM guest_quiz_attempts
+                        WHERE guest_code = :code
+                        GROUP BY topic
+                        HAVING AVG(CAST(score AS FLOAT) / total_questions) >= 0.9
+                    """), {"code": guest_code}).fetchall()
+                    topics_mastered = len(topics_result)
+                    progress = (topics_mastered / badge.requirement_value) * 100 if badge.requirement_value > 0 else 0
+                    if topics_mastered >= badge.requirement_value:
+                        earned = True
+                
+                if earned:
+                    # Check if already awarded
+                    existing = db.session.execute(text("""
+                        SELECT COUNT(*) FROM guest_badges
+                        WHERE guest_code = :code AND badge_name = :name
+                    """), {"code": guest_code, "name": badge.name}).fetchone()[0]
+                    
+                    if existing == 0:
+                        # Award it!
+                        db.session.execute(text("""
+                            INSERT INTO guest_badges (guest_code, badge_name, earned_at)
+                            VALUES (:code, :name, :now)
+                        """), {
+                            "code": guest_code,
+                            "name": badge.name,
+                            "now": datetime.utcnow()
+                        })
+                        db.session.commit()
+                        awarded.append({
+                            'name': badge.name,
+                            'progress': int(progress),
+                            'requirement': f"{badge.requirement_type}: {badge.requirement_value}"
+                        })
+                    else:
+                        skipped.append(f"{badge.name} (already earned)")
+                        
+            except Exception as e:
+                errors.append(f"{badge.name}: {str(e)}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Badge check complete!',
+            'guest_code': guest_code,
+            'quizzes_completed': quizzes,
+            'total_points': points,
+            'newly_awarded': awarded,
+            'already_earned': skipped,
+            'errors': errors if errors else None
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Failed to check badges. See error for details.'
+        }), 500
+
+
+def ensure_guest_badges_table():
+    """
+    Ensure the guest_badges table exists with correct structure
+    Creates it if missing
+    """
+    from sqlalchemy import text
+    
+    try:
+        # Check if table exists
+        result = db.session.execute(text("""
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='guest_badges'
+        """)).fetchone()
+        
+        if not result:
+            print("⚠️  guest_badges table does NOT exist! Creating it now...")
+            
+            # Create the table
+            db.session.execute(text("""
+                CREATE TABLE guest_badges (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    guest_code TEXT NOT NULL,
+                    badge_name TEXT NOT NULL,
+                    earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(guest_code, badge_name)
+                )
+            """))
+            db.session.commit()
+            print("✅ guest_badges table created successfully!")
+        else:
+            print("✅ guest_badges table exists")
+            
+    except Exception as e:
+        print(f"❌ Error checking/creating guest_badges table: {e}")
+        # Don't raise - just log the error
 
 
 @app.route('/student/badges')
