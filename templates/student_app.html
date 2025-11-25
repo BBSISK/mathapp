@@ -10,6 +10,10 @@
     <script src="{{ url_for('static', filename='quiz_milestones.js') }}"></script>
     <!-- WHO AM I: CSS for reveal grid -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/who_am_i.css') }}">
+    <!-- AVATAR: CSS for avatar display -->
+    {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/avatar.css') }}">
+    {% endif %}
     <style>
         /* WHO AM I: Ensure container fits nicely in side-by-side layout */
         @media (min-width: 1024px) {
@@ -699,6 +703,28 @@
         }
 
         /* ========================================
+           AVATAR SYSTEM STYLES 
+           ======================================== */
+        
+        @keyframes results-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+            }
+        }
+        
+        #header-avatar-container:hover #header-avatar {
+            transform: scale(1.1);
+            transition: transform 0.2s ease;
+        }
+        
+        #results-avatar {
+            margin: 0 auto;
+        }
+
+        /* ========================================
            MILESTONE CELEBRATION SYSTEM 
            ======================================== */
         
@@ -874,6 +900,12 @@
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-gray-800">🎓 Math Master</h1>
             <div class="flex items-center gap-4">
+                <!-- AVATAR: Display in header -->
+                {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+                <div id="header-avatar-container" class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='/avatar/shop'" title="Customize your avatar">
+                    <div id="header-avatar" class="avatar-container avatar-small"></div>
+                </div>
+                {% endif %}
                 <span class="text-gray-700" id="userName"></span>
                 <button onclick="openPasswordModal()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all">
                     <i class="fas fa-key mr-2"></i>Change Password
@@ -890,7 +922,12 @@
         <div id="badge-widget" class="badge-summary-widget" style="display: none;">
             <div class="badge-summary-header">
                 <h2 class="badge-summary-title">🏆 Your Progress</h2>
-                <a href="/student/badges" class="view-badges-btn">View All Badges →</a>
+                <div class="flex gap-2">
+                    {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+                    <a href="/avatar/shop" class="view-badges-btn" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">🎨 Avatar Shop</a>
+                    {% endif %}
+                    <a href="/student/badges" class="view-badges-btn">View All Badges →</a>
+                </div>
             </div>
 
             <div class="badge-summary-stats">
@@ -1023,7 +1060,14 @@
         <!-- Results Screen -->
         <div id="resultsScreen" class="hidden max-w-2xl mx-auto">
             <div class="bg-white rounded-2xl p-8 shadow-2xl text-center">
+                <!-- AVATAR: Show on results screen -->
+                {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+                <div id="results-avatar-container" class="mb-4">
+                    <div id="results-avatar" class="avatar-container avatar-large mx-auto" style="border: 4px solid #ffd700; animation: results-glow 2s ease-in-out infinite;"></div>
+                </div>
+                {% else %}
                 <i class="fas fa-trophy text-yellow-500 text-8xl mb-6"></i>
+                {% endif %}
                 <h2 class="text-4xl font-bold text-gray-800 mb-4">Quiz Complete!</h2>
                 <div id="percentage" class="text-6xl font-bold text-purple-600 mb-4"></div>
                 <p id="scoreText" class="text-2xl text-gray-700 mb-8"></p>
@@ -4493,6 +4537,52 @@ console.log('Tutorial Manager initialized');
 
 <!-- WHO AM I: JavaScript for reveal functionality -->
 <script src="{{ url_for('static', filename='js/who_am_i.js') }}"></script>
+
+<!-- AVATAR: JavaScript for avatar rendering -->
+{% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+<script src="{{ url_for('static', filename='js/avatar.js') }}"></script>
+<script>
+    // Load and render avatar on page load
+    async function loadUserAvatar() {
+        try {
+            const response = await fetch('/api/avatar/equipped');
+            const data = await response.json();
+            
+            if (data.success && data.equipped) {
+                const config = data.equipped;
+                
+                // Render in header
+                const headerAvatar = document.getElementById('header-avatar');
+                if (headerAvatar && typeof AvatarRenderer !== 'undefined') {
+                    AvatarRenderer.render(headerAvatar, config, 'small');
+                }
+                
+                // Render in results screen
+                const resultsAvatar = document.getElementById('results-avatar');
+                if (resultsAvatar && typeof AvatarRenderer !== 'undefined') {
+                    AvatarRenderer.render(resultsAvatar, config, 'large');
+                }
+            }
+        } catch (error) {
+            console.log('Avatar loading skipped:', error.message);
+        }
+    }
+    
+    // Load avatar when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUserAvatar();
+    });
+    
+    // Also refresh avatar after quiz results are shown (in case of new unlocks)
+    const originalShowResults = typeof showResults === 'function' ? showResults : null;
+    if (originalShowResults) {
+        window.showResults = function() {
+            originalShowResults.apply(this, arguments);
+            loadUserAvatar(); // Refresh avatar display
+        };
+    }
+</script>
+{% endif %}
 
 </body>
 </html>

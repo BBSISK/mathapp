@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Badges & Progress</title>
+    <!-- AVATAR: CSS for avatar display -->
+    {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/avatar.css') }}">
+    {% endif %}
     <style>
         * {
             margin: 0;
@@ -297,6 +301,11 @@
         <a href="/" class="back-button">← Back to Dashboard</a>
 
         <div class="header">
+            <!-- AVATAR: Display large avatar at top of profile -->
+            {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+            <div id="profile-avatar" class="avatar-container avatar-xlarge" style="margin: 0 auto 20px; border: 4px solid rgba(255,255,255,0.3);"></div>
+            <a href="/avatar/shop" style="display: inline-block; background: rgba(255,255,255,0.2); color: white; padding: 8px 20px; border-radius: 20px; text-decoration: none; font-size: 0.9em; margin-bottom: 15px;">🎨 Customize Avatar</a>
+            {% endif %}
             <h1>🏆 My Badges & Progress</h1>
             <p>Track your achievements and mastery</p>
         </div>
@@ -514,5 +523,31 @@
         // Load dashboard on page load
         loadDashboard();
     </script>
+    
+    <!-- AVATAR: JavaScript for avatar rendering -->
+    {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+    <script src="{{ url_for('static', filename='js/avatar.js') }}"></script>
+    <script>
+        // Load and render avatar
+        async function loadProfileAvatar() {
+            try {
+                const response = await fetch('/api/avatar/equipped');
+                const data = await response.json();
+                
+                if (data.success && data.equipped) {
+                    const profileAvatar = document.getElementById('profile-avatar');
+                    if (profileAvatar && typeof AvatarRenderer !== 'undefined') {
+                        AvatarRenderer.render(profileAvatar, data.equipped, 'xlarge');
+                    }
+                }
+            } catch (error) {
+                console.log('Avatar loading skipped:', error.message);
+            }
+        }
+        
+        // Load avatar when DOM is ready
+        document.addEventListener('DOMContentLoaded', loadProfileAvatar);
+    </script>
+    {% endif %}
 </body>
 </html>

@@ -430,12 +430,15 @@ const AvatarShop = {
             const inventoryData = await inventoryResponse.json();
             this.inventory = inventoryData.inventory || [];
             this.userPoints = inventoryData.points || 0;
+            console.log('🎒 Loaded inventory:', this.inventory.length, 'items, Points:', this.userPoints);
             
             // Load equipped items
             const equippedResponse = await fetch('/api/avatar/equipped');
             const equippedData = await equippedResponse.json();
+            console.log('🎭 Equipped data from API:', equippedData);
             if (equippedData.equipped) {
                 this.currentAvatar = equippedData.equipped;
+                console.log('🎭 Current avatar set to:', this.currentAvatar);
             }
             
         } catch (error) {
@@ -461,9 +464,12 @@ const AvatarShop = {
      * Render the preview avatar
      */
     renderPreview() {
+        console.log('🖼️ renderPreview called with:', this.currentAvatar);
         const previewContainer = document.getElementById('avatar-preview');
         if (previewContainer) {
             AvatarRenderer.render(previewContainer, this.currentAvatar, 'xlarge');
+        } else {
+            console.warn('⚠️ avatar-preview container not found');
         }
         
         const pointsDisplay = document.getElementById('avatar-points');
@@ -562,15 +568,24 @@ const AvatarShop = {
             const data = await response.json();
             
             if (data.success) {
-                // Update local state
+                // Update points immediately
                 if (data.new_points !== undefined) {
                     this.userPoints = data.new_points;
                 }
                 
-                // Reload inventory
+                // Reload ALL data from server (inventory AND equipped)
                 await this.loadData();
+                
+                // Force re-render after data loads
                 this.renderPreview();
                 this.renderShop();
+                
+                // Animate the preview to show change
+                const preview = document.getElementById('avatar-preview');
+                if (preview) {
+                    preview.classList.add('avatar-bounce');
+                    setTimeout(() => preview.classList.remove('avatar-bounce'), 500);
+                }
                 
                 // Show success message
                 this.showMessage(data.message, 'success');

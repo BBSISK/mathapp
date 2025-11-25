@@ -204,6 +204,12 @@
             <div class="preview-info">
                 <div class="preview-name">{{ user_name or guest_code or 'Student' }}</div>
                 <div class="preview-level">Level {{ level or 1 }}</div>
+                {% if is_casual_guest %}
+                <div style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 10px; margin-bottom: 10px; font-size: 0.9em;">
+                    💡 Quick Try guests can't save avatar purchases.<br>
+                    <a href="/guest-mode" style="color: #ffd700;">Get a code</a> to save your progress!
+                </div>
+                {% endif %}
                 <div class="points-display">
                     <span class="points-icon">⭐</span>
                     <span id="avatar-points">{{ points or 0 }}</span>

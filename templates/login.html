@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Math Master - Welcome</title>
+    <!-- AVATAR: CSS for avatar display -->
+    {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/avatar.css') }}">
+    {% endif %}
     <style>
         * {
             margin: 0;
@@ -669,6 +673,15 @@
         <!-- Code Display (after generation) -->
         <div id="codeDisplay" class="form-section">
             <h2 style="margin-bottom: 20px; color: #333; text-align: center;">🎉 Your Code is Ready!</h2>
+            
+            <!-- AVATAR: Show animal avatar with code -->
+            {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+            <div id="codeAvatarContainer" style="text-align: center; margin-bottom: 20px;">
+                <div id="codeAvatar" class="avatar-container avatar-large" style="margin: 0 auto; border: 4px solid #667eea;"></div>
+                <p style="margin-top: 10px; color: #666; font-size: 14px;">This is your avatar! You can customize it later.</p>
+            </div>
+            {% endif %}
+            
             <div class="code-display">
                 <h3>Your Unique Guest Code:</h3>
                 <div class="guest-code" id="displayedCode">---</div>
@@ -1205,6 +1218,14 @@
                     document.getElementById('displayedCode').textContent = data.guest_code;
                     document.querySelectorAll('.form-section').forEach(el => el.classList.remove('active'));
                     document.getElementById('codeDisplay').classList.add('active');
+                    
+                    // AVATAR: Render the animal avatar if available
+                    if (data.animal && typeof AvatarRenderer !== 'undefined') {
+                        const avatarContainer = document.getElementById('codeAvatar');
+                        if (avatarContainer) {
+                            AvatarRenderer.render(avatarContainer, { animal: data.animal }, 'large');
+                        }
+                    }
                 } else {
                     showError(data.error || 'Failed to generate code');
                     btn.disabled = false;
@@ -1341,5 +1362,10 @@
             }
         });
     </script>
+    
+    <!-- AVATAR: JavaScript for avatar rendering -->
+    {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+    <script src="{{ url_for('static', filename='js/avatar.js') }}"></script>
+    {% endif %}
 </body>
 </html>

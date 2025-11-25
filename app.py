@@ -634,20 +634,24 @@ def get_avatar_user_points(user_id=None, guest_code=None):
     """
     Get current points for user or guest.
     Returns (points, level) tuple.
+    
+    NOTE: guest_code takes priority over user_id because repeat guests
+    have BOTH set in session (user_id points to shared guest account).
     """
     from sqlalchemy import text
     
-    if user_id:
+    # Check guest_code FIRST (repeat guests have both user_id and guest_code)
+    if guest_code:
+        # Guest user - get from guest_users table (NOT guest_stats!)
+        result = db.session.execute(text(
+            "SELECT total_score FROM guest_users WHERE guest_code = :code"
+        ), {"code": guest_code}).fetchone()
+        points = result[0] if result else 0
+    elif user_id:
         # Registered user - get from UserStats
         result = db.session.execute(text(
             "SELECT total_points FROM user_stats WHERE user_id = :uid"
         ), {"uid": user_id}).fetchone()
-        points = result[0] if result else 0
-    elif guest_code:
-        # Guest user - get from guest_stats
-        result = db.session.execute(text(
-            "SELECT total_score FROM guest_stats WHERE guest_code = :code"
-        ), {"code": guest_code}).fetchone()
         points = result[0] if result else 0
     else:
         points = 0
@@ -659,10 +663,11 @@ def avatar_owns_item(item_id, user_id=None, guest_code=None):
     """Check if user/guest owns a specific item"""
     query = UserAvatarInventory.query.filter_by(item_id=item_id)
     
-    if user_id:
-        return query.filter_by(user_id=user_id).first() is not None
-    elif guest_code:
+    # Check guest_code FIRST (repeat guests have both user_id and guest_code)
+    if guest_code:
         return query.filter_by(guest_code=guest_code).first() is not None
+    elif user_id:
+        return query.filter_by(user_id=user_id).first() is not None
     
     return False
 
@@ -696,8 +701,9 @@ def grant_default_avatar_items(user_id=None, guest_code=None):
     
     for item in default_items:
         if not avatar_owns_item(item.id, user_id, guest_code):
+            # For guests, only store guest_code (not the shared user_id)
             inventory_entry = UserAvatarInventory(
-                user_id=user_id,
+                user_id=user_id if not guest_code else None,
                 guest_code=guest_code,
                 item_id=item.id
             )
@@ -4656,11 +4662,36 @@ def generate_repeat_guest():
             VALUES (:code, :now, :now)
         """), {"code": code, "now": datetime.utcnow()})
         db.session.commit()
+        
+        # AVATAR: Auto-setup avatar for new guest
+        animal = get_animal_from_guest_code(code)
+        avatar_animal = animal if animal else 'panda'
+        
+        if FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
+            try:
+                # Grant default items to new guest
+                grant_default_avatar_items(guest_code=code)
+                
+                # Create equipped avatar with their animal
+                equipped = UserAvatarEquipped(
+                    guest_code=code,
+                    animal_key=avatar_animal,
+                    hat_key='none',
+                    glasses_key='none',
+                    background_key='none',
+                    accessory_key='none'
+                )
+                db.session.add(equipped)
+                db.session.commit()
+            except Exception as avatar_error:
+                print(f"Avatar setup error (non-fatal): {avatar_error}")
+                # Don't fail the guest creation if avatar setup fails
 
         return jsonify({
             'success': True,
             'guest_code': code,
-            'message': f'Your code is: {code}'
+            'message': f'Your code is: {code}',
+            'animal': avatar_animal  # Return animal for frontend display
         }), 200
 
     except Exception as e:
@@ -4712,11 +4743,36 @@ def repeat_guest_login():
 
         # Update last active
         update_guest_last_active(code)
+        
+        # AVATAR: Ensure returning guest has avatar setup
+        animal = get_animal_from_guest_code(code)
+        if FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
+            try:
+                # Check if guest has equipped avatar
+                existing_equipped = UserAvatarEquipped.query.filter_by(guest_code=code).first()
+                
+                if not existing_equipped:
+                    # First time with avatar system - set up defaults
+                    grant_default_avatar_items(guest_code=code)
+                    
+                    equipped = UserAvatarEquipped(
+                        guest_code=code,
+                        animal_key=animal if animal else 'panda',
+                        hat_key='none',
+                        glasses_key='none',
+                        background_key='none',
+                        accessory_key='none'
+                    )
+                    db.session.add(equipped)
+                    db.session.commit()
+            except Exception as avatar_error:
+                print(f"Avatar setup error (non-fatal): {avatar_error}")
 
         return jsonify({
             'success': True,
             'message': 'Welcome back!',
-            'redirect': '/student'
+            'redirect': '/student',
+            'animal': animal  # Return animal for frontend display
         }), 200
 
     except Exception as e:
@@ -5594,24 +5650,43 @@ def avatar_shop_page():
     
     user_id = session.get('user_id')
     guest_code = session.get('guest_code')
+    is_casual_guest = session.get('is_guest', False)
     
     if not user_id and not guest_code:
         flash('Please log in to access the avatar shop', 'warning')
         return redirect(url_for('login'))
     
-    # Get user info
+    # Get user info based on user type
     user_name = None
-    if user_id:
+    display_name = None
+    
+    if guest_code:
+        # Repeat guest with animal code - use guest_code as name
+        display_name = guest_code
+    elif is_casual_guest:
+        # Casual guest (Quick Try) - show generic name
+        display_name = "Quick Try Guest"
+    elif user_id:
+        # Regular registered user
         user = User.query.get(user_id)
         user_name = user.full_name if user else None
+        display_name = user_name
     
-    points, level = get_avatar_user_points(user_id, guest_code)
+    # Get points - prioritize guest_code for repeat guests
+    if guest_code:
+        points, level = get_avatar_user_points(None, guest_code)
+    elif user_id and not is_casual_guest:
+        points, level = get_avatar_user_points(user_id, None)
+    else:
+        # Casual guests don't have persistent points for avatar shop
+        points, level = 0, 1
     
     return render_template('avatar_shop.html',
-        user_name=user_name,
+        user_name=display_name,
         guest_code=guest_code,
         points=points,
-        level=level
+        level=level,
+        is_casual_guest=is_casual_guest
     )
 
 @app.route('/api/avatar/items', methods=['GET'])
@@ -5641,6 +5716,7 @@ def api_avatar_inventory():
     
     user_id = session.get('user_id')
     guest_code = session.get('guest_code')
+    is_casual_guest = session.get('is_guest', False)
     
     if not user_id and not guest_code:
         return jsonify({
@@ -5650,15 +5726,27 @@ def api_avatar_inventory():
             'points': 0
         })
     
-    # Get inventory
+    # Get inventory based on user type
     query = UserAvatarInventory.query
-    if user_id:
-        query = query.filter_by(user_id=user_id)
-    elif guest_code:
+    if guest_code:
+        # Repeat guest - use guest_code
         query = query.filter_by(guest_code=guest_code)
+        points, level = get_avatar_user_points(None, guest_code)
+    elif user_id and not is_casual_guest:
+        # Regular registered user
+        query = query.filter_by(user_id=user_id)
+        points, level = get_avatar_user_points(user_id, None)
+    else:
+        # Casual guest - no persistent inventory or points
+        return jsonify({
+            'success': True,
+            'inventory': [],
+            'points': 0,
+            'level': 1,
+            'is_casual_guest': True
+        })
     
     inventory = query.all()
-    points, level = get_avatar_user_points(user_id, guest_code)
     
     return jsonify({
         'success': True,
@@ -5746,18 +5834,19 @@ def api_avatar_purchase():
     from sqlalchemy import text
     new_points = current_points - item.point_cost
     
-    if user_id:
+    # Deduct from correct table (guest_code takes priority)
+    if guest_code:
+        db.session.execute(text(
+            "UPDATE guest_users SET total_score = :points WHERE guest_code = :code"
+        ), {"points": new_points, "code": guest_code})
+    elif user_id:
         db.session.execute(text(
             "UPDATE user_stats SET total_points = :points WHERE user_id = :uid"
         ), {"points": new_points, "uid": user_id})
-    elif guest_code:
-        db.session.execute(text(
-            "UPDATE guest_stats SET total_score = :points WHERE guest_code = :code"
-        ), {"points": new_points, "code": guest_code})
     
-    # Add to inventory
+    # Add to inventory (store both for tracking, but guest_code is primary for guests)
     inventory_entry = UserAvatarInventory(
-        user_id=user_id,
+        user_id=user_id if not guest_code else None,  # Only set user_id for actual registered users
         guest_code=guest_code,
         item_id=item_id
     )
@@ -5814,16 +5903,16 @@ def api_avatar_equip():
     if not item.is_default and not avatar_owns_item(item.id, user_id, guest_code):
         return jsonify({'success': False, 'message': "You don't own this item"}), 400
     
-    # Get or create equipped record
-    if user_id:
-        equipped = UserAvatarEquipped.query.filter_by(user_id=user_id).first()
-        if not equipped:
-            equipped = UserAvatarEquipped(user_id=user_id)
-            db.session.add(equipped)
-    elif guest_code:
+    # Get or create equipped record (guest_code takes priority)
+    if guest_code:
         equipped = UserAvatarEquipped.query.filter_by(guest_code=guest_code).first()
         if not equipped:
             equipped = UserAvatarEquipped(guest_code=guest_code)
+            db.session.add(equipped)
+    elif user_id:
+        equipped = UserAvatarEquipped.query.filter_by(user_id=user_id).first()
+        if not equipped:
+            equipped = UserAvatarEquipped(user_id=user_id)
             db.session.add(equipped)
     else:
         return jsonify({'success': False, 'message': 'No user or guest identified'}), 400
