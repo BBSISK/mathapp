@@ -672,16 +672,26 @@ def avatar_owns_item(item_id, user_id=None, guest_code=None):
     return False
 
 def get_equipped_avatar(user_id=None, guest_code=None):
-    """Get currently equipped avatar configuration"""
-    if user_id:
-        equipped = UserAvatarEquipped.query.filter_by(user_id=user_id).first()
-    elif guest_code:
+    """Get currently equipped avatar configuration
+    
+    NOTE: guest_code takes priority because repeat guests have BOTH
+    a shared user_id AND their unique guest_code in session.
+    """
+    equipped = None
+    
+    # Check guest_code FIRST (repeat guests have both user_id and guest_code)
+    if guest_code:
         equipped = UserAvatarEquipped.query.filter_by(guest_code=guest_code).first()
-    else:
-        equipped = None
+        print(f"🔍 Looking for equipped by guest_code={guest_code}, found: {equipped}")
+    
+    # Only check user_id if no guest_code OR no equipped found for guest
+    if not equipped and user_id:
+        equipped = UserAvatarEquipped.query.filter_by(user_id=user_id).first()
+        print(f"🔍 Looking for equipped by user_id={user_id}, found: {equipped}")
     
     # Return default configuration if none exists
     if not equipped:
+        print(f"⚠️ No equipped record found, returning defaults")
         return {
             'animal': 'panda',
             'hat': 'none',
@@ -690,7 +700,9 @@ def get_equipped_avatar(user_id=None, guest_code=None):
             'accessory': 'none'
         }
     
-    return equipped.to_dict()
+    result = equipped.to_dict()
+    print(f"✅ Found equipped record: {result}")
+    return result
 
 def grant_default_avatar_items(user_id=None, guest_code=None):
     """Grant all default items to a new user/guest"""
@@ -5764,11 +5776,21 @@ def api_avatar_equipped():
     user_id = session.get('user_id')
     guest_code = session.get('guest_code')
     
+    # DEBUG: Log what we're looking for
+    print(f"🔍 api_avatar_equipped called: user_id={user_id}, guest_code={guest_code}")
+    
     equipped = get_equipped_avatar(user_id, guest_code)
+    
+    # DEBUG: Log what we found
+    print(f"🎭 Returning equipped: {equipped}")
     
     return jsonify({
         'success': True,
-        'equipped': equipped
+        'equipped': equipped,
+        '_debug': {
+            'session_user_id': user_id,
+            'session_guest_code': guest_code
+        }
     })
 
 @app.route('/api/avatar/purchase', methods=['POST'])
@@ -5851,6 +5873,42 @@ def api_avatar_purchase():
         item_id=item_id
     )
     db.session.add(inventory_entry)
+    
+    # AUTO-EQUIP: Automatically equip the purchased item
+    print(f"🛒 AUTO-EQUIP: user_id={user_id}, guest_code={guest_code}, item_type={item.item_type}, item_key={item.item_key}")
+    
+    if guest_code:
+        equipped = UserAvatarEquipped.query.filter_by(guest_code=guest_code).first()
+        print(f"🔍 Found equipped for guest_code={guest_code}: {equipped}")
+        if not equipped:
+            equipped = UserAvatarEquipped(guest_code=guest_code)
+            db.session.add(equipped)
+            print(f"📝 Created new equipped record for guest_code={guest_code}")
+    elif user_id:
+        equipped = UserAvatarEquipped.query.filter_by(user_id=user_id).first()
+        print(f"🔍 Found equipped for user_id={user_id}: {equipped}")
+        if not equipped:
+            equipped = UserAvatarEquipped(user_id=user_id)
+            db.session.add(equipped)
+            print(f"📝 Created new equipped record for user_id={user_id}")
+    else:
+        equipped = None
+    
+    # Set the appropriate slot based on item type
+    if equipped:
+        print(f"📝 Before equip: animal={equipped.animal_key}, hat={equipped.hat_key}, glasses={equipped.glasses_key}")
+        if item.item_type == 'animal':
+            equipped.animal_key = item.item_key
+        elif item.item_type == 'hat':
+            equipped.hat_key = item.item_key
+        elif item.item_type == 'glasses':
+            equipped.glasses_key = item.item_key
+        elif item.item_type == 'background':
+            equipped.background_key = item.item_key
+        elif item.item_type == 'accessory':
+            equipped.accessory_key = item.item_key
+        equipped.updated_at = datetime.utcnow()
+        print(f"📝 After equip: animal={equipped.animal_key}, hat={equipped.hat_key}, glasses={equipped.glasses_key}")
     
     # Log the purchase
     purchase_log = AvatarPurchaseLog(
