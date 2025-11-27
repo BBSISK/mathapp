@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Math Master - Dual Guest System Deployment Script
+AgentMath.app - Dual Guest System Deployment Script
 Automates the complete deployment of both casual and repeat guest systems
 """
 
@@ -58,7 +58,7 @@ def get_database_path():
     return None
 
 def create_casual_guest_user(db_path):
-    """Create the casual guest user (guest@mathmaster.app)"""
+    """Create the casual guest user (guest@agentmath.app)"""
     print_header("STEP 1: Creating Casual Guest User")
     
     try:
@@ -66,7 +66,7 @@ def create_casual_guest_user(db_path):
         cursor = conn.cursor()
         
         # Check if guest user exists
-        cursor.execute("SELECT id FROM users WHERE email = 'guest@mathmaster.app'")
+        cursor.execute("SELECT id FROM users WHERE email = 'guest@agentmath.app'")
         existing = cursor.fetchone()
         
         if existing:
@@ -80,7 +80,7 @@ def create_casual_guest_user(db_path):
             INSERT INTO users (email, password_hash, full_name, role, is_approved, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (
-            'guest@mathmaster.app',
+            'guest@agentmath.app',
             'no_password_required',
             'Guest User',
             'student',
@@ -92,7 +92,7 @@ def create_casual_guest_user(db_path):
         guest_id = cursor.lastrowid
         
         print_success(f"Casual guest user created successfully!")
-        print_info(f"   Email: guest@mathmaster.app")
+        print_info(f"   Email: guest@agentmath.app")
         print_info(f"   User ID: {guest_id}")
         print_info(f"   Role: student")
         
@@ -229,7 +229,7 @@ def verify_deployment(db_path):
         
         # Check 1: Casual guest user
         print_info("Checking casual guest user...")
-        cursor.execute("SELECT id FROM users WHERE email = 'guest@mathmaster.app'")
+        cursor.execute("SELECT id FROM users WHERE email = 'guest@agentmath.app'")
         if cursor.fetchone():
             print_success("   Casual guest user exists")
             checks_passed += 1
@@ -307,7 +307,7 @@ def show_summary():
     print(f"{Colors.BOLD}Database changes completed:{Colors.ENDC}\n")
     
     print(f"{Colors.GREEN}✅ Casual Guest System:{Colors.ENDC}")
-    print("   • Shared guest@mathmaster.app user created")
+    print("   • Shared guest@agentmath.app user created")
     print("   • Instant access without code")
     print("   • Progress NOT saved (temporary)")
     print()
@@ -331,7 +331,7 @@ def main():
     print(f"{Colors.BOLD}{Colors.HEADER}")
     print("╔═══════════════════════════════════════════════════════════════════╗")
     print("║                                                                   ║")
-    print("║          Math Master - Dual Guest System Deployment              ║")
+    print("║          AgentMath.app - Dual Guest System Deployment              ║")
     print("║                                                                   ║")
     print("╚═══════════════════════════════════════════════════════════════════╝")
     print(f"{Colors.ENDC}")

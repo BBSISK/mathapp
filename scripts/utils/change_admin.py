@@ -9,7 +9,7 @@ from app_with_auth import app, db, User
 def change_admin():
     with app.app_context():
         # Find the default admin
-        admin = User.query.filter_by(email='admin@mathmaster.com').first()
+        admin = User.query.filter_by(email='admin@agentmath.app').first()
         
         if admin:
             # Update email and password

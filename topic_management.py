@@ -1,7 +1,7 @@
 """
 TOPIC MANAGEMENT MODULE
 ========================
-This module adds topic, strand, and tutorial management to the Math Master app.
+This module adds topic, strand, and tutorial management to the AgentMath.app app.
 Import this at the end of app.py to enable the admin topic management features.
 
 Usage in app.py:

@@ -1,4 +1,4 @@
-// Math Master - Quiz Milestone Celebration System
+// AgentMath.app - Quiz Milestone Celebration System
 // Version 2.1 - HIGH CONTRAST FIX for readability
 
 console.log('🎉 LOADING quiz_milestones.js - Version 2.1 with HIGH CONTRAST text fix!');

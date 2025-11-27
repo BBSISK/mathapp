@@ -2,7 +2,7 @@
 """
 Complex Numbers Question Generator - RESTRUCTURED
 Two topics: Complex Numbers Intro & Complex Numbers Expanded
-For Math Master - Palmerstown Community School
+For AgentMath.app - Palmerstown Community School
 
 STRUCTURE:
 Topic 1: Complex Numbers Intro

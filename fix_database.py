@@ -40,7 +40,7 @@ def fix_database():
         
         # Fix 2: Ensure guest user exists
         print("\n📋 Checking guest user...")
-        cursor.execute("SELECT id FROM users WHERE email = 'guest@mathmaster.app'")
+        cursor.execute("SELECT id FROM users WHERE email = 'guest@agentmath.app'")
         existing = cursor.fetchone()
         
         if existing:
@@ -51,7 +51,7 @@ def fix_database():
                 INSERT INTO users (email, password_hash, full_name, role, is_approved, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (
-                'guest@mathmaster.app',
+                'guest@agentmath.app',
                 'no_password_required',
                 'Guest User',
                 'student',
@@ -116,7 +116,7 @@ def fix_database():
 
 if __name__ == "__main__":
     print("="*50)
-    print("Math Master - Database Fix Script")
+    print("AgentMath.app - Database Fix Script")
     print("="*50)
     print()
     

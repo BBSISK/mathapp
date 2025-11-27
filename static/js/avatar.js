@@ -1,6 +1,6 @@
 /**
  * Avatar System JavaScript
- * Math Master - Animal Avatars
+ * AgentMath.app - Animal Avatars
  * 
  * This file contains all client-side avatar functionality:
  * - SVG avatar rendering
@@ -14,12 +14,30 @@
 
 const AvatarRenderer = {
     
-    // Color definitions for each animal
+    // Color definitions for each animal (20 avatar-friendly animals)
     animalColors: {
+        // Original 4
         panda: { face: '#ffffff', ears: '#1a1a1a', patches: '#1a1a1a', nose: '#1a1a1a' },
         fox: { face: '#ff6b35', ears: '#ff6b35', patches: '#ffffff', nose: '#1a1a1a' },
         cat: { face: '#ffa94d', ears: '#ffa94d', patches: '#ffffff', nose: '#ffb6c1' },
-        owl: { face: '#8b4513', ears: '#654321', patches: '#f5deb3', nose: '#ffa500' }
+        owl: { face: '#8b4513', ears: '#654321', patches: '#f5deb3', nose: '#ffa500' },
+        // New 16
+        lion: { face: '#daa520', ears: '#b8860b', patches: '#f4a460', nose: '#1a1a1a' },
+        bear: { face: '#8b4513', ears: '#654321', patches: '#a0522d', nose: '#1a1a1a' },
+        wolf: { face: '#708090', ears: '#4a4a4a', patches: '#d3d3d3', nose: '#1a1a1a' },
+        rabbit: { face: '#f5f5f5', ears: '#ffb6c1', patches: '#ffffff', nose: '#ffb6c1' },
+        tiger: { face: '#ff8c00', ears: '#ff6600', patches: '#1a1a1a', nose: '#1a1a1a' },
+        penguin: { face: '#1a1a1a', ears: '#1a1a1a', patches: '#ffffff', nose: '#ffa500' },
+        koala: { face: '#808080', ears: '#696969', patches: '#d3d3d3', nose: '#1a1a1a' },
+        elephant: { face: '#808080', ears: '#696969', patches: '#a9a9a9', nose: '#696969' },
+        monkey: { face: '#deb887', ears: '#d2691e', patches: '#ffe4c4', nose: '#8b4513' },
+        dog: { face: '#d2691e', ears: '#8b4513', patches: '#ffe4c4', nose: '#1a1a1a' },
+        dolphin: { face: '#4682b4', ears: '#4169e1', patches: '#87ceeb', nose: '#4682b4' },
+        horse: { face: '#8b4513', ears: '#654321', patches: '#d2691e', nose: '#1a1a1a' },
+        deer: { face: '#d2691e', ears: '#8b4513', patches: '#f5deb3', nose: '#1a1a1a' },
+        eagle: { face: '#8b4513', ears: '#654321', patches: '#ffffff', nose: '#ffa500' },
+        parrot: { face: '#32cd32', ears: '#228b22', patches: '#ff4500', nose: '#ffa500' },
+        turtle: { face: '#228b22', ears: '#006400', patches: '#90ee90', nose: '#2e8b57' }
     },
     
     // Background colors
@@ -544,7 +562,13 @@ const AvatarShop = {
      */
     getItemEmoji(type, key) {
         const emojis = {
-            animal: { panda: '🐼', fox: '🦊', cat: '🐱', owl: '🦉' },
+            animal: { 
+                panda: '🐼', fox: '🦊', cat: '🐱', owl: '🦉',
+                lion: '🦁', bear: '🐻', wolf: '🐺', rabbit: '🐰',
+                tiger: '🐯', penguin: '🐧', koala: '🐨', elephant: '🐘',
+                monkey: '🐵', dog: '🐕', dolphin: '🐬', horse: '🐴',
+                deer: '🦌', eagle: '🦅', parrot: '🦜', turtle: '🐢'
+            },
             hat: { none: '❌', party: '🎉', cap: '🧢', beanie: '🧶', tophat: '🎩', wizard: '🧙', crown: '👑', graduation: '🎓' },
             glasses: { none: '❌', round: '👓', cool: '😎', heart: '💕', star: '⭐' },
             background: { none: '⬜', forest: '🌲', ocean: '🌊', sunset: '🌅', space: '🌌', rainbow: '🌈' },

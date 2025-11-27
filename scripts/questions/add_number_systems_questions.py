@@ -1,5 +1,5 @@
 """
-Script to add Number Systems questions to the Math Master app.
+Script to add Number Systems questions to the AgentMath.app app.
 
 Beginner: Natural numbers, Integers, Prime numbers
 Intermediate: More complex versions + Rounding and Significant figures

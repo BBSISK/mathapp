@@ -1,6 +1,6 @@
 # Utility Scripts
 
-This directory contains maintenance, diagnostic, and administration scripts for the Math Master application.
+This directory contains maintenance, diagnostic, and administration scripts for the AgentMath.app application.
 
 ## User Management
 

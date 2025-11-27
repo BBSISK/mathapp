@@ -3,7 +3,7 @@
 Production server using Gunicorn
 Usage: python run_production.py
 
-This script starts the Math Master app using Gunicorn,
+This script starts the AgentMath.app app using Gunicorn,
 a production-ready WSGI server.
 """
 import os
@@ -46,7 +46,7 @@ def main():
     ]
     
     print("=" * 60)
-    print("🚀 Starting Math Master in PRODUCTION mode")
+    print("🚀 Starting AgentMath.app in PRODUCTION mode")
     print("=" * 60)
     print(f"Server: Gunicorn (production WSGI server)")
     print(f"Host: {host}")

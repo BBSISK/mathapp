@@ -1,6 +1,6 @@
 # Scripts Directory
 
-This directory contains utility scripts and tools for managing the Math Master application.
+This directory contains utility scripts and tools for managing the AgentMath.app application.
 
 ## Directory Structure
 

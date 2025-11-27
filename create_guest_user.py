@@ -23,7 +23,7 @@ def create_guest_user():
     
     try:
         # Check if guest user exists
-        cursor.execute("SELECT id FROM users WHERE email = 'guest@mathmaster.app'")
+        cursor.execute("SELECT id FROM users WHERE email = 'guest@agentmath.app'")
         existing = cursor.fetchone()
         
         if existing:
@@ -35,7 +35,7 @@ def create_guest_user():
             INSERT INTO users (email, password_hash, full_name, role, is_approved, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (
-            'guest@mathmaster.app',
+            'guest@agentmath.app',
             'no_password_required',
             'Guest User',
             'student',
@@ -47,7 +47,7 @@ def create_guest_user():
         guest_id = cursor.lastrowid
         
         print(f"✅ Guest user created successfully!")
-        print(f"   Email: guest@mathmaster.app")
+        print(f"   Email: guest@agentmath.app")
         print(f"   ID: {guest_id}")
         print(f"   Role: student")
         

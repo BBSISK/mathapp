@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Guest Mode Database Migration Script
-Run this to add guest user support to your Math Master database.
+Run this to add guest user support to your AgentMath.app database.
 """
 
 import sqlite3
@@ -26,7 +26,7 @@ def run_migration():
     try:
         # Step 1: Check if guest user already exists
         print("\n📋 Step 1: Checking for existing guest user...")
-        cursor.execute("SELECT id FROM users WHERE email = 'guest@mathmaster.app'")
+        cursor.execute("SELECT id FROM users WHERE email = 'guest@agentmath.app'")
         existing = cursor.fetchone()
         
         if existing:
@@ -39,7 +39,7 @@ def run_migration():
                 INSERT INTO users (email, password_hash, full_name, role, is_approved, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (
-                'guest@mathmaster.app',
+                'guest@agentmath.app',
                 'no_password_required',
                 'Guest User',
                 'student',
@@ -98,7 +98,7 @@ def run_migration():
         print("✨ MIGRATION COMPLETE ✨")
         print("="*50)
         print(f"Guest User ID: {guest_id}")
-        print(f"Guest Email: guest@mathmaster.app")
+        print(f"Guest Email: guest@agentmath.app")
         print("\nYour database is now ready for guest mode!")
         print("You can now restart your Flask app.")
         print("="*50)
@@ -115,7 +115,7 @@ def run_migration():
 
 if __name__ == "__main__":
     print("="*50)
-    print("Math Master - Guest Mode Migration")
+    print("AgentMath.app - Guest Mode Migration")
     print("="*50)
     print()
     

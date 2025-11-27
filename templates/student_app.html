@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Master - Student</title>
+    <title>AgentMath.app - Student</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Quiz Milestone Celebration System -->
@@ -898,7 +898,7 @@
     <!-- Header with User Info -->
     <div class="bg-white shadow-md">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">🎓 Math Master</h1>
+            <h1 class="text-2xl font-bold text-gray-800">🎓 AgentMath.app</h1>
             <div class="flex items-center gap-4">
                 <!-- AVATAR: Display in header -->
                 {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
@@ -922,9 +922,12 @@
         <div id="badge-widget" class="badge-summary-widget" style="display: none;">
             <div class="badge-summary-header">
                 <h2 class="badge-summary-title">🏆 Your Progress</h2>
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-wrap">
                     {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
                     <a href="/avatar/shop" class="view-badges-btn" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">🎨 Avatar Shop</a>
+                    {% endif %}
+                    {% if feature_flags.PRIZE_SYSTEM_ENABLED %}
+                    <a href="/prizes" class="view-badges-btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #333;">🎁 Prize Shop</a>
                     {% endif %}
                     <a href="/student/badges" class="view-badges-btn">View All Badges →</a>
                 </div>
@@ -947,9 +950,10 @@
                     <span id="stat-quizzes" class="badge-stat-value">-</span>
                     <div class="badge-stat-label">Quizzes</div>
                 </div>
-                <div class="badge-stat-box">
+                <div class="badge-stat-box" id="streak-box" title="Complete quizzes on consecutive school days to build your streak!">
                     <span id="stat-streak" class="badge-stat-value">-</span>
                     <div class="badge-stat-label">🔥 Streak</div>
+                    <div id="streak-next-milestone" class="text-xs opacity-70 mt-1" style="display: none;"></div>
                 </div>
                 <div class="badge-stat-box">
                     <span id="stat-accuracy" class="badge-stat-value">-</span>
@@ -1008,6 +1012,19 @@
 
         <!-- Quiz Screen -->
         <div id="quizScreen" class="hidden mx-auto" style="max-width: 1400px;">
+            <!-- AVATAR: Quiz Header Bar -->
+            {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+            <div class="quiz-avatar-header mb-4 mx-4 bg-white/20 backdrop-blur rounded-xl p-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div id="quiz-header-avatar" class="avatar-container avatar-small cursor-pointer hover:scale-110 transition-transform" onclick="window.location.href='/avatar/shop'" title="Customize your avatar"></div>
+                    <div>
+                        <p id="quizAvatarTopicTitle" class="text-white font-semibold text-lg m-0"></p>
+                    </div>
+                </div>
+                <span id="quizDifficultyBadge" class="bg-white/30 text-white px-4 py-1 rounded-full text-sm font-medium"></span>
+            </div>
+            {% endif %}
+            
             <div class="mb-6 flex justify-between items-center px-4">
                 <button onclick="backToDifficulty()" class="bg-white text-gray-700 px-6 py-2 rounded-lg shadow hover:shadow-md transition-all">
                     ← Back
@@ -1065,6 +1082,18 @@
                 <div id="results-avatar-container" class="mb-4">
                     <div id="results-avatar" class="avatar-container avatar-large mx-auto" style="border: 4px solid #ffd700; animation: results-glow 2s ease-in-out infinite;"></div>
                 </div>
+                
+                <!-- New Item Unlocked Banner -->
+                <div id="new-unlock-banner" class="hidden bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-800 rounded-xl p-4 mb-4 animate-pulse">
+                    <div class="flex items-center justify-center gap-2">
+                        <i class="fas fa-gift text-2xl"></i>
+                        <div>
+                            <p class="font-bold">New item unlocked!</p>
+                            <p id="unlock-message" class="text-sm">You can now afford new items in the Avatar Shop!</p>
+                        </div>
+                        <a href="/avatar/shop" class="bg-gray-800 text-white px-3 py-1 rounded-lg text-sm hover:bg-gray-700 ml-2">Visit Shop</a>
+                    </div>
+                </div>
                 {% else %}
                 <i class="fas fa-trophy text-yellow-500 text-8xl mb-6"></i>
                 {% endif %}
@@ -1091,6 +1120,11 @@
                     <button onclick="backToTopics()" class="w-full bg-gray-200 text-gray-800 py-4 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
                         Choose Another Topic
                     </button>
+                    {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+                    <a href="/avatar/shop" class="block w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-4 rounded-xl font-semibold hover:from-pink-600 hover:to-purple-600 transition-colors">
+                        🎨 Avatar Shop
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -1507,6 +1541,21 @@
                 document.getElementById('stat-quizzes').textContent = statsData.stats.total_quizzes;
                 document.getElementById('stat-streak').textContent = statsData.stats.current_streak_days;
                 document.getElementById('stat-accuracy').textContent = statsData.stats.overall_accuracy + '%';
+                
+                // Show next streak milestone if available
+                const streakInfo = statsData.stats.streak_info;
+                const streakMilestoneEl = document.getElementById('streak-next-milestone');
+                if (streakInfo && streakInfo.days_until_next && streakMilestoneEl) {
+                    streakMilestoneEl.textContent = `${streakInfo.days_until_next} more for +${streakInfo.next_milestone_points}pts`;
+                    streakMilestoneEl.style.display = 'block';
+                }
+                
+                // Add streak fire animation if streak > 0
+                const streakBox = document.getElementById('streak-box');
+                if (statsData.stats.current_streak_days >= 3 && streakBox) {
+                    streakBox.style.background = 'linear-gradient(135deg, #ff6b35, #ff8c42)';
+                    streakBox.style.color = 'white';
+                }
 
                 console.log('✅ Badge widget updated successfully');
                 console.log('   - Points displayed:', document.getElementById('stat-points').textContent);
@@ -1616,6 +1665,11 @@
             shownMilestones.clear();
             totalMilestonePoints = 0;  // Reset milestone points
             console.log('✅ Milestone tracking reset for new quiz');
+            
+            // AVATAR: Store points before quiz for unlock detection (if function exists)
+            if (typeof getPointsBeforeQuiz === 'function') {
+                getPointsBeforeQuiz(); // Don't await - let it run in background
+            }
 
             document.getElementById('difficultyScreen').classList.add('hidden');
             document.getElementById('loadingScreen').classList.remove('hidden');
@@ -1630,6 +1684,21 @@
                 document.getElementById('quizTopicTitle').textContent = currentTopic.charAt(0).toUpperCase() + currentTopic.slice(1);
                 document.getElementById('total').textContent = questions.length;
                 document.getElementById('totalQuestions').textContent = questions.length;
+                
+                // AVATAR: Populate quiz header bar
+                const quizAvatarTitle = document.getElementById('quizAvatarTopicTitle');
+                if (quizAvatarTitle) {
+                    quizAvatarTitle.textContent = currentTopic.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                }
+                const quizDiffBadge = document.getElementById('quizDifficultyBadge');
+                if (quizDiffBadge) {
+                    quizDiffBadge.textContent = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+                }
+                // Render avatar in quiz header
+                const quizHeaderAvatar = document.getElementById('quiz-header-avatar');
+                if (quizHeaderAvatar && typeof AvatarRenderer !== 'undefined' && window.currentAvatarConfig) {
+                    AvatarRenderer.render(quizHeaderAvatar, window.currentAvatarConfig, 'small');
+                }
 
                 // Initialize tutorial system for ALL topics (shows splash screen on first visit, help button on subsequent)
                 const tutorialTopics = [
@@ -2078,6 +2147,27 @@
                         bonusDisplay.style.display = 'block';
                     }
                 }
+            }
+            
+            // AVATAR: Check for new item unlocks after a delay to let points update
+            if (typeof checkForNewUnlocks === 'function') {
+                setTimeout(() => {
+                    // Fetch updated points and check for unlocks
+                    fetch('/api/avatar/inventory')
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.points !== undefined) {
+                                checkForNewUnlocks(data.points);
+                            }
+                        })
+                        .catch(e => console.log('Could not check unlocks:', e));
+                }, 1000); // Wait 1 second for points to update
+            }
+            
+            // AVATAR: Hide the unlock banner initially (will show if items unlocked)
+            const unlockBanner = document.getElementById('new-unlock-banner');
+            if (unlockBanner) {
+                unlockBanner.classList.add('hidden');
             }
         }
 
@@ -4317,7 +4407,7 @@ class TutorialManager {
     constructor() {
         this.currentTopic = null;
         this.currentDifficulty = null;
-        this.storageKey = 'mathmaster_tutorial_prefs';
+        this.storageKey = 'agentmath_tutorial_prefs';
     }
     
     /**
@@ -4542,6 +4632,12 @@ console.log('Tutorial Manager initialized');
 {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
 <script src="{{ url_for('static', filename='js/avatar.js') }}"></script>
 <script>
+    // Store current avatar config globally for quiz header
+    window.currentAvatarConfig = null;
+    
+    // Store points before quiz for unlock detection
+    let pointsBeforeQuiz = 0;
+    
     // Load and render avatar on page load
     async function loadUserAvatar() {
         try {
@@ -4550,6 +4646,7 @@ console.log('Tutorial Manager initialized');
             
             if (data.success && data.equipped) {
                 const config = data.equipped;
+                window.currentAvatarConfig = config; // Store for quiz header
                 
                 // Render in header
                 const headerAvatar = document.getElementById('header-avatar');
@@ -4562,9 +4659,58 @@ console.log('Tutorial Manager initialized');
                 if (resultsAvatar && typeof AvatarRenderer !== 'undefined') {
                     AvatarRenderer.render(resultsAvatar, config, 'large');
                 }
+                
+                // Render in quiz header if visible
+                const quizHeaderAvatar = document.getElementById('quiz-header-avatar');
+                if (quizHeaderAvatar && typeof AvatarRenderer !== 'undefined') {
+                    AvatarRenderer.render(quizHeaderAvatar, config, 'small');
+                }
             }
         } catch (error) {
             console.log('Avatar loading skipped:', error.message);
+        }
+    }
+    
+    // Get current points before quiz starts
+    async function getPointsBeforeQuiz() {
+        try {
+            const response = await fetch('/api/avatar/inventory');
+            const data = await response.json();
+            if (data.points !== undefined) {
+                pointsBeforeQuiz = data.points;
+                console.log('📊 Points before quiz:', pointsBeforeQuiz);
+            }
+        } catch (error) {
+            console.log('Could not get points:', error);
+        }
+    }
+    
+    // Check for newly affordable items after quiz
+    async function checkForNewUnlocks(newTotalPoints) {
+        try {
+            const response = await fetch('/api/avatar/items');
+            const data = await response.json();
+            
+            if (data.items) {
+                // Find items that are now affordable but weren't before
+                const newlyAffordable = data.items.filter(item => 
+                    item.point_cost > pointsBeforeQuiz && 
+                    item.point_cost <= newTotalPoints &&
+                    !item.is_default
+                );
+                
+                if (newlyAffordable.length > 0) {
+                    const banner = document.getElementById('new-unlock-banner');
+                    const message = document.getElementById('unlock-message');
+                    if (banner && message) {
+                        const itemNames = newlyAffordable.slice(0, 3).map(i => i.display_name).join(', ');
+                        message.textContent = `You can now afford: ${itemNames}${newlyAffordable.length > 3 ? ' and more!' : '!'}`;
+                        banner.classList.remove('hidden');
+                    }
+                }
+            }
+        } catch (error) {
+            console.log('Could not check for unlocks:', error);
         }
     }
     

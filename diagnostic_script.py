@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Math Master Diagnostic Script
+AgentMath.app Diagnostic Script
 Run this on PythonAnywhere to identify missing components and functionality
 """
 

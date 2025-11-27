@@ -1,5 +1,5 @@
 """
-Script to expand Math Master questions from 20 to 40 per topic/difficulty level
+Script to expand AgentMath.app questions from 20 to 40 per topic/difficulty level
 Run this to add 20 more questions to each existing topic/difficulty combination
 """
 

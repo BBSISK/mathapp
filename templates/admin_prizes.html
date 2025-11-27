@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prize Management - AgentMath.app Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .card {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+        .card-header {
+            background: rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .table {
+            color: #fff;
+        }
+        .table-hover tbody tr:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-tabs .nav-link {
+            color: rgba(255,255,255,0.7);
+        }
+        .nav-tabs .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        .badge-tier-bronze { background: #cd7f32; }
+        .badge-tier-silver { background: #c0c0c0; color: #333; }
+        .badge-tier-gold { background: #ffd700; color: #333; }
+        .badge-tier-platinum { background: linear-gradient(135deg, #e5e4e2, #b4b4b4); color: #333; }
+        .stat-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .stat-label {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        .form-control:focus, .form-select:focus {
+            background: rgba(255,255,255,0.15);
+            border-color: #0d6efd;
+            color: #fff;
+        }
+        .form-control::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        .emoji-btn {
+            font-size: 1.5rem;
+            padding: 5px 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 5px;
+            background: none;
+        }
+        .emoji-btn:hover, .emoji-btn.selected {
+            border-color: #0d6efd;
+            background: rgba(13, 110, 253, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-gift me-2"></i>Prize Management</h1>
+                <p class="text-muted mb-0">Manage prizes, schools, and redemptions</p>
+            </div>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Back to Admin
+            </a>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row mb-4" id="stats-row">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-schools">-</div>
+                    <div class="stat-label">Approved Schools</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-prizes">-</div>
+                    <div class="stat-label">Active Prizes</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-pending">-</div>
+                    <div class="stat-label">Pending Redemptions</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-fulfilled">-</div>
+                    <div class="stat-label">Fulfilled</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Tabs -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#settings-tab">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#prizes-tab">
+                    <i class="fas fa-gift me-2"></i>Prize Catalogue
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#schools-tab">
+                    <i class="fas fa-school me-2"></i>Schools
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#requests-tab">
+                    <i class="fas fa-inbox me-2"></i>School Requests
+                    <span class="badge bg-warning ms-1" id="requests-count" style="display:none;">0</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Settings Tab -->
+            <div class="tab-pane fade show active" id="settings-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Global Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="settings-form">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Global Points Multiplier</label>
+                                    <select class="form-select" id="global-multiplier">
+                                        <option value="1">1x (Base cost)</option>
+                                        <option value="2">2x</option>
+                                        <option value="3">3x</option>
+                                        <option value="5" selected>5x (Default)</option>
+                                        <option value="10">10x</option>
+                                        <option value="20">20x</option>
+                                        <option value="30">30x</option>
+                                        <option value="40">40x</option>
+                                        <option value="50">50x</option>
+                                        <option value="100">100x</option>
+                                    </select>
+                                    <small class="text-muted">Multiplies all base prize costs</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Prize Expiry (Days)</label>
+                                    <input type="number" class="form-control" id="expiry-days" value="30" min="7" max="90">
+                                    <small class="text-muted">Days before unclaimed prizes expire</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Raffle System</label>
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" id="raffle-enabled" checked>
+                                        <label class="form-check-label" for="raffle-enabled">Enable Raffle Draws</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Level Lock System</label>
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" id="level-lock-enabled">
+                                        <label class="form-check-label" for="level-lock-enabled">Require Minimum Level for Prizes</label>
+                                    </div>
+                                    <small class="text-muted">When enabled, students must reach the prize's minimum level to redeem</small>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Settings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Quick Reference -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Cost Calculator</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>With current multiplier: <strong id="current-multiplier">5x</strong></p>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Tier</th>
+                                    <th>Base Cost</th>
+                                    <th>Actual Cost</th>
+                                    <th>Example</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cost-table">
+                                <tr>
+                                    <td><span class="badge badge-tier-bronze">Bronze</span></td>
+                                    <td>200</td>
+                                    <td class="multiplied">1,000</td>
+                                    <td>Pencil, Eraser</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-tier-silver">Silver</span></td>
+                                    <td>500</td>
+                                    <td class="multiplied">2,500</td>
+                                    <td>Pen Set, Notebook</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-tier-gold">Gold</span></td>
+                                    <td>1,000</td>
+                                    <td class="multiplied">5,000</td>
+                                    <td>Geometry Set</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-tier-platinum">Platinum</span></td>
+                                    <td>2,000</td>
+                                    <td class="multiplied">10,000</td>
+                                    <td>Book Voucher</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prize Catalogue Tab -->
+            <div class="tab-pane fade" id="prizes-tab">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>Prize Catalogue</h5>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#prizeModal" onclick="openPrizeModal()">
+                        <i class="fas fa-plus me-2"></i>Add Prize
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Prize</th>
+                                    <th>Tier</th>
+                                    <th>Base Cost</th>
+                                    <th>Effective Cost</th>
+                                    <th>Min Level</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prizes-table">
+                                <tr><td colspan="8" class="text-center">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schools Tab -->
+            <div class="tab-pane fade" id="schools-tab">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>Participating Schools</h5>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#schoolModal" onclick="openSchoolModal()">
+                        <i class="fas fa-plus me-2"></i>Add School
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>School</th>
+                                    <th>County</th>
+                                    <th>Status</th>
+                                    <th>Rep</th>
+                                    <th>Multiplier</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schools-table">
+                                <tr><td colspan="6" class="text-center">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- School Requests Tab -->
+            <div class="tab-pane fade" id="requests-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Pending School Requests</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>School Name</th>
+                                    <th>County</th>
+                                    <th>Requested By</th>
+                                    <th>Suggested Rep</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requests-table">
+                                <tr><td colspan="6" class="text-center">No pending requests</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prize Modal -->
+    <div class="modal fade" id="prizeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="prizeModalTitle">Add Prize</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="prize-form">
+                        <input type="hidden" id="prize-id">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Emoji</label>
+                            <div id="emoji-picker">
+                                <button type="button" class="emoji-btn" data-emoji="✏️">✏️</button>
+                                <button type="button" class="emoji-btn" data-emoji="🖊️">🖊️</button>
+                                <button type="button" class="emoji-btn" data-emoji="📏">📏</button>
+                                <button type="button" class="emoji-btn" data-emoji="📐">📐</button>
+                                <button type="button" class="emoji-btn" data-emoji="📓">📓</button>
+                                <button type="button" class="emoji-btn" data-emoji="📚">📚</button>
+                                <button type="button" class="emoji-btn" data-emoji="🎒">🎒</button>
+                                <button type="button" class="emoji-btn selected" data-emoji="🎁">🎁</button>
+                                <button type="button" class="emoji-btn" data-emoji="🏆">🏆</button>
+                                <button type="button" class="emoji-btn" data-emoji="⭐">⭐</button>
+                                <button type="button" class="emoji-btn" data-emoji="🎟️">🎟️</button>
+                                <button type="button" class="emoji-btn" data-emoji="🎮">🎮</button>
+                            </div>
+                            <input type="hidden" id="prize-emoji" value="🎁">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" id="prize-name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="prize-description" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Base Point Cost</label>
+                                <input type="number" class="form-control" id="prize-cost" required min="1">
+                                <small class="text-muted">Before multiplier</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tier</label>
+                                <select class="form-select" id="prize-tier">
+                                    <option value="bronze">🥉 Bronze</option>
+                                    <option value="silver">🥈 Silver</option>
+                                    <option value="gold">🥇 Gold</option>
+                                    <option value="platinum">💎 Platinum</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Type</label>
+                                <select class="form-select" id="prize-type">
+                                    <option value="physical">Physical Item</option>
+                                    <option value="raffle_entry">Raffle Entry</option>
+                                    <option value="digital">Digital Reward</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Minimum Level</label>
+                                <input type="number" class="form-control" id="prize-min-level" min="0" max="100" value="0">
+                                <small class="text-muted">0 = no requirement</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="prize-active" checked>
+                                    <label class="form-check-label" for="prize-active">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="savePrize()">Save Prize</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- School Modal -->
+    <div class="modal fade" id="schoolModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="schoolModalTitle">Add School</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="school-form">
+                        <input type="hidden" id="school-id">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">School Name</label>
+                            <input type="text" class="form-control" id="school-name" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Roll Number</label>
+                                <input type="text" class="form-control" id="school-roll">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">County</label>
+                                <select class="form-select" id="school-county">
+                                    <option value="">Select...</option>
+                                    <option value="Carlow">Carlow</option>
+                                    <option value="Cavan">Cavan</option>
+                                    <option value="Clare">Clare</option>
+                                    <option value="Cork">Cork</option>
+                                    <option value="Donegal">Donegal</option>
+                                    <option value="Dublin">Dublin</option>
+                                    <option value="Galway">Galway</option>
+                                    <option value="Kerry">Kerry</option>
+                                    <option value="Kildare">Kildare</option>
+                                    <option value="Kilkenny">Kilkenny</option>
+                                    <option value="Laois">Laois</option>
+                                    <option value="Leitrim">Leitrim</option>
+                                    <option value="Limerick">Limerick</option>
+                                    <option value="Longford">Longford</option>
+                                    <option value="Louth">Louth</option>
+                                    <option value="Mayo">Mayo</option>
+                                    <option value="Meath">Meath</option>
+                                    <option value="Monaghan">Monaghan</option>
+                                    <option value="Offaly">Offaly</option>
+                                    <option value="Roscommon">Roscommon</option>
+                                    <option value="Sligo">Sligo</option>
+                                    <option value="Tipperary">Tipperary</option>
+                                    <option value="Waterford">Waterford</option>
+                                    <option value="Westmeath">Westmeath</option>
+                                    <option value="Wexford">Wexford</option>
+                                    <option value="Wicklow">Wicklow</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Points Multiplier</label>
+                            <select class="form-select" id="school-multiplier">
+                                <option value="0.5">0.5x (Half cost)</option>
+                                <option value="1" selected>1x (Standard)</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2">2x (Double cost)</option>
+                            </select>
+                            <small class="text-muted">Combined with global multiplier</small>
+                        </div>
+                        
+                        <hr>
+                        <h6>School Representative</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Rep Name</label>
+                                <input type="text" class="form-control" id="school-rep-name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Rep Email</label>
+                                <input type="email" class="form-control" id="school-rep-email">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSchool()">Save School</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentMultiplier = 5;
+        
+        // Load everything on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            loadStats();
+            loadPrizes();
+            loadSchools();
+            loadRequests();
+            
+            // Emoji picker
+            document.querySelectorAll('.emoji-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+                    this.classList.add('selected');
+                    document.getElementById('prize-emoji').value = this.dataset.emoji;
+                });
+            });
+        });
+        
+        // Settings
+        async function loadSettings() {
+            const response = await fetch('/api/admin/prizes/settings');
+            const data = await response.json();
+            
+            document.getElementById('global-multiplier').value = data.global_points_multiplier;
+            document.getElementById('expiry-days').value = data.prize_expiry_days;
+            document.getElementById('raffle-enabled').checked = data.raffle_enabled;
+            document.getElementById('level-lock-enabled').checked = data.level_lock_enabled;
+            
+            currentMultiplier = data.global_points_multiplier;
+            updateCostTable();
+        }
+        
+        document.getElementById('settings-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const response = await fetch('/api/admin/prizes/settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    global_points_multiplier: parseFloat(document.getElementById('global-multiplier').value),
+                    prize_expiry_days: parseInt(document.getElementById('expiry-days').value),
+                    raffle_enabled: document.getElementById('raffle-enabled').checked,
+                    level_lock_enabled: document.getElementById('level-lock-enabled').checked
+                })
+            });
+            
+            if (response.ok) {
+                alert('Settings saved!');
+                currentMultiplier = parseFloat(document.getElementById('global-multiplier').value);
+                updateCostTable();
+                loadPrizes();
+            }
+        });
+        
+        function updateCostTable() {
+            document.getElementById('current-multiplier').textContent = currentMultiplier + 'x';
+            document.querySelectorAll('.multiplied').forEach((cell, i) => {
+                const baseCosts = [200, 500, 1000, 2000];
+                cell.textContent = (baseCosts[i] * currentMultiplier).toLocaleString();
+            });
+        }
+        
+        // Stats
+        async function loadStats() {
+            const response = await fetch('/api/admin/prizes/stats');
+            const data = await response.json();
+            
+            document.getElementById('stat-schools').textContent = data.schools.approved;
+            document.getElementById('stat-prizes').textContent = data.prizes.active;
+            document.getElementById('stat-pending').textContent = data.redemptions.pending;
+            document.getElementById('stat-fulfilled').textContent = data.redemptions.fulfilled;
+        }
+        
+        // Prizes
+        async function loadPrizes() {
+            const response = await fetch('/api/admin/prizes/catalogue');
+            const data = await response.json();
+            
+            const tbody = document.getElementById('prizes-table');
+            
+            if (data.prizes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No prizes yet. Add your first prize!</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.prizes.map(p => `
+                <tr>
+                    <td>${p.emoji} ${p.name}</td>
+                    <td><span class="badge badge-tier-${p.tier}">${p.tier}</span></td>
+                    <td>${p.base_point_cost.toLocaleString()}</td>
+                    <td><strong>${p.effective_cost.toLocaleString()}</strong></td>
+                    <td>${p.minimum_level > 0 ? '<span class="badge bg-info">Lvl ' + p.minimum_level + '+</span>' : '-'}</td>
+                    <td>${p.prize_type}</td>
+                    <td>${p.is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-light" onclick="editPrize(${p.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deletePrize(${p.id}, '${p.name}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function openPrizeModal(prize = null) {
+            document.getElementById('prizeModalTitle').textContent = prize ? 'Edit Prize' : 'Add Prize';
+            document.getElementById('prize-id').value = prize ? prize.id : '';
+            document.getElementById('prize-name').value = prize ? prize.name : '';
+            document.getElementById('prize-description').value = prize ? prize.description : '';
+            document.getElementById('prize-cost').value = prize ? prize.base_point_cost : '';
+            document.getElementById('prize-tier').value = prize ? prize.tier : 'bronze';
+            document.getElementById('prize-type').value = prize ? prize.prize_type : 'physical';
+            document.getElementById('prize-min-level').value = prize ? (prize.minimum_level || 0) : 0;
+            document.getElementById('prize-active').checked = prize ? prize.is_active : true;
+            
+            // Set emoji
+            const emoji = prize ? prize.emoji : '🎁';
+            document.getElementById('prize-emoji').value = emoji;
+            document.querySelectorAll('.emoji-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.emoji === emoji);
+            });
+        }
+        
+        async function editPrize(id) {
+            const response = await fetch('/api/admin/prizes/catalogue');
+            const data = await response.json();
+            const prize = data.prizes.find(p => p.id === id);
+            if (prize) {
+                openPrizeModal(prize);
+                new bootstrap.Modal(document.getElementById('prizeModal')).show();
+            }
+        }
+        
+        async function savePrize() {
+            const id = document.getElementById('prize-id').value;
+            const data = {
+                name: document.getElementById('prize-name').value,
+                description: document.getElementById('prize-description').value,
+                base_point_cost: parseInt(document.getElementById('prize-cost').value),
+                tier: document.getElementById('prize-tier').value,
+                prize_type: document.getElementById('prize-type').value,
+                minimum_level: parseInt(document.getElementById('prize-min-level').value) || 0,
+                emoji: document.getElementById('prize-emoji').value,
+                is_active: document.getElementById('prize-active').checked
+            };
+            
+            const url = id ? `/api/admin/prizes/catalogue/${id}` : '/api/admin/prizes/catalogue';
+            const method = id ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('prizeModal')).hide();
+                loadPrizes();
+                loadStats();
+            } else {
+                const error = await response.json();
+                alert('Error: ' + (error.error || 'Unknown error'));
+            }
+        }
+        
+        async function deletePrize(id, name) {
+            if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+            
+            const response = await fetch(`/api/admin/prizes/catalogue/${id}`, {method: 'DELETE'});
+            
+            if (response.ok) {
+                loadPrizes();
+                loadStats();
+            } else {
+                const error = await response.json();
+                alert('Error: ' + (error.error || 'Unknown error'));
+            }
+        }
+        
+        // Schools
+        async function loadSchools() {
+            const response = await fetch('/api/admin/prizes/schools');
+            const data = await response.json();
+            
+            const tbody = document.getElementById('schools-table');
+            
+            if (data.schools.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">No schools yet. Add your first school!</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = data.schools.map(s => `
+                <tr>
+                    <td><strong>${s.name}</strong>${s.roll_number ? `<br><small class="text-muted">${s.roll_number}</small>` : ''}</td>
+                    <td>${s.county || '-'}</td>
+                    <td>
+                        ${s.status === 'approved' ? '<span class="badge bg-success">Approved</span>' : 
+                          s.status === 'pending' ? '<span class="badge bg-warning">Pending</span>' :
+                          '<span class="badge bg-danger">Suspended</span>'}
+                    </td>
+                    <td>${s.rep_name || '-'}<br><small class="text-muted">${s.rep_email || ''}</small></td>
+                    <td>${s.points_multiplier}x</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-light" onclick="editSchool(${s.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="viewSchoolPrizes(${s.id})">
+                            <i class="fas fa-gift"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function openSchoolModal(school = null) {
+            document.getElementById('schoolModalTitle').textContent = school ? 'Edit School' : 'Add School';
+            document.getElementById('school-id').value = school ? school.id : '';
+            document.getElementById('school-name').value = school ? school.name : '';
+            document.getElementById('school-roll').value = school ? school.roll_number : '';
+            document.getElementById('school-county').value = school ? school.county : '';
+            document.getElementById('school-multiplier').value = school ? school.points_multiplier : '1';
+            document.getElementById('school-rep-name').value = school ? school.rep_name : '';
+            document.getElementById('school-rep-email').value = school ? school.rep_email : '';
+        }
+        
+        async function editSchool(id) {
+            const response = await fetch('/api/admin/prizes/schools');
+            const data = await response.json();
+            const school = data.schools.find(s => s.id === id);
+            if (school) {
+                openSchoolModal(school);
+                new bootstrap.Modal(document.getElementById('schoolModal')).show();
+            }
+        }
+        
+        async function saveSchool() {
+            const id = document.getElementById('school-id').value;
+            const data = {
+                name: document.getElementById('school-name').value,
+                roll_number: document.getElementById('school-roll').value,
+                county: document.getElementById('school-county').value,
+                points_multiplier: parseFloat(document.getElementById('school-multiplier').value),
+                rep_name: document.getElementById('school-rep-name').value,
+                rep_email: document.getElementById('school-rep-email').value
+            };
+            
+            const url = id ? `/api/admin/prizes/schools/${id}` : '/api/admin/prizes/schools';
+            const method = id ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('schoolModal')).hide();
+                loadSchools();
+                loadStats();
+            } else {
+                const error = await response.json();
+                alert('Error: ' + (error.error || 'Unknown error'));
+            }
+        }
+        
+        function viewSchoolPrizes(schoolId) {
+            alert('School prize management coming in Phase 2!');
+        }
+        
+        // School Requests
+        async function loadRequests() {
+            const response = await fetch('/api/admin/prizes/school-requests');
+            const data = await response.json();
+            
+            const pending = data.requests.filter(r => r.status === 'pending');
+            const countBadge = document.getElementById('requests-count');
+            
+            if (pending.length > 0) {
+                countBadge.textContent = pending.length;
+                countBadge.style.display = 'inline';
+            } else {
+                countBadge.style.display = 'none';
+            }
+            
+            const tbody = document.getElementById('requests-table');
+            
+            if (pending.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">No pending requests</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = pending.map(r => `
+                <tr>
+                    <td>${r.school_name}</td>
+                    <td>${r.county || '-'}</td>
+                    <td>${r.requested_by_username}</td>
+                    <td>${r.suggested_rep_email || '-'}</td>
+                    <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success" onclick="approveRequest(${r.id})">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="rejectRequest(${r.id})">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        async function approveRequest(id) {
+            const repEmail = prompt('Enter school rep email (optional):');
+            
+            const response = await fetch(`/api/admin/prizes/school-requests/${id}/approve`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({rep_email: repEmail})
+            });
+            
+            if (response.ok) {
+                loadRequests();
+                loadSchools();
+                loadStats();
+            }
+        }
+        
+        async function rejectRequest(id) {
+            const reason = prompt('Rejection reason (optional):');
+            
+            const response = await fetch(`/api/admin/prizes/school-requests/${id}/reject`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({admin_notes: reason})
+            });
+            
+            if (response.ok) {
+                loadRequests();
+            }
+        }
+    </script>
+</body>
+</html>

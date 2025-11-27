@@ -27,17 +27,17 @@ def diagnose_and_fix():
         print(f"\n2. Creating test users...")
         
         # Create admin
-        admin = User.query.filter_by(email='admin@mathmaster.com').first()
+        admin = User.query.filter_by(email='admin@agentmath.app').first()
         if not admin:
             admin = User(
-                email='admin@mathmaster.com',
+                email='admin@agentmath.app',
                 full_name='Admin User',
                 role='admin',
                 is_approved=True
             )
             admin.set_password('admin123')
             db.session.add(admin)
-            print("   ✅ Admin created: admin@mathmaster.com / admin123")
+            print("   ✅ Admin created: admin@agentmath.app / admin123")
         else:
             print("   ℹ️  Admin already exists")
         
@@ -98,7 +98,7 @@ def diagnose_and_fix():
         if total_users > 0:
             print("\n🎉 SUCCESS! Database is ready.")
             print("\n📝 Test Accounts:")
-            print("   Admin:    admin@mathmaster.com / admin123")
+            print("   Admin:    admin@agentmath.app / admin123")
             print("   Student:  student@test.com / student123")
             print("   Teacher:  teacher@test.com / teacher123")
             print("\n⚠️  If login still doesn't work:")

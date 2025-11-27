@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Rep Dashboard - AgentMath.app</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .dashboard-header {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-value {
+            font-size: 3rem;
+            font-weight: bold;
+        }
+        
+        .stat-value.pending { color: #ffc107; }
+        .stat-value.fulfilled { color: #28a745; }
+        
+        .card {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+        }
+        
+        .card-header {
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .token-search {
+            background: rgba(255,255,255,0.1);
+            border-radius: 50px;
+            padding: 15px 25px;
+            margin-bottom: 30px;
+        }
+        
+        .token-search input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .token-search input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .token-search input:focus {
+            outline: none;
+        }
+        
+        .redemption-card {
+            background: white;
+            border-radius: 15px;
+            color: #333;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        
+        .redemption-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .prize-emoji {
+            font-size: 2.5rem;
+        }
+        
+        .token-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-family: monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        .btn-fulfil {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            padding: 10px 25px;
+            font-weight: bold;
+        }
+        
+        .btn-fulfil:hover {
+            background: linear-gradient(135deg, #218838, #1aa179);
+        }
+        
+        .school-select {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        
+        .school-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+        
+        .history-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            opacity: 0.7;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1><i class="fas fa-user-tie me-2"></i>School Rep Dashboard</h1>
+                    <p class="mb-0 opacity-75">Manage prize fulfilments for your school</p>
+                </div>
+                <div>
+                    <select class="school-select" id="school-select" onchange="selectSchool()">
+                        <option value="">Loading schools...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Token Search -->
+        <div class="token-search d-flex align-items-center gap-3">
+            <i class="fas fa-search fa-lg"></i>
+            <input type="text" id="token-input" placeholder="Enter token (e.g., PRIZE-K7M2-X9F3)" 
+                   class="flex-grow-1" onkeypress="if(event.key==='Enter') searchToken()">
+            <button class="btn btn-primary btn-lg" onclick="searchToken()">
+                <i class="fas fa-search me-2"></i>Find
+            </button>
+        </div>
+        
+        <!-- Token Search Result -->
+        <div id="search-result" style="display: none;" class="mb-4"></div>
+        
+        <!-- Stats Row -->
+        <div class="row mb-4" id="stats-row" style="display: none;">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-value pending" id="stat-pending">0</div>
+                    <div>Pending Collection</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-value fulfilled" id="stat-fulfilled">0</div>
+                    <div>Prizes Delivered</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-points">0</div>
+                    <div>Total Points Redeemed</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#pending-tab">
+                    <i class="fas fa-clock me-2"></i>Pending
+                    <span class="badge bg-warning ms-1" id="pending-count">0</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#history-tab">
+                    <i class="fas fa-history me-2"></i>History
+                </a>
+            </li>
+        </ul>
+        
+        <div class="tab-content">
+            <!-- Pending Tab -->
+            <div class="tab-pane fade show active" id="pending-tab">
+                <div id="pending-list">
+                    <div class="empty-state">
+                        <i class="fas fa-school"></i>
+                        <p>Select a school to view pending redemptions</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- History Tab -->
+            <div class="tab-pane fade" id="history-tab">
+                <div id="history-list">
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>Select a school to view fulfilment history</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Back Button -->
+        <div class="text-center mt-4">
+            <a href="{{ url_for('student_app') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <!-- Fulfil Modal -->
+    <div class="modal fade" id="fulfilModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Confirm Prize Delivery</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="fulfil-emoji" style="font-size: 5rem;"></div>
+                    <h4 id="fulfil-prize-name"></h4>
+                    <p class="text-muted">Token: <span id="fulfil-token" class="token-badge"></span></p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Have you verified the student and given them the prize?
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Notes (optional)</label>
+                        <textarea class="form-control" id="fulfil-notes" rows="2" placeholder="Any notes about this fulfilment..."></textarea>
+                    </div>
+                    
+                    <input type="hidden" id="fulfil-redemption-id">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success btn-lg" onclick="confirmFulfil()">
+                        <i class="fas fa-check me-2"></i>Mark as Delivered
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentSchoolId = null;
+        let fulfilModal;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            fulfilModal = new bootstrap.Modal(document.getElementById('fulfilModal'));
+            loadSchools();
+        });
+        
+        async function loadSchools() {
+            const response = await fetch('/api/school-rep/my-schools');
+            const data = await response.json();
+            
+            const select = document.getElementById('school-select');
+            
+            if (data.schools.length === 0) {
+                select.innerHTML = '<option value="">No schools assigned</option>';
+                return;
+            }
+            
+            select.innerHTML = '<option value="">-- Select School --</option>' +
+                data.schools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            
+            // Auto-select if only one school
+            if (data.schools.length === 1) {
+                select.value = data.schools[0].id;
+                selectSchool();
+            }
+        }
+        
+        async function selectSchool() {
+            const schoolId = document.getElementById('school-select').value;
+            
+            if (!schoolId) {
+                currentSchoolId = null;
+                document.getElementById('stats-row').style.display = 'none';
+                return;
+            }
+            
+            currentSchoolId = schoolId;
+            document.getElementById('stats-row').style.display = '';
+            
+            loadStats();
+            loadPending();
+            loadHistory();
+        }
+        
+        async function loadStats() {
+            if (!currentSchoolId) return;
+            
+            const response = await fetch(`/api/school-rep/stats/${currentSchoolId}`);
+            const data = await response.json();
+            
+            document.getElementById('stat-pending').textContent = data.stats.pending;
+            document.getElementById('stat-fulfilled').textContent = data.stats.fulfilled;
+            document.getElementById('stat-points').textContent = data.stats.total_points_redeemed.toLocaleString();
+            document.getElementById('pending-count').textContent = data.stats.pending;
+        }
+        
+        async function loadPending() {
+            if (!currentSchoolId) return;
+            
+            const response = await fetch(`/api/school-rep/pending/${currentSchoolId}`);
+            const data = await response.json();
+            
+            const container = document.getElementById('pending-list');
+            
+            if (data.redemptions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <p>No pending redemptions - all caught up! 🎉</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = data.redemptions.map(r => renderRedemptionCard(r, true)).join('');
+        }
+        
+        async function loadHistory() {
+            if (!currentSchoolId) return;
+            
+            const response = await fetch(`/api/school-rep/history/${currentSchoolId}`);
+            const data = await response.json();
+            
+            const container = document.getElementById('history-list');
+            
+            if (data.redemptions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>No fulfilment history yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = data.redemptions.map(r => `
+                <div class="history-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <span style="font-size: 1.5rem;">${r.prize_emoji}</span>
+                        <strong>${r.prize_name}</strong>
+                        <span class="text-muted ms-2">${r.token}</span>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-success">Delivered</span>
+                        <div class="small text-muted">${new Date(r.fulfilled_at).toLocaleDateString()}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderRedemptionCard(r, showFulfilBtn = false) {
+            const redeemDate = new Date(r.redeemed_at).toLocaleDateString();
+            const expiryDate = r.expires_at ? new Date(r.expires_at).toLocaleDateString() : 'N/A';
+            
+            return `
+                <div class="redemption-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="prize-emoji">${r.prize_emoji}</div>
+                            <div>
+                                <h5 class="mb-1">${r.prize_name}</h5>
+                                <span class="token-badge">${r.token}</span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted mb-2">
+                                Redeemed: ${redeemDate}<br>
+                                Expires: ${expiryDate}
+                            </div>
+                            ${showFulfilBtn ? `
+                                <button class="btn btn-fulfil text-white" onclick="openFulfilModal(${JSON.stringify(r).replace(/"/g, '&quot;')})">
+                                    <i class="fas fa-check me-2"></i>Mark Delivered
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function searchToken() {
+            const token = document.getElementById('token-input').value.trim().toUpperCase();
+            const resultDiv = document.getElementById('search-result');
+            
+            if (!token) {
+                resultDiv.style.display = 'none';
+                return;
+            }
+            
+            const response = await fetch('/api/school-rep/search-token', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({token: token})
+            });
+            
+            const data = await response.json();
+            
+            if (!data.found) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle me-2"></i>${data.error || 'Token not found'}
+                    </div>
+                `;
+                resultDiv.style.display = '';
+                return;
+            }
+            
+            const r = data.redemption;
+            
+            if (r.status === 'fulfilled') {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        This prize (${r.prize_name}) was already delivered on ${new Date(r.fulfilled_at).toLocaleDateString()}
+                    </div>
+                `;
+            } else if (r.status === 'expired') {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-clock me-2"></i>
+                        This token has expired
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = renderRedemptionCard(r, true);
+            }
+            
+            resultDiv.style.display = '';
+        }
+        
+        function openFulfilModal(redemption) {
+            document.getElementById('fulfil-emoji').textContent = redemption.prize_emoji;
+            document.getElementById('fulfil-prize-name').textContent = redemption.prize_name;
+            document.getElementById('fulfil-token').textContent = redemption.token;
+            document.getElementById('fulfil-redemption-id').value = redemption.id;
+            document.getElementById('fulfil-notes').value = '';
+            
+            fulfilModal.show();
+        }
+        
+        async function confirmFulfil() {
+            const redemptionId = document.getElementById('fulfil-redemption-id').value;
+            const notes = document.getElementById('fulfil-notes').value;
+            
+            const response = await fetch(`/api/school-rep/fulfil/${redemptionId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({notes: notes})
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                fulfilModal.hide();
+                
+                // Clear search result
+                document.getElementById('search-result').style.display = 'none';
+                document.getElementById('token-input').value = '';
+                
+                // Reload data
+                loadStats();
+                loadPending();
+                loadHistory();
+                
+                // Show success toast or alert
+                alert('Prize marked as delivered! ✅');
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        }
+    </script>
+</body>
+</html>

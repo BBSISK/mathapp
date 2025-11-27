@@ -744,10 +744,10 @@ if __name__ == '__main__':
         db.create_all()
         
         # Create default admin if doesn't exist
-        admin = User.query.filter_by(email='admin@mathmaster.com').first()
+        admin = User.query.filter_by(email='admin@agentmath.app').first()
         if not admin:
             admin = User(
-                email='admin@mathmaster.com',
+                email='admin@agentmath.app',
                 full_name='System Administrator',
                 role='admin',
                 is_approved=True
@@ -755,6 +755,6 @@ if __name__ == '__main__':
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-            print("Default admin created: admin@mathmaster.com / admin123")
+            print("Default admin created: admin@agentmath.app / admin123")
     
     app.run(debug=True)

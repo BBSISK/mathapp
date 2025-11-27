@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prize Shop - AgentMath.app</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .shop-header {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .points-display {
+            background: linear-gradient(135deg, #ffd700, #ffb347);
+            color: #333;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .school-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tier-section {
+            margin-bottom: 40px;
+        }
+        
+        .tier-header {
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        
+        .tier-bronze { background: linear-gradient(135deg, #cd7f32, #a0522d); }
+        .tier-silver { background: linear-gradient(135deg, #c0c0c0, #a8a8a8); color: #333; }
+        .tier-gold { background: linear-gradient(135deg, #ffd700, #daa520); color: #333; }
+        .tier-platinum { background: linear-gradient(135deg, #e5e4e2, #b4b4b4); color: #333; }
+        .tier-school { background: linear-gradient(135deg, #667eea, #764ba2); }
+        
+        .prize-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .prize-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+        
+        .prize-card.cant-afford {
+            opacity: 0.6;
+        }
+        
+        .prize-emoji {
+            font-size: 4rem;
+            display: block;
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+        
+        .prize-info {
+            padding: 20px;
+        }
+        
+        .prize-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .prize-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .prize-cost {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .prize-cost.affordable {
+            color: #28a745;
+        }
+        
+        .btn-redeem {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            width: 100%;
+            padding: 12px;
+            font-weight: bold;
+        }
+        
+        .btn-redeem:hover {
+            background: linear-gradient(135deg, #5a6fd6, #6a4190);
+        }
+        
+        .btn-redeem:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .stock-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .stock-badge.low {
+            background: #dc3545;
+        }
+        
+        .modal-success {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .token-display {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            letter-spacing: 3px;
+        }
+        
+        .school-select-card {
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            color: white;
+        }
+        
+        .my-redemptions {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .redemption-item {
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .redemption-token {
+            font-family: monospace;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .status-pending { color: #ffc107; }
+        .status-fulfilled { color: #28a745; }
+        .status-expired { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="shop-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="mb-2"><i class="fas fa-gift me-2"></i>Prize Shop</h1>
+                    <p class="mb-0 opacity-75">Redeem your hard-earned points for real prizes!</p>
+                </div>
+                <div class="text-end">
+                    <div class="points-display mb-2">
+                        <i class="fas fa-coins me-2"></i><span id="student-points">0</span> Points
+                    </div>
+                    <div id="school-display"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- School Selection (if no school selected) -->
+        <div id="school-selection" class="school-select-card mb-4" style="display: none;">
+            <i class="fas fa-school fa-3x mb-3 opacity-50"></i>
+            <h4>Select Your School</h4>
+            <p class="opacity-75">Choose your school to see available prizes and redeem rewards.</p>
+            <button class="btn btn-light btn-lg" onclick="showSchoolModal()">
+                <i class="fas fa-search me-2"></i>Find My School
+            </button>
+        </div>
+        
+        <!-- Prize Grid -->
+        <div id="prizes-container">
+            <!-- Prizes loaded dynamically -->
+            <div class="text-center text-white py-5">
+                <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
+                <p>Loading prizes...</p>
+            </div>
+        </div>
+        
+        <!-- My Redemptions -->
+        <div class="my-redemptions" id="my-redemptions" style="display: none;">
+            <h4 class="text-white mb-3"><i class="fas fa-history me-2"></i>My Redemptions</h4>
+            <div id="redemptions-list"></div>
+        </div>
+        
+        <!-- Back Button -->
+        <div class="text-center mt-4">
+            <a href="{{ url_for('student_app') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <!-- School Selection Modal -->
+    <div class="modal fade" id="schoolModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-school me-2"></i>Select Your School</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Search for your school:</label>
+                        <select class="form-select form-select-lg" id="school-select">
+                            <option value="">-- Select School --</option>
+                        </select>
+                    </div>
+                    <hr>
+                    <p class="text-muted mb-2">Can't find your school?</p>
+                    <button class="btn btn-outline-primary" onclick="showRequestSchoolForm()">
+                        <i class="fas fa-plus me-2"></i>Request to Add My School
+                    </button>
+                    
+                    <div id="request-school-form" style="display: none;" class="mt-3">
+                        <div class="mb-3">
+                            <label class="form-label">School Name</label>
+                            <input type="text" class="form-control" id="request-school-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">County</label>
+                            <select class="form-select" id="request-school-county">
+                                <option value="">Select...</option>
+                                <option value="Carlow">Carlow</option>
+                                <option value="Cavan">Cavan</option>
+                                <option value="Clare">Clare</option>
+                                <option value="Cork">Cork</option>
+                                <option value="Donegal">Donegal</option>
+                                <option value="Dublin">Dublin</option>
+                                <option value="Galway">Galway</option>
+                                <option value="Kerry">Kerry</option>
+                                <option value="Kildare">Kildare</option>
+                                <option value="Kilkenny">Kilkenny</option>
+                                <option value="Laois">Laois</option>
+                                <option value="Leitrim">Leitrim</option>
+                                <option value="Limerick">Limerick</option>
+                                <option value="Longford">Longford</option>
+                                <option value="Louth">Louth</option>
+                                <option value="Mayo">Mayo</option>
+                                <option value="Meath">Meath</option>
+                                <option value="Monaghan">Monaghan</option>
+                                <option value="Offaly">Offaly</option>
+                                <option value="Roscommon">Roscommon</option>
+                                <option value="Sligo">Sligo</option>
+                                <option value="Tipperary">Tipperary</option>
+                                <option value="Waterford">Waterford</option>
+                                <option value="Westmeath">Westmeath</option>
+                                <option value="Wexford">Wexford</option>
+                                <option value="Wicklow">Wicklow</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teacher's Email (optional)</label>
+                            <input type="email" class="form-control" id="request-school-rep" placeholder="Suggest a teacher to be the school rep">
+                        </div>
+                        <button class="btn btn-primary" onclick="submitSchoolRequest()">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Request
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="selectSchool()">
+                        <i class="fas fa-check me-2"></i>Confirm School
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Redemption Confirmation Modal -->
+    <div class="modal fade" id="redeemModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-gift me-2"></i>Confirm Redemption</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="redeem-prize-emoji" style="font-size: 5rem;"></div>
+                    <h4 id="redeem-prize-name"></h4>
+                    <p class="text-muted" id="redeem-prize-desc"></p>
+                    <div class="alert alert-info">
+                        <strong>Cost:</strong> <span id="redeem-prize-cost"></span> points<br>
+                        <strong>Your Balance:</strong> <span id="redeem-your-points"></span> points<br>
+                        <strong>After:</strong> <span id="redeem-after-points"></span> points
+                    </div>
+                    <input type="hidden" id="redeem-prize-id">
+                    <input type="hidden" id="redeem-school-prize-id">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success btn-lg" onclick="confirmRedeem()">
+                        <i class="fas fa-check me-2"></i>Redeem Prize!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body modal-success">
+                    <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+                    <h3 class="mt-3">Prize Redeemed!</h3>
+                    <p>Show this token to your school rep to collect your prize:</p>
+                    <div class="token-display" id="success-token"></div>
+                    <p class="text-muted">
+                        <i class="fas fa-clock me-2"></i>Valid until: <span id="success-expiry"></span>
+                    </p>
+                    <p><strong id="success-school"></strong></p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Screenshot or write down this token! You'll need it to collect your prize.
+                    </div>
+                    <button class="btn btn-primary btn-lg" data-bs-dismiss="modal" onclick="loadPrizes()">
+                        <i class="fas fa-thumbs-up me-2"></i>Got It!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let studentPoints = 0;
+        let currentSchool = null;
+        let schoolModal, redeemModal, successModal;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            schoolModal = new bootstrap.Modal(document.getElementById('schoolModal'));
+            redeemModal = new bootstrap.Modal(document.getElementById('redeemModal'));
+            successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            
+            loadSchools();
+            loadPrizes();
+            loadMyRedemptions();
+        });
+        
+        async function loadSchools() {
+            const response = await fetch('/api/prizes/schools');
+            const data = await response.json();
+            
+            const select = document.getElementById('school-select');
+            
+            // Group by county
+            const byCounty = {};
+            data.schools.forEach(s => {
+                const county = s.county || 'Other';
+                if (!byCounty[county]) byCounty[county] = [];
+                byCounty[county].push(s);
+            });
+            
+            Object.keys(byCounty).sort().forEach(county => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = county;
+                byCounty[county].forEach(school => {
+                    const opt = document.createElement('option');
+                    opt.value = school.id;
+                    opt.textContent = school.name;
+                    optgroup.appendChild(opt);
+                });
+                select.appendChild(optgroup);
+            });
+        }
+        
+        async function loadPrizes() {
+            const response = await fetch('/api/prizes/available');
+            const data = await response.json();
+            
+            studentPoints = data.student_points;
+            currentSchool = data.school;
+            
+            document.getElementById('student-points').textContent = studentPoints.toLocaleString();
+            
+            // Update school display
+            const schoolDisplay = document.getElementById('school-display');
+            const schoolSelection = document.getElementById('school-selection');
+            
+            if (currentSchool) {
+                schoolDisplay.innerHTML = `
+                    <div class="school-badge">
+                        <i class="fas fa-school"></i>
+                        <span>${currentSchool.name}</span>
+                        <button class="btn btn-sm btn-outline-light" onclick="showSchoolModal()">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                    </div>
+                `;
+                schoolSelection.style.display = 'none';
+            } else {
+                schoolDisplay.innerHTML = '';
+                schoolSelection.style.display = 'block';
+            }
+            
+            // Render prizes
+            const container = document.getElementById('prizes-container');
+            
+            if (!currentSchool) {
+                container.innerHTML = `
+                    <div class="text-center text-white py-5">
+                        <i class="fas fa-arrow-up fa-3x mb-3 opacity-50"></i>
+                        <p>Select your school above to view available prizes</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group prizes by tier
+            const tiers = {
+                bronze: { name: 'Bronze', icon: '🥉', class: 'tier-bronze', prizes: [] },
+                silver: { name: 'Silver', icon: '🥈', class: 'tier-silver', prizes: [] },
+                gold: { name: 'Gold', icon: '🥇', class: 'tier-gold', prizes: [] },
+                platinum: { name: 'Platinum', icon: '💎', class: 'tier-platinum', prizes: [] }
+            };
+            
+            data.prizes.forEach(p => {
+                if (tiers[p.tier]) {
+                    tiers[p.tier].prizes.push(p);
+                }
+            });
+            
+            let html = '';
+            
+            // School-specific prizes first
+            if (data.school_prizes && data.school_prizes.length > 0) {
+                html += `
+                    <div class="tier-section">
+                        <h3 class="tier-header tier-school">🏫 ${currentSchool.name} Specials</h3>
+                        <div class="row g-4">
+                            ${data.school_prizes.map(p => renderPrizeCard(p)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Regular tiers
+            Object.values(tiers).forEach(tier => {
+                if (tier.prizes.length > 0) {
+                    html += `
+                        <div class="tier-section">
+                            <h3 class="tier-header ${tier.class}">${tier.icon} ${tier.name}</h3>
+                            <div class="row g-4">
+                                ${tier.prizes.map(p => renderPrizeCard(p)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            container.innerHTML = html || '<p class="text-white text-center">No prizes available at the moment.</p>';
+        }
+        
+        function renderPrizeCard(prize) {
+            const canAfford = prize.can_afford;
+            const meetsLevel = prize.meets_level !== false; // Default to true if not set
+            const canRedeem = canAfford && meetsLevel;
+            const isSchoolSpecific = prize.is_school_specific;
+            
+            let stockBadge = '';
+            if (prize.stock_available !== null && prize.stock_available !== undefined) {
+                const isLow = prize.stock_available <= 5;
+                stockBadge = `<span class="stock-badge ${isLow ? 'low' : ''}">${prize.stock_available} left</span>`;
+            }
+            
+            let levelBadge = '';
+            if (prize.minimum_level && prize.minimum_level > 0 && prize.level_lock_enabled) {
+                levelBadge = `<span class="badge ${meetsLevel ? 'bg-success' : 'bg-danger'} mb-2">Level ${prize.minimum_level}+</span>`;
+            }
+            
+            let buttonText = '<i class="fas fa-gift me-2"></i>Redeem';
+            let buttonDisabled = false;
+            
+            if (!canAfford) {
+                buttonText = 'Not Enough Points';
+                buttonDisabled = true;
+            } else if (!meetsLevel) {
+                buttonText = `Reach Level ${prize.minimum_level}`;
+                buttonDisabled = true;
+            } else if (prize.stock_available === 0) {
+                buttonText = 'Out of Stock';
+                buttonDisabled = true;
+            }
+            
+            return `
+                <div class="col-md-4 col-lg-3">
+                    <div class="prize-card ${canRedeem ? '' : 'cant-afford'}" style="position: relative;">
+                        ${stockBadge}
+                        <div class="prize-emoji">${prize.emoji}</div>
+                        <div class="prize-info">
+                            ${levelBadge}
+                            <div class="prize-name">${prize.name}</div>
+                            <div class="prize-description">${prize.description || ''}</div>
+                            <div class="prize-cost ${canAfford ? 'affordable' : ''}">
+                                <i class="fas fa-coins me-1"></i>${prize.point_cost.toLocaleString()} pts
+                            </div>
+                            <button class="btn btn-redeem text-white mt-3" 
+                                    ${buttonDisabled ? 'disabled' : ''}
+                                    onclick="openRedeemModal(${JSON.stringify(prize).replace(/"/g, '&quot;')})">
+                                ${buttonText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showSchoolModal() {
+            schoolModal.show();
+        }
+        
+        function showRequestSchoolForm() {
+            document.getElementById('request-school-form').style.display = 'block';
+        }
+        
+        async function selectSchool() {
+            const schoolId = document.getElementById('school-select').value;
+            
+            if (!schoolId) {
+                alert('Please select a school');
+                return;
+            }
+            
+            const response = await fetch('/api/prizes/select-school', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({school_id: parseInt(schoolId)})
+            });
+            
+            if (response.ok) {
+                schoolModal.hide();
+                loadPrizes();
+            }
+        }
+        
+        async function submitSchoolRequest() {
+            const name = document.getElementById('request-school-name').value;
+            const county = document.getElementById('request-school-county').value;
+            const rep = document.getElementById('request-school-rep').value;
+            
+            if (!name) {
+                alert('Please enter school name');
+                return;
+            }
+            
+            const response = await fetch('/api/prizes/request-school', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    school_name: name,
+                    county: county,
+                    suggested_rep_email: rep
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert('School request submitted! An admin will review it soon.');
+                schoolModal.hide();
+            } else {
+                alert(data.error || 'Error submitting request');
+            }
+        }
+        
+        function openRedeemModal(prize) {
+            document.getElementById('redeem-prize-emoji').textContent = prize.emoji;
+            document.getElementById('redeem-prize-name').textContent = prize.name;
+            document.getElementById('redeem-prize-desc').textContent = prize.description || '';
+            document.getElementById('redeem-prize-cost').textContent = prize.point_cost.toLocaleString();
+            document.getElementById('redeem-your-points').textContent = studentPoints.toLocaleString();
+            document.getElementById('redeem-after-points').textContent = (studentPoints - prize.point_cost).toLocaleString();
+            
+            document.getElementById('redeem-prize-id').value = prize.id || '';
+            document.getElementById('redeem-school-prize-id').value = prize.school_prize_id || '';
+            
+            redeemModal.show();
+        }
+        
+        async function confirmRedeem() {
+            const prizeId = document.getElementById('redeem-prize-id').value;
+            const schoolPrizeId = document.getElementById('redeem-school-prize-id').value;
+            
+            const body = {};
+            if (prizeId) body.prize_id = parseInt(prizeId);
+            if (schoolPrizeId) body.school_prize_id = parseInt(schoolPrizeId);
+            
+            const response = await fetch('/api/prizes/redeem', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                redeemModal.hide();
+                
+                // Show success modal
+                document.getElementById('success-token').textContent = data.token;
+                document.getElementById('success-expiry').textContent = new Date(data.expires_at).toLocaleDateString();
+                document.getElementById('success-school').textContent = data.school_name;
+                
+                studentPoints = data.points_remaining;
+                document.getElementById('student-points').textContent = studentPoints.toLocaleString();
+                
+                successModal.show();
+                loadMyRedemptions();
+            } else {
+                alert(data.error || 'Error redeeming prize');
+            }
+        }
+        
+        async function loadMyRedemptions() {
+            const response = await fetch('/api/prizes/my-redemptions');
+            const data = await response.json();
+            
+            const container = document.getElementById('my-redemptions');
+            const list = document.getElementById('redemptions-list');
+            
+            if (data.redemptions.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            
+            list.innerHTML = data.redemptions.map(r => `
+                <div class="redemption-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span style="font-size: 1.5rem;">${r.prize_emoji}</span>
+                            <strong>${r.prize_name}</strong>
+                            <span class="redemption-token ms-2">${r.token}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge ${r.status === 'pending' ? 'bg-warning' : r.status === 'fulfilled' ? 'bg-success' : 'bg-danger'}">
+                                ${r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                            </span>
+                            <div class="small text-muted">${r.school_name}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
