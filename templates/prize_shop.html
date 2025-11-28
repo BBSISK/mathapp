@@ -195,6 +195,13 @@
 </head>
 <body>
     <div class="container py-4">
+        <!-- Back Button -->
+        <div class="mb-3">
+            <a href="{{ url_for('student_app') }}" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+        
         <!-- Header -->
         <div class="shop-header">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -236,12 +243,6 @@
             <div id="redemptions-list"></div>
         </div>
         
-        <!-- Back Button -->
-        <div class="text-center mt-4">
-            <a href="{{ url_for('student_app') }}" class="btn btn-outline-light btn-lg">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
-        </div>
     </div>
     
     <!-- School Selection Modal -->
@@ -393,83 +394,100 @@
         });
         
         async function loadSchools() {
-            const response = await fetch('/api/prizes/schools');
-            const data = await response.json();
-            
-            const select = document.getElementById('school-select');
-            
-            // Group by county
-            const byCounty = {};
-            data.schools.forEach(s => {
-                const county = s.county || 'Other';
-                if (!byCounty[county]) byCounty[county] = [];
-                byCounty[county].push(s);
-            });
-            
-            Object.keys(byCounty).sort().forEach(county => {
-                const optgroup = document.createElement('optgroup');
-                optgroup.label = county;
-                byCounty[county].forEach(school => {
-                    const opt = document.createElement('option');
-                    opt.value = school.id;
-                    opt.textContent = school.name;
-                    optgroup.appendChild(opt);
+            try {
+                const response = await fetch('/api/prizes/schools');
+                
+                if (!response.ok) {
+                    console.error('Failed to load schools:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                const select = document.getElementById('school-select');
+                
+                // Group by county
+                const byCounty = {};
+                (data.schools || []).forEach(s => {
+                    const county = s.county || 'Other';
+                    if (!byCounty[county]) byCounty[county] = [];
+                    byCounty[county].push(s);
                 });
-                select.appendChild(optgroup);
-            });
+                
+                Object.keys(byCounty).sort().forEach(county => {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = county;
+                    byCounty[county].forEach(school => {
+                        const opt = document.createElement('option');
+                        opt.value = school.id;
+                        opt.textContent = school.name;
+                        optgroup.appendChild(opt);
+                    });
+                    select.appendChild(optgroup);
+                });
+            } catch (error) {
+                console.error('Error loading schools:', error);
+            }
         }
         
         async function loadPrizes() {
-            const response = await fetch('/api/prizes/available');
-            const data = await response.json();
-            
-            studentPoints = data.student_points;
-            currentSchool = data.school;
-            
-            document.getElementById('student-points').textContent = studentPoints.toLocaleString();
-            
-            // Update school display
-            const schoolDisplay = document.getElementById('school-display');
-            const schoolSelection = document.getElementById('school-selection');
-            
-            if (currentSchool) {
-                schoolDisplay.innerHTML = `
-                    <div class="school-badge">
-                        <i class="fas fa-school"></i>
-                        <span>${currentSchool.name}</span>
-                        <button class="btn btn-sm btn-outline-light" onclick="showSchoolModal()">
-                            <i class="fas fa-exchange-alt"></i>
-                        </button>
-                    </div>
-                `;
-                schoolSelection.style.display = 'none';
-            } else {
-                schoolDisplay.innerHTML = '';
-                schoolSelection.style.display = 'block';
-            }
-            
-            // Render prizes
-            const container = document.getElementById('prizes-container');
-            
-            if (!currentSchool) {
-                container.innerHTML = `
-                    <div class="text-center text-white py-5">
-                        <i class="fas fa-arrow-up fa-3x mb-3 opacity-50"></i>
-                        <p>Select your school above to view available prizes</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Group prizes by tier
-            const tiers = {
-                bronze: { name: 'Bronze', icon: '🥉', class: 'tier-bronze', prizes: [] },
-                silver: { name: 'Silver', icon: '🥈', class: 'tier-silver', prizes: [] },
-                gold: { name: 'Gold', icon: '🥇', class: 'tier-gold', prizes: [] },
-                platinum: { name: 'Platinum', icon: '💎', class: 'tier-platinum', prizes: [] }
-            };
-            
-            data.prizes.forEach(p => {
+            try {
+                const response = await fetch('/api/prizes/available');
+                
+                // Check if request was successful
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                studentPoints = data.student_points || 0;
+                currentSchool = data.school;
+                
+                document.getElementById('student-points').textContent = studentPoints.toLocaleString();
+                
+                // Update school display
+                const schoolDisplay = document.getElementById('school-display');
+                const schoolSelection = document.getElementById('school-selection');
+                
+                if (currentSchool) {
+                    schoolDisplay.innerHTML = `
+                        <div class="school-badge">
+                            <i class="fas fa-school"></i>
+                            <span>${currentSchool.name}</span>
+                            <button class="btn btn-sm btn-outline-light" onclick="showSchoolModal()">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                    schoolSelection.style.display = 'none';
+                } else {
+                    schoolDisplay.innerHTML = '';
+                    schoolSelection.style.display = 'block';
+                }
+                
+                // Render prizes
+                const container = document.getElementById('prizes-container');
+                
+                if (!currentSchool) {
+                    container.innerHTML = `
+                        <div class="text-center text-white py-5">
+                            <i class="fas fa-arrow-up fa-3x mb-3 opacity-50"></i>
+                            <p>Select your school above to view available prizes</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Group prizes by tier
+                const tiers = {
+                    bronze: { name: 'Bronze', icon: '🥉', class: 'tier-bronze', prizes: [] },
+                    silver: { name: 'Silver', icon: '🥈', class: 'tier-silver', prizes: [] },
+                    gold: { name: 'Gold', icon: '🥇', class: 'tier-gold', prizes: [] },
+                    platinum: { name: 'Platinum', icon: '💎', class: 'tier-platinum', prizes: [] }
+                };
+                
+                (data.prizes || []).forEach(p => {
                 if (tiers[p.tier]) {
                     tiers[p.tier].prizes.push(p);
                 }
@@ -504,6 +522,31 @@
             });
             
             container.innerHTML = html || '<p class="text-white text-center">No prizes available at the moment.</p>';
+            
+            } catch (error) {
+                console.error('Error loading prizes:', error);
+                const container = document.getElementById('prizes-container');
+                container.innerHTML = `
+                    <div class="alert alert-danger text-center mx-auto" style="max-width: 600px;">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                        <h4>Unable to Load Prizes</h4>
+                        <p>${error.message}</p>
+                        <p class="small mb-3">This could mean:</p>
+                        <ul class="text-start small">
+                            <li>The prize system is not enabled yet</li>
+                            <li>No prizes have been added to the catalogue</li>
+                            <li>There was a connection error</li>
+                        </ul>
+                        <button class="btn btn-light mt-2" onclick="loadPrizes()">
+                            <i class="fas fa-sync me-2"></i>Try Again
+                        </button>
+                        <a href="/student" class="btn btn-outline-light mt-2">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                `;
+                return;
+            }
         }
         
         function renderPrizeCard(prize) {
@@ -667,36 +710,45 @@
         }
         
         async function loadMyRedemptions() {
-            const response = await fetch('/api/prizes/my-redemptions');
-            const data = await response.json();
-            
-            const container = document.getElementById('my-redemptions');
-            const list = document.getElementById('redemptions-list');
-            
-            if (data.redemptions.length === 0) {
-                container.style.display = 'none';
-                return;
-            }
-            
-            container.style.display = 'block';
-            
-            list.innerHTML = data.redemptions.map(r => `
-                <div class="redemption-item">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span style="font-size: 1.5rem;">${r.prize_emoji}</span>
-                            <strong>${r.prize_name}</strong>
-                            <span class="redemption-token ms-2">${r.token}</span>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge ${r.status === 'pending' ? 'bg-warning' : r.status === 'fulfilled' ? 'bg-success' : 'bg-danger'}">
-                                ${r.status.charAt(0).toUpperCase() + r.status.slice(1)}
-                            </span>
-                            <div class="small text-muted">${r.school_name}</div>
+            try {
+                const response = await fetch('/api/prizes/my-redemptions');
+                
+                if (!response.ok) {
+                    console.error('Failed to load redemptions:', response.status);
+                    return;
+                }
+                
+                const data = await response.json();
+                const container = document.getElementById('my-redemptions');
+                const list = document.getElementById('redemptions-list');
+                
+                if (!data.redemptions || data.redemptions.length === 0) {
+                    container.style.display = 'none';
+                    return;
+                }
+                
+                container.style.display = 'block';
+                
+                list.innerHTML = data.redemptions.map(r => `
+                    <div class="redemption-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span style="font-size: 1.5rem;">${r.prize_emoji}</span>
+                                <strong>${r.prize_name}</strong>
+                                <span class="redemption-token ms-2">${r.token}</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge ${r.status === 'pending' ? 'bg-warning' : r.status === 'fulfilled' ? 'bg-success' : 'bg-danger'}">
+                                    ${r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                                </span>
+                                <div class="small text-muted">${r.school_name}</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (error) {
+                console.error('Error loading redemptions:', error);
+            }
         }
     </script>
 </body>

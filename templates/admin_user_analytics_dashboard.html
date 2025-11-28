@@ -1,0 +1,583 @@
+<!--
+  ADMIN USER ANALYTICS DASHBOARD
+  Add this as a new tab in admin_dashboard.html
+  
+  Features:
+  - Overview statistics (casual guests, repeat guests, registered users)
+  - Activity charts
+  - Drill-down into individual users
+  - Automatic cleanup management
+-->
+
+<style>
+/* Analytics Dashboard Styles */
+.analytics-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 25px;
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card h2 {
+    font-size: 3em;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.stat-card p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.stat-card.warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+}
+
+.stat-card.danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.stat-card.success {
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.user-table th {
+    background: #f8f9fa;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.user-table td {
+    padding: 12px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.user-table tr:hover {
+    background: #f8f9fa;
+}
+
+.badge-activity {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.activity-active { background: #d4edda; color: #155724; }
+.activity-inactive { background: #f8d7da; color: #721c24; }
+.activity-stale { background: #fff3cd; color: #856404; }
+
+.cleanup-warning {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-bar {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.filter-bar input, .filter-bar select {
+    margin-right: 10px;
+}
+</style>
+
+<!-- User Analytics Tab Content -->
+<div class="tab-pane fade" id="user-analytics" role="tabpanel">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3>📊 User Analytics & Management</h3>
+            <p class="text-muted">Monitor user activity and manage inactive accounts</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="refreshAnalytics()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn btn-warning" onclick="showCleanupSettings()">
+                <i class="fas fa-broom"></i> Cleanup Settings
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h2 id="total-registered">0</h2>
+                <p>Registered Users</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card success">
+                <i class="fas fa-ticket-alt fa-2x mb-2"></i>
+                <h2 id="total-repeat-guests">0</h2>
+                <p>Repeat Guests</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card warning">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h2 id="inactive-guests">0</h2>
+                <p>Inactive (60+ days)</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <i class="fas fa-user-clock fa-2x mb-2"></i>
+                <h2 id="total-casual">0</h2>
+                <p>Casual Sessions Today</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cleanup Warning -->
+    <div id="cleanup-alert" class="cleanup-warning" style="display: none;">
+        <strong><i class="fas fa-exclamation-triangle"></i> Auto-Cleanup Status:</strong>
+        <span id="cleanup-status">Loading...</span>
+        <button class="btn btn-sm btn-warning float-end" onclick="runCleanupNow()">
+            Run Cleanup Now
+        </button>
+    </div>
+
+    <!-- Tabs for Different User Types -->
+    <ul class="nav nav-tabs mb-3" id="userTypesTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="registered-tab" data-bs-toggle="tab" href="#registered-users">
+                Registered Users
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="repeat-guests-tab" data-bs-toggle="tab" href="#repeat-guests">
+                Repeat Guests
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="inactive-tab" data-bs-toggle="tab" href="#inactive-users">
+                Inactive Accounts
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Registered Users Tab -->
+        <div class="tab-pane fade show active" id="registered-users">
+            <div class="analytics-card">
+                <div class="filter-bar">
+                    <input type="text" id="search-registered" class="form-control d-inline-block" style="width: 300px;" placeholder="Search by name or email...">
+                    <select id="sort-registered" class="form-select d-inline-block" style="width: 200px;">
+                        <option value="recent">Most Recent</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="active">Most Active</option>
+                        <option value="points">Most Points</option>
+                    </select>
+                </div>
+
+                <table class="user-table" id="registered-users-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Points</th>
+                            <th>Quizzes</th>
+                            <th>Last Active</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Repeat Guests Tab -->
+        <div class="tab-pane fade" id="repeat-guests">
+            <div class="analytics-card">
+                <div class="filter-bar">
+                    <input type="text" id="search-guests" class="form-control d-inline-block" style="width: 300px;" placeholder="Search by code or nickname...">
+                    <select id="sort-guests" class="form-select d-inline-block" style="width: 200px;">
+                        <option value="recent">Most Recent</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="active">Most Active</option>
+                        <option value="points">Most Points</option>
+                    </select>
+                </div>
+
+                <table class="user-table" id="repeat-guests-table">
+                    <thead>
+                        <tr>
+                            <th>Guest Code</th>
+                            <th>Nickname</th>
+                            <th>Points</th>
+                            <th>Quizzes</th>
+                            <th>Created</th>
+                            <th>Last Active</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Inactive Accounts Tab -->
+        <div class="tab-pane fade" id="inactive-users">
+            <div class="analytics-card">
+                <div class="alert alert-warning">
+                    <strong><i class="fas fa-info-circle"></i> Auto-Cleanup Policy:</strong>
+                    Repeat guest codes inactive for 60+ days can be recycled to free up space.
+                    Registered users are never automatically deleted.
+                </div>
+
+                <table class="user-table" id="inactive-users-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Identifier</th>
+                            <th>Last Active</th>
+                            <th>Days Inactive</th>
+                            <th>Points</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Detail Modal -->
+<div class="modal fade" id="userDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-circle"></i> User Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="user-detail-content">
+                <!-- Loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cleanup Settings Modal -->
+<div class="modal fade" id="cleanupSettingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-broom"></i> Auto-Cleanup Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Inactive Days Threshold</label>
+                    <input type="number" class="form-control" id="cleanup-days" value="60" min="30" max="180">
+                    <small class="text-muted">Guest codes inactive for this many days will be eligible for cleanup</small>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="auto-cleanup-enabled">
+                        <label class="form-check-label" for="auto-cleanup-enabled">
+                            Enable Automatic Cleanup (runs daily)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Note:</strong> Only repeat guest codes are affected. Registered users are never auto-deleted.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCleanupSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load analytics data
+function loadAnalytics() {
+    fetch('/api/admin/analytics/overview')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total-registered').textContent = data.registered_users;
+            document.getElementById('total-repeat-guests').textContent = data.repeat_guests;
+            document.getElementById('inactive-guests').textContent = data.inactive_guests;
+            document.getElementById('total-casual').textContent = data.casual_sessions_today;
+            
+            // Update cleanup status
+            if (data.inactive_guests > 0) {
+                document.getElementById('cleanup-alert').style.display = 'block';
+                document.getElementById('cleanup-status').textContent = 
+                    `${data.inactive_guests} guest codes ready for cleanup`;
+            }
+        });
+}
+
+function loadRegisteredUsers() {
+    fetch('/api/admin/analytics/registered-users')
+        .then(response => response.json())
+        .then(users => {
+            const tbody = document.querySelector('#registered-users-table tbody');
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td><strong>${user.full_name}</strong></td>
+                    <td>${user.email}</td>
+                    <td><span class="badge bg-primary">${user.points}</span></td>
+                    <td>${user.quizzes}</td>
+                    <td>${formatDate(user.last_active)}</td>
+                    <td><span class="badge-activity activity-${user.activity_status}">${user.activity_label}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="viewUserDetail('registered', ${user.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        });
+}
+
+function loadRepeatGuests() {
+    fetch('/api/admin/analytics/repeat-guests')
+        .then(response => response.json())
+        .then(guests => {
+            const tbody = document.querySelector('#repeat-guests-table tbody');
+            tbody.innerHTML = guests.map(guest => `
+                <tr>
+                    <td><code>${guest.guest_code}</code></td>
+                    <td>${guest.nickname || '<em>No nickname</em>'}</td>
+                    <td><span class="badge bg-success">${guest.total_score}</span></td>
+                    <td>${guest.quizzes_completed}</td>
+                    <td>${formatDate(guest.created_at)}</td>
+                    <td>${formatDate(guest.last_active)}</td>
+                    <td><span class="badge-activity activity-${guest.activity_status}">${guest.activity_label}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-info" onclick="viewUserDetail('guest', '${guest.guest_code}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            ${guest.days_inactive > 60 ? `
+                                <button class="btn btn-sm btn-danger" onclick="recycleGuestCode('${guest.guest_code}')">
+                                    <i class="fas fa-recycle"></i> Recycle
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        });
+}
+
+function loadInactiveUsers() {
+    fetch('/api/admin/analytics/inactive-users')
+        .then(response => response.json())
+        .then(inactive => {
+            const tbody = document.querySelector('#inactive-users-table tbody');
+            tbody.innerHTML = inactive.map(user => `
+                <tr>
+                    <td><span class="badge bg-secondary">${user.type}</span></td>
+                    <td>${user.identifier}</td>
+                    <td>${formatDate(user.last_active)}</td>
+                    <td><strong>${user.days_inactive}</strong> days</td>
+                    <td>${user.points}</td>
+                    <td>
+                        ${user.type === 'Guest' ? `
+                            <button class="btn btn-sm btn-danger" onclick="recycleGuestCode('${user.identifier}')">
+                                <i class="fas fa-recycle"></i> Recycle Now
+                            </button>
+                        ` : '<em>Auto-cleanup disabled for registered users</em>'}
+                    </td>
+                </tr>
+            `).join('');
+        });
+}
+
+function viewUserDetail(type, identifier) {
+    fetch(`/api/admin/analytics/user-detail?type=${type}&id=${identifier}`)
+        .then(response => response.json())
+        .then(data => {
+            const content = document.getElementById('user-detail-content');
+            
+            if (type === 'registered') {
+                content.innerHTML = `
+                    <h5>${data.full_name}</h5>
+                    <p><strong>Email:</strong> ${data.email}</p>
+                    <p><strong>Role:</strong> ${data.role}</p>
+                    <hr>
+                    <h6>Statistics</h6>
+                    <ul>
+                        <li>Total Points: <strong>${data.points}</strong></li>
+                        <li>Level: <strong>${data.level}</strong></li>
+                        <li>Quizzes Completed: <strong>${data.quizzes}</strong></li>
+                        <li>Accuracy: <strong>${data.accuracy}%</strong></li>
+                        <li>Current Streak: <strong>${data.streak} days</strong></li>
+                    </ul>
+                    <hr>
+                    <h6>Recent Activity</h6>
+                    <div>${data.recent_activity}</div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <h5>Guest Code: <code>${data.guest_code}</code></h5>
+                    <p><strong>Nickname:</strong> ${data.nickname || 'None'}</p>
+                    <hr>
+                    <h6>Statistics</h6>
+                    <ul>
+                        <li>Total Points: <strong>${data.total_score}</strong></li>
+                        <li>Quizzes Completed: <strong>${data.quizzes_completed}</strong></li>
+                        <li>Days Since Created: <strong>${data.days_old}</strong></li>
+                        <li>Days Since Last Active: <strong>${data.days_inactive}</strong></li>
+                    </ul>
+                    <hr>
+                    <h6>Recent Quizzes</h6>
+                    <div>${data.recent_quizzes}</div>
+                `;
+            }
+            
+            new bootstrap.Modal(document.getElementById('userDetailModal')).show();
+        });
+}
+
+function recycleGuestCode(guestCode) {
+    if (!confirm(`Are you sure you want to recycle guest code "${guestCode}"? This will permanently delete all their data.`)) {
+        return;
+    }
+    
+    fetch('/api/admin/analytics/recycle-guest', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({guest_code: guestCode})
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert('Guest code recycled successfully!');
+            refreshAnalytics();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    });
+}
+
+function runCleanupNow() {
+    if (!confirm('Run automatic cleanup now? This will recycle all guest codes inactive for 60+ days.')) {
+        return;
+    }
+    
+    fetch('/api/admin/analytics/run-cleanup', {method: 'POST'})
+        .then(response => response.json())
+        .then(result => {
+            alert(`Cleanup complete! Recycled ${result.recycled_count} guest codes.`);
+            refreshAnalytics();
+        });
+}
+
+function showCleanupSettings() {
+    fetch('/api/admin/analytics/cleanup-settings')
+        .then(response => response.json())
+        .then(settings => {
+            document.getElementById('cleanup-days').value = settings.days_threshold;
+            document.getElementById('auto-cleanup-enabled').checked = settings.auto_enabled;
+            new bootstrap.Modal(document.getElementById('cleanupSettingsModal')).show();
+        });
+}
+
+function saveCleanupSettings() {
+    const settings = {
+        days_threshold: parseInt(document.getElementById('cleanup-days').value),
+        auto_enabled: document.getElementById('auto-cleanup-enabled').checked
+    };
+    
+    fetch('/api/admin/analytics/cleanup-settings', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(result => {
+        alert('Settings saved!');
+        bootstrap.Modal.getInstance(document.getElementById('cleanupSettingsModal')).hide();
+    });
+}
+
+function refreshAnalytics() {
+    loadAnalytics();
+    loadRegisteredUsers();
+    loadRepeatGuests();
+    loadInactiveUsers();
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return 'Never';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    if (diff < 7) return `${diff} days ago`;
+    if (diff < 30) return `${Math.floor(diff / 7)} weeks ago`;
+    return date.toLocaleDateString();
+}
+
+// Load on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('user-analytics')) {
+        refreshAnalytics();
+    }
+});
+
+// Auto-refresh every 60 seconds
+setInterval(() => {
+    if (document.getElementById('user-analytics') && 
+        document.getElementById('user-analytics').classList.contains('active')) {
+        loadAnalytics();
+    }
+}, 60000);
+</script>

@@ -376,7 +376,7 @@ class UserStats(db.Model):
 class AvatarItem(db.Model):
     """Shop items - animals, hats, glasses, backgrounds, accessories"""
     __tablename__ = 'avatar_items'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     item_type = db.Column(db.String(50), nullable=False)  # 'animal', 'hat', 'glasses', 'background', 'accessory'
     item_key = db.Column(db.String(50), nullable=False)   # 'panda', 'crown', etc.
@@ -388,9 +388,9 @@ class AvatarItem(db.Model):
     is_active = db.Column(db.Boolean, default=True)      # Can hide items without deleting
     sort_order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     __table_args__ = (db.UniqueConstraint('item_type', 'item_key', name='unique_item_type_key'),)
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -408,15 +408,15 @@ class AvatarItem(db.Model):
 class UserAvatarInventory(db.Model):
     """Tracks which items users/guests have purchased"""
     __tablename__ = 'user_avatar_inventory'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     guest_code = db.Column(db.String(50), nullable=True)
     item_id = db.Column(db.Integer, db.ForeignKey('avatar_items.id'), nullable=False)
     purchased_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     item = db.relationship('AvatarItem', backref='purchases')
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -429,7 +429,7 @@ class UserAvatarInventory(db.Model):
 class UserAvatarEquipped(db.Model):
     """Tracks currently equipped avatar configuration"""
     __tablename__ = 'user_avatar_equipped'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     guest_code = db.Column(db.String(50), nullable=True)
@@ -439,7 +439,7 @@ class UserAvatarEquipped(db.Model):
     background_key = db.Column(db.String(50), default='none')
     accessory_key = db.Column(db.String(50), default='none')
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def to_dict(self):
         return {
             'user_id': self.user_id,
@@ -455,7 +455,7 @@ class UserAvatarEquipped(db.Model):
 class AvatarPurchaseLog(db.Model):
     """Audit log for all purchases - useful for debugging and potential refunds"""
     __tablename__ = 'avatar_purchase_log'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=True)
     guest_code = db.Column(db.String(50), nullable=True)
@@ -464,9 +464,9 @@ class AvatarPurchaseLog(db.Model):
     points_before = db.Column(db.Integer, nullable=False)
     points_after = db.Column(db.Integer, nullable=False)
     purchased_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     item = db.relationship('AvatarItem')
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -486,13 +486,13 @@ class AvatarPurchaseLog(db.Model):
 class SystemSetting(db.Model):
     """Global system settings (key-value store)"""
     __tablename__ = 'system_settings'
-    
+
     key = db.Column(db.String(100), primary_key=True)
     value = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     updated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    
+
     @staticmethod
     def get(key, default=None):
         """Get a setting value"""
@@ -505,7 +505,7 @@ class SystemSetting(db.Model):
             except:
                 return setting.value
         return default
-    
+
     @staticmethod
     def set(key, value, description=None, user_id=None):
         """Set a setting value"""
@@ -513,18 +513,18 @@ class SystemSetting(db.Model):
         setting = SystemSetting.query.get(key)
         if not setting:
             setting = SystemSetting(key=key)
-        
+
         # Serialize complex values as JSON
         if isinstance(value, (dict, list)):
             setting.value = json.dumps(value)
         else:
             setting.value = str(value)
-        
+
         if description:
             setting.description = description
         setting.updated_by = user_id
         setting.updated_at = datetime.utcnow()
-        
+
         db.session.add(setting)
         db.session.commit()
         return setting
@@ -533,34 +533,34 @@ class SystemSetting(db.Model):
 class PrizeSchool(db.Model):
     """Schools participating in the prize programme"""
     __tablename__ = 'prize_schools'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     roll_number = db.Column(db.String(20), unique=True, nullable=True)  # Irish school roll number
     county = db.Column(db.String(50))
     address = db.Column(db.Text)
-    
+
     # Status
     status = db.Column(db.String(20), default='pending')  # pending, approved, suspended
-    
+
     # School-specific settings
     points_multiplier = db.Column(db.Float, default=1.0)  # Multiplied with global multiplier
-    
+
     # School rep (main contact)
     rep_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     rep_name = db.Column(db.String(100))
     rep_email = db.Column(db.String(100))
-    
+
     # Admin tracking
     approved_at = db.Column(db.DateTime)
     approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     notes = db.Column(db.Text)
-    
+
     # Relationships
     rep_user = db.relationship('User', foreign_keys=[rep_user_id], backref='rep_for_schools')
     approver = db.relationship('User', foreign_keys=[approved_by])
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -579,31 +579,31 @@ class PrizeSchool(db.Model):
 class Prize(db.Model):
     """Global prize catalogue (templates)"""
     __tablename__ = 'prizes'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    
+
     # Points (base cost before multipliers)
     base_point_cost = db.Column(db.Integer, nullable=False)
-    
+
     # Classification
     tier = db.Column(db.String(20), default='bronze')  # bronze, silver, gold, platinum
     prize_type = db.Column(db.String(20), default='physical')  # physical, raffle_entry, digital
-    
+
     # Level requirement (0 = no requirement)
     minimum_level = db.Column(db.Integer, default=0)
-    
+
     # Display
     emoji = db.Column(db.String(10), default='🎁')
     image_url = db.Column(db.String(255))
     sort_order = db.Column(db.Integer, default=0)
-    
+
     # Availability
     is_active = db.Column(db.Boolean, default=True)
-    
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def get_cost_for_school(self, school):
         """Calculate actual point cost for this prize at a specific school"""
         # Check for school-specific override
@@ -611,16 +611,16 @@ class Prize(db.Model):
             school_id=school.id,
             prize_id=self.id
         ).first()
-        
+
         if override and override.point_cost_override:
             return override.point_cost_override
-        
+
         # Apply multipliers
         global_multiplier = float(SystemSetting.get('global_points_multiplier', 5.0))
         school_multiplier = school.points_multiplier or 1.0
-        
+
         return int(self.base_point_cost * global_multiplier * school_multiplier)
-    
+
     def to_dict(self, school=None):
         result = {
             'id': self.id,
@@ -635,40 +635,40 @@ class Prize(db.Model):
             'is_active': self.is_active,
             'sort_order': self.sort_order
         }
-        
+
         if school:
             result['point_cost'] = self.get_cost_for_school(school)
-        
+
         return result
 
 
 class SchoolPrize(db.Model):
     """School-specific prize overrides and custom prizes"""
     __tablename__ = 'school_prizes'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     school_id = db.Column(db.Integer, db.ForeignKey('prize_schools.id'), nullable=False)
-    
+
     # If prize_id is set, this is an override for a global prize
     # If prize_id is NULL, this is a school-specific prize
     prize_id = db.Column(db.Integer, db.ForeignKey('prizes.id'), nullable=True)
-    
+
     # Custom prize details (used when prize_id is NULL)
     custom_name = db.Column(db.String(100))
     custom_description = db.Column(db.Text)
     custom_emoji = db.Column(db.String(10), default='🎁')
-    
+
     # Override settings
     point_cost_override = db.Column(db.Integer, nullable=True)  # NULL = use calculated cost
     stock_available = db.Column(db.Integer, nullable=True)  # NULL = unlimited
     is_enabled = db.Column(db.Boolean, default=True)  # Can disable for this school
-    
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationships
     school = db.relationship('PrizeSchool', backref='prize_overrides')
     prize = db.relationship('Prize', backref='school_overrides')
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -683,7 +683,7 @@ class SchoolPrize(db.Model):
             # Include global prize info if this is an override
             'prize': self.prize.to_dict() if self.prize else None
         }
-    
+
     def get_display_name(self):
         """Get the display name (custom or from global prize)"""
         if self.custom_name:
@@ -691,7 +691,7 @@ class SchoolPrize(db.Model):
         elif self.prize:
             return self.prize.name
         return "Unknown Prize"
-    
+
     def get_point_cost(self):
         """Get the point cost for this school prize"""
         if self.point_cost_override:
@@ -704,40 +704,40 @@ class SchoolPrize(db.Model):
 class PrizeRedemption(db.Model):
     """Student prize redemptions (token-based, no personal data)"""
     __tablename__ = 'prize_redemptions'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    
+
     # Who redeemed
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     school_id = db.Column(db.Integer, db.ForeignKey('prize_schools.id'), nullable=False)
-    
+
     # What was redeemed
     prize_id = db.Column(db.Integer, db.ForeignKey('prizes.id'), nullable=True)  # Global prize
     school_prize_id = db.Column(db.Integer, db.ForeignKey('school_prizes.id'), nullable=True)  # School-specific
-    
+
     # Token for collection (GDPR-safe: no student name stored)
     token = db.Column(db.String(20), unique=True, nullable=False)
-    
+
     # Points
     points_spent = db.Column(db.Integer, nullable=False)
-    
+
     # Status tracking
     status = db.Column(db.String(20), default='pending')  # pending, fulfilled, expired, cancelled
-    
+
     # Timestamps
     redeemed_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime)  # Token expiry
     fulfilled_at = db.Column(db.DateTime)
     fulfilled_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     fulfilment_notes = db.Column(db.Text)
-    
+
     # Relationships
     user = db.relationship('User', foreign_keys=[user_id], backref='prize_redemptions')
     school = db.relationship('PrizeSchool', backref='redemptions')
     prize = db.relationship('Prize', backref='redemptions')
     school_prize = db.relationship('SchoolPrize', backref='redemptions')
     fulfiller = db.relationship('User', foreign_keys=[fulfilled_by])
-    
+
     def get_prize_name(self):
         """Get the name of the redeemed prize"""
         if self.school_prize:
@@ -745,7 +745,7 @@ class PrizeRedemption(db.Model):
         elif self.prize:
             return self.prize.name
         return "Unknown Prize"
-    
+
     def get_prize_emoji(self):
         """Get the emoji for the redeemed prize"""
         if self.school_prize and self.school_prize.custom_emoji:
@@ -753,7 +753,7 @@ class PrizeRedemption(db.Model):
         elif self.prize:
             return self.prize.emoji
         return "🎁"
-    
+
     def to_dict(self, include_user=False):
         result = {
             'id': self.id,
@@ -768,44 +768,44 @@ class PrizeRedemption(db.Model):
             'expires_at': self.expires_at.isoformat() if self.expires_at else None,
             'fulfilled_at': self.fulfilled_at.isoformat() if self.fulfilled_at else None
         }
-        
+
         if include_user and self.user:
             result['username'] = self.user.username
-        
+
         return result
 
 
 class SchoolRequest(db.Model):
     """Student requests to add their school to the programme"""
     __tablename__ = 'school_requests'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    
+
     # School info from student
     school_name = db.Column(db.String(200), nullable=False)
     county = db.Column(db.String(50))
     suggested_rep_email = db.Column(db.String(100))  # Optional: student suggests a teacher
-    
+
     # Who requested
     requested_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    
+
     # Status
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
     admin_notes = db.Column(db.Text)
-    
+
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     processed_at = db.Column(db.DateTime)
     processed_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    
+
     # If approved, link to created school
     created_school_id = db.Column(db.Integer, db.ForeignKey('prize_schools.id'), nullable=True)
-    
+
     # Relationships
     requester = db.relationship('User', foreign_keys=[requested_by], backref='school_requests')
     processor = db.relationship('User', foreign_keys=[processed_by])
     created_school = db.relationship('PrizeSchool')
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -823,29 +823,29 @@ class SchoolRequest(db.Model):
 class RaffleDraw(db.Model):
     """Weekly raffle draws"""
     __tablename__ = 'raffle_draws'
-    
+
     id = db.Column(db.Integer, primary_key=True)
-    
+
     # Draw info
     draw_name = db.Column(db.String(100), nullable=False)
     prize_description = db.Column(db.Text, nullable=False)
-    
+
     # Scheduling
     draw_date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(20), default='scheduled')  # scheduled, completed, cancelled
-    
+
     # Winner
     winner_redemption_id = db.Column(db.Integer, db.ForeignKey('prize_redemptions.id'), nullable=True)
-    
+
     # Admin
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     drawn_at = db.Column(db.DateTime)
-    
+
     # Relationships
     winner_redemption = db.relationship('PrizeRedemption')
     creator = db.relationship('User', foreign_keys=[created_by])
-    
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -1039,12 +1039,12 @@ def get_avatar_user_points(user_id=None, guest_code=None):
     """
     Get current points for user or guest.
     Returns (points, level) tuple.
-    
+
     NOTE: guest_code takes priority over user_id because repeat guests
     have BOTH set in session (user_id points to shared guest account).
     """
     from sqlalchemy import text
-    
+
     # Check guest_code FIRST (repeat guests have both user_id and guest_code)
     if guest_code:
         # Guest user - get from guest_users table (NOT guest_stats!)
@@ -1060,40 +1060,40 @@ def get_avatar_user_points(user_id=None, guest_code=None):
         points = result[0] if result else 0
     else:
         points = 0
-    
+
     level = (points // 100) + 1
     return points, level
 
 def avatar_owns_item(item_id, user_id=None, guest_code=None):
     """Check if user/guest owns a specific item"""
     query = UserAvatarInventory.query.filter_by(item_id=item_id)
-    
+
     # Check guest_code FIRST (repeat guests have both user_id and guest_code)
     if guest_code:
         return query.filter_by(guest_code=guest_code).first() is not None
     elif user_id:
         return query.filter_by(user_id=user_id).first() is not None
-    
+
     return False
 
 def get_equipped_avatar(user_id=None, guest_code=None):
     """Get currently equipped avatar configuration
-    
+
     NOTE: guest_code takes priority because repeat guests have BOTH
     a shared user_id AND their unique guest_code in session.
     """
     equipped = None
-    
+
     # Check guest_code FIRST (repeat guests have both user_id and guest_code)
     if guest_code:
         equipped = UserAvatarEquipped.query.filter_by(guest_code=guest_code).first()
         print(f"🔍 Looking for equipped by guest_code={guest_code}, found: {equipped}")
-    
+
     # Only check user_id if no guest_code OR no equipped found for guest
     if not equipped and user_id:
         equipped = UserAvatarEquipped.query.filter_by(user_id=user_id).first()
         print(f"🔍 Looking for equipped by user_id={user_id}, found: {equipped}")
-    
+
     # Return default configuration if none exists
     if not equipped:
         print(f"⚠️ No equipped record found, returning defaults")
@@ -1104,7 +1104,7 @@ def get_equipped_avatar(user_id=None, guest_code=None):
             'background': 'none',
             'accessory': 'none'
         }
-    
+
     result = equipped.to_dict()
     print(f"✅ Found equipped record: {result}")
     return result
@@ -1113,9 +1113,9 @@ def grant_default_avatar_items(user_id=None, guest_code=None):
     """Grant all default items to a new user/guest"""
     if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
         return
-    
+
     default_items = AvatarItem.query.filter_by(is_default=True).all()
-    
+
     for item in default_items:
         if not avatar_owns_item(item.id, user_id, guest_code):
             # For guests, only store guest_code (not the shared user_id)
@@ -1125,7 +1125,7 @@ def grant_default_avatar_items(user_id=None, guest_code=None):
                 item_id=item.id
             )
             db.session.add(inventory_entry)
-    
+
     try:
         db.session.commit()
     except:
@@ -1139,20 +1139,20 @@ def get_animal_from_guest_code(guest_code):
     """
     if not guest_code:
         return 'panda'
-    
+
     code_lower = guest_code.lower()
-    
+
     # Check for avatar-friendly animals first (these have matching avatars)
     for animal in AVATAR_ANIMALS:
         if code_lower.startswith(animal):
             return animal
-    
+
     # Check for legacy animals (these get mapped to panda)
     for animal in LEGACY_ANIMALS:
         if code_lower.startswith(animal):
             # Legacy animal without avatar - use panda as fallback
             return 'panda'
-    
+
     # Unknown format - default to panda
     return 'panda'
 
@@ -1203,7 +1203,7 @@ def update_user_stats_after_quiz(user_id, quiz_attempt):
     today = date.today()
     streak_bonus = 0
     streak_milestone = None
-    
+
     if IRISH_CALENDAR_ENABLED:
         # Smart streak tracking - only counts school days
         if stats.last_quiz_date:
@@ -1222,7 +1222,7 @@ def update_user_stats_after_quiz(user_id, quiz_attempt):
         else:
             # First quiz ever
             stats.current_streak_days = 1
-        
+
         # Check for streak milestone bonus
         streak_milestone = get_streak_milestone(stats.current_streak_days)
         if streak_milestone:
@@ -2401,13 +2401,30 @@ def submit_quiz():
             'is_repeat_guest': True
         }), 200
 
-    # For casual guests, just return results without saving
+    # For casual guests, save to UserStats so points persist during session
     if 'is_guest' in session:
+        user_id = session.get('user_id')
+        if user_id:
+            # Get or create UserStats for guest user
+            stats = UserStats.query.filter_by(user_id=user_id).first()
+            if not stats:
+                stats = UserStats(user_id=user_id, total_points=0, level=1)
+                db.session.add(stats)
+                db.session.commit()
+            
+            # Update points
+            stats.total_points += score
+            stats.total_quizzes += 1
+            stats.total_questions_answered += total
+            stats.total_correct_answers += score
+            db.session.commit()
+        
         return jsonify({
             'message': 'Quiz completed!',
             'score': score,
             'total': total,
             'percentage': percentage,
+            'total_points': score,
             'is_guest': True,
             'prompt_register': True
         }), 200
@@ -2487,14 +2504,17 @@ def get_student_badges():
     from sqlalchemy import text
 
     # =====================================================================
-    # CASUAL GUESTS - Quick Try users (no persistence)
+    # CASUAL GUESTS - Quick Try users (now with session persistence!)
     # =====================================================================
     if 'is_guest' in session and 'guest_code' not in session:
+        user_id = session.get('user_id')
+        stats = UserStats.query.filter_by(user_id=user_id).first() if user_id else None
+        
         return jsonify({
             'earned': [],
             'available': [],
-            'level': 1,
-            'total_points': 0,
+            'level': stats.level if stats else 1,
+            'total_points': stats.total_points if stats else 0,
             'total_badges': 0,
             'is_casual_guest': True
         }), 200
@@ -2861,7 +2881,7 @@ def get_student_stats():
     recent_attempts = QuizAttempt.query.filter_by(user_id=user_id).order_by(
         QuizAttempt.completed_at.desc()
     ).limit(10).all()
-    
+
     # Get streak info (if Irish calendar enabled)
     streak_info = {}
     if IRISH_CALENDAR_ENABLED:
@@ -2873,7 +2893,7 @@ def get_student_stats():
             'next_milestone_points': next_milestone_info['points'] if next_milestone_info else None,
             'days_until_next': (next_milestone_days - stats.current_streak_days) if next_milestone_days else None
         }
-    
+
     stats_dict = stats.to_dict()
     stats_dict['streak_info'] = streak_info
 
@@ -4277,7 +4297,48 @@ def admin_statistics():
         'total_quizzes': QuizAttempt.query.count(),
         'total_questions': Question.query.count()
     }
+
+    # Add prize system statistics if enabled
+    if FEATURE_FLAGS.get('PRIZE_SYSTEM_ENABLED', False):
+        stats['prize_stats'] = {
+            'active_prizes': Prize.query.filter_by(is_active=True).count(),
+            'total_schools': PrizeSchool.query.filter_by(is_active=True).count(),
+            'pending_redemptions': PrizeRedemption.query.filter_by(status='pending').count(),
+            'total_redemptions': PrizeRedemption.query.count()
+        }
+
     return jsonify(stats)
+
+
+@app.route('/api/admin/topics-list')
+@login_required
+@role_required('admin')
+def admin_topics_list():
+    """Get all distinct topics from questions table with counts"""
+    from sqlalchemy import func
+
+    # Query to get topics and their question counts
+    topics_query = db.session.query(
+        Question.topic,
+        func.count(Question.id).label('count')
+    ).group_by(Question.topic).order_by(Question.topic).all()
+
+    # Format topic names for display
+    def format_topic_name(topic):
+        """Convert topic key to display name"""
+        return topic.replace('_', ' ').title()
+
+    topics = [
+        {
+            'value': topic,
+            'name': format_topic_name(topic),
+            'count': count
+        }
+        for topic, count in topics_query
+    ]
+
+    return jsonify({'topics': topics})
+
 
 # ==================== REAL-TIME CLASS DASHBOARD ROUTES ====================
 
@@ -5140,16 +5201,16 @@ def generate_repeat_guest():
             VALUES (:code, :now, :now)
         """), {"code": code, "now": datetime.utcnow()})
         db.session.commit()
-        
+
         # AVATAR: Auto-setup avatar for new guest
         animal = get_animal_from_guest_code(code)
         avatar_animal = animal if animal else 'panda'
-        
+
         if FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
             try:
                 # Grant default items to new guest
                 grant_default_avatar_items(guest_code=code)
-                
+
                 # Create equipped avatar with their animal
                 equipped = UserAvatarEquipped(
                     guest_code=code,
@@ -5221,18 +5282,18 @@ def repeat_guest_login():
 
         # Update last active
         update_guest_last_active(code)
-        
+
         # AVATAR: Ensure returning guest has avatar setup
         animal = get_animal_from_guest_code(code)
         if FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
             try:
                 # Check if guest has equipped avatar
                 existing_equipped = UserAvatarEquipped.query.filter_by(guest_code=code).first()
-                
+
                 if not existing_equipped:
                     # First time with avatar system - set up defaults
                     grant_default_avatar_items(guest_code=code)
-                    
+
                     equipped = UserAvatarEquipped(
                         guest_code=code,
                         animal_key=animal if animal else 'panda',
@@ -5471,7 +5532,7 @@ def admin_prizes():
     if not FEATURE_FLAGS.get('PRIZE_SYSTEM_ENABLED', False):
         flash('Prize system is not enabled.', 'warning')
         return redirect(url_for('admin_dashboard'))
-    
+
     return render_template('admin_prizes.html')
 
 
@@ -5496,23 +5557,23 @@ def update_prize_settings():
     """Update global prize system settings"""
     data = request.get_json()
     user_id = session.get('user_id')
-    
+
     if 'global_points_multiplier' in data:
-        SystemSetting.set('global_points_multiplier', float(data['global_points_multiplier']), 
+        SystemSetting.set('global_points_multiplier', float(data['global_points_multiplier']),
                           'Global multiplier for prize point costs', user_id)
-    
+
     if 'prize_expiry_days' in data:
         SystemSetting.set('prize_expiry_days', int(data['prize_expiry_days']),
                           'Days before unclaimed prizes expire', user_id)
-    
+
     if 'raffle_enabled' in data:
         SystemSetting.set('raffle_enabled', 'true' if data['raffle_enabled'] else 'false',
                           'Whether raffle system is enabled', user_id)
-    
+
     if 'level_lock_enabled' in data:
         SystemSetting.set('prize_level_lock_enabled', 'true' if data['level_lock_enabled'] else 'false',
                           'Whether prizes require minimum level to redeem', user_id)
-    
+
     return jsonify({'success': True, 'message': 'Settings updated'})
 
 
@@ -5525,13 +5586,13 @@ def get_prize_catalogue():
     """Get all prizes in the global catalogue"""
     prizes = Prize.query.order_by(Prize.tier, Prize.sort_order, Prize.name).all()
     global_multiplier = float(SystemSetting.get('global_points_multiplier', 5.0))
-    
+
     result = []
     for prize in prizes:
         p = prize.to_dict()
         p['effective_cost'] = int(prize.base_point_cost * global_multiplier)
         result.append(p)
-    
+
     return jsonify({
         'prizes': result,
         'global_multiplier': global_multiplier
@@ -5544,7 +5605,7 @@ def get_prize_catalogue():
 def create_prize():
     """Create a new prize in the global catalogue"""
     data = request.get_json()
-    
+
     prize = Prize(
         name=data['name'],
         description=data.get('description', ''),
@@ -5556,10 +5617,10 @@ def create_prize():
         sort_order=data.get('sort_order', 0),
         is_active=data.get('is_active', True)
     )
-    
+
     db.session.add(prize)
     db.session.commit()
-    
+
     return jsonify({'success': True, 'prize': prize.to_dict()})
 
 
@@ -5570,7 +5631,7 @@ def update_prize(prize_id):
     """Update a prize in the global catalogue"""
     prize = Prize.query.get_or_404(prize_id)
     data = request.get_json()
-    
+
     if 'name' in data:
         prize.name = data['name']
     if 'description' in data:
@@ -5589,9 +5650,9 @@ def update_prize(prize_id):
         prize.sort_order = int(data['sort_order'])
     if 'is_active' in data:
         prize.is_active = data['is_active']
-    
+
     db.session.commit()
-    
+
     return jsonify({'success': True, 'prize': prize.to_dict()})
 
 
@@ -5601,21 +5662,21 @@ def update_prize(prize_id):
 def delete_prize(prize_id):
     """Delete a prize from the global catalogue (if no redemptions)"""
     prize = Prize.query.get_or_404(prize_id)
-    
+
     # Check for redemptions
     redemption_count = PrizeRedemption.query.filter_by(prize_id=prize_id).count()
     if redemption_count > 0:
         return jsonify({
-            'success': False, 
+            'success': False,
             'error': f'Cannot delete: {redemption_count} redemptions exist for this prize. Deactivate instead.'
         }), 400
-    
+
     # Delete school overrides first
     SchoolPrize.query.filter_by(prize_id=prize_id).delete()
-    
+
     db.session.delete(prize)
     db.session.commit()
-    
+
     return jsonify({'success': True, 'message': 'Prize deleted'})
 
 
@@ -5636,7 +5697,7 @@ def get_prize_schools():
 def create_prize_school():
     """Add a new school to the prize programme"""
     data = request.get_json()
-    
+
     school = PrizeSchool(
         name=data['name'],
         roll_number=data.get('roll_number'),
@@ -5649,10 +5710,10 @@ def create_prize_school():
         approved_at=datetime.utcnow(),
         approved_by=session.get('user_id')
     )
-    
+
     db.session.add(school)
     db.session.commit()
-    
+
     return jsonify({'success': True, 'school': school.to_dict()})
 
 
@@ -5663,7 +5724,7 @@ def update_prize_school(school_id):
     """Update a school in the prize programme"""
     school = PrizeSchool.query.get_or_404(school_id)
     data = request.get_json()
-    
+
     if 'name' in data:
         school.name = data['name']
     if 'roll_number' in data:
@@ -5686,9 +5747,9 @@ def update_prize_school(school_id):
         school.rep_email = data['rep_email']
     if 'notes' in data:
         school.notes = data['notes']
-    
+
     db.session.commit()
-    
+
     return jsonify({'success': True, 'school': school.to_dict()})
 
 
@@ -5698,7 +5759,7 @@ def update_prize_school(school_id):
 def delete_prize_school(school_id):
     """Delete a school from the prize programme"""
     school = PrizeSchool.query.get_or_404(school_id)
-    
+
     # Check for redemptions
     redemption_count = PrizeRedemption.query.filter_by(school_id=school_id).count()
     if redemption_count > 0:
@@ -5706,13 +5767,13 @@ def delete_prize_school(school_id):
             'success': False,
             'error': f'Cannot delete: {redemption_count} redemptions exist for this school. Suspend instead.'
         }), 400
-    
+
     # Delete school prizes
     SchoolPrize.query.filter_by(school_id=school_id).delete()
-    
+
     db.session.delete(school)
     db.session.commit()
-    
+
     return jsonify({'success': True, 'message': 'School deleted'})
 
 
@@ -5722,18 +5783,18 @@ def delete_prize_school(school_id):
 def get_school_prizes(school_id):
     """Get all prizes available at a specific school (with overrides)"""
     school = PrizeSchool.query.get_or_404(school_id)
-    
+
     # Get all global prizes
     global_prizes = Prize.query.filter_by(is_active=True).order_by(Prize.tier, Prize.sort_order).all()
-    
+
     # Get school overrides
     overrides = {sp.prize_id: sp for sp in SchoolPrize.query.filter_by(school_id=school_id).all()}
-    
+
     # Get school-specific prizes (where prize_id is NULL)
     school_specific = SchoolPrize.query.filter_by(school_id=school_id, prize_id=None).all()
-    
+
     result = []
-    
+
     # Add global prizes with override info
     for prize in global_prizes:
         override = overrides.get(prize.id)
@@ -5742,7 +5803,7 @@ def get_school_prizes(school_id):
         item['is_enabled'] = override.is_enabled if override else True
         item['stock_available'] = override.stock_available if override else None
         result.append(item)
-    
+
     # Add school-specific prizes
     for sp in school_specific:
         result.append({
@@ -5756,7 +5817,7 @@ def get_school_prizes(school_id):
             'is_enabled': sp.is_enabled,
             'stock_available': sp.stock_available
         })
-    
+
     return jsonify({
         'school': school.to_dict(),
         'prizes': result
@@ -5770,7 +5831,7 @@ def create_school_prize(school_id):
     """Create a school-specific prize or override"""
     school = PrizeSchool.query.get_or_404(school_id)
     data = request.get_json()
-    
+
     school_prize = SchoolPrize(
         school_id=school_id,
         prize_id=data.get('prize_id'),  # NULL for school-specific
@@ -5781,10 +5842,10 @@ def create_school_prize(school_id):
         stock_available=data.get('stock_available'),
         is_enabled=data.get('is_enabled', True)
     )
-    
+
     db.session.add(school_prize)
     db.session.commit()
-    
+
     return jsonify({'success': True, 'school_prize': school_prize.to_dict()})
 
 
@@ -5794,12 +5855,12 @@ def create_school_prize(school_id):
 def update_school_prize(school_id, school_prize_id):
     """Update a school-specific prize or override"""
     school_prize = SchoolPrize.query.get_or_404(school_prize_id)
-    
+
     if school_prize.school_id != school_id:
         return jsonify({'error': 'Prize does not belong to this school'}), 400
-    
+
     data = request.get_json()
-    
+
     if 'custom_name' in data:
         school_prize.custom_name = data['custom_name']
     if 'custom_description' in data:
@@ -5812,9 +5873,9 @@ def update_school_prize(school_id, school_prize_id):
         school_prize.stock_available = data['stock_available']
     if 'is_enabled' in data:
         school_prize.is_enabled = data['is_enabled']
-    
+
     db.session.commit()
-    
+
     return jsonify({'success': True, 'school_prize': school_prize.to_dict()})
 
 
@@ -5836,7 +5897,7 @@ def approve_school_request(request_id):
     """Approve a school request and create the school"""
     school_request = SchoolRequest.query.get_or_404(request_id)
     data = request.get_json() or {}
-    
+
     # Create the school
     school = PrizeSchool(
         name=data.get('name', school_request.school_name),
@@ -5847,19 +5908,19 @@ def approve_school_request(request_id):
         approved_at=datetime.utcnow(),
         approved_by=session.get('user_id')
     )
-    
+
     db.session.add(school)
     db.session.flush()  # Get the school ID
-    
+
     # Update the request
     school_request.status = 'approved'
     school_request.processed_at = datetime.utcnow()
     school_request.processed_by = session.get('user_id')
     school_request.created_school_id = school.id
     school_request.admin_notes = data.get('admin_notes')
-    
+
     db.session.commit()
-    
+
     return jsonify({'success': True, 'school': school.to_dict()})
 
 
@@ -5870,14 +5931,14 @@ def reject_school_request(request_id):
     """Reject a school request"""
     school_request = SchoolRequest.query.get_or_404(request_id)
     data = request.get_json() or {}
-    
+
     school_request.status = 'rejected'
     school_request.processed_at = datetime.utcnow()
     school_request.processed_by = session.get('user_id')
     school_request.admin_notes = data.get('admin_notes', 'Request rejected')
-    
+
     db.session.commit()
-    
+
     return jsonify({'success': True})
 
 
@@ -5889,20 +5950,20 @@ def reject_school_request(request_id):
 def get_prize_stats():
     """Get prize system statistics"""
     from sqlalchemy import func
-    
+
     total_schools = PrizeSchool.query.filter_by(status='approved').count()
     pending_schools = PrizeSchool.query.filter_by(status='pending').count()
     total_prizes = Prize.query.filter_by(is_active=True).count()
-    
+
     total_redemptions = PrizeRedemption.query.count()
     pending_redemptions = PrizeRedemption.query.filter_by(status='pending').count()
     fulfilled_redemptions = PrizeRedemption.query.filter_by(status='fulfilled').count()
-    
+
     total_points_spent = db.session.query(func.sum(PrizeRedemption.points_spent)).scalar() or 0
-    
+
     # Recent redemptions
     recent = PrizeRedemption.query.order_by(PrizeRedemption.redeemed_at.desc()).limit(10).all()
-    
+
     return jsonify({
         'schools': {
             'approved': total_schools,
@@ -5932,7 +5993,7 @@ def student_prize_shop():
     if not FEATURE_FLAGS.get('PRIZE_SYSTEM_ENABLED', False):
         flash('Prize shop is not available yet.', 'info')
         return redirect(url_for('student_app'))
-    
+
     return render_template('prize_shop.html')
 
 
@@ -5943,26 +6004,66 @@ def get_available_prizes():
     """Get prizes available to the current student"""
     if not FEATURE_FLAGS.get('PRIZE_SYSTEM_ENABLED', False):
         return jsonify({'error': 'Prize system not enabled'}), 403
-    
+
     user_id = session.get('user_id')
-    
+
     # Get student's school (if set)
     user = User.query.get(user_id)
     school_id = session.get('prize_school_id')
+    
+    # If not in session, try to load from user's default
+    if not school_id and user and not user.email.startswith('guest_'):
+        try:
+            from sqlalchemy import text
+            result = db.session.execute(text("""
+                SELECT default_school_id FROM users WHERE id = :user_id
+            """), {'user_id': user_id}).fetchone()
+            if result and result.default_school_id:
+                school_id = result.default_school_id
+                session['prize_school_id'] = school_id
+        except:
+            pass
+    
     school = PrizeSchool.query.get(school_id) if school_id else None
-    
+
     # Get student's points and level
-    stats = UserStats.query.filter_by(user_id=user_id).first()
-    student_points = stats.total_points if stats else 0
-    student_level = stats.level if stats else 1
-    
+    # Check if this is a repeat guest first
+    if 'guest_code' in session:
+        from sqlalchemy import text
+        guest_code = session['guest_code']
+        guest_stats = db.session.execute(text("""
+            SELECT total_score, quizzes_completed
+            FROM guest_users
+            WHERE guest_code = :code
+        """), {"code": guest_code}).fetchone()
+        
+        student_points = guest_stats.total_score if guest_stats else 0
+        student_level = (student_points // 100) + 1 if guest_stats else 1
+    else:
+        # Regular users and casual guests use UserStats
+        stats = UserStats.query.filter_by(user_id=user_id).first()
+        
+        # Create UserStats if it doesn't exist (e.g., for guest users)
+        if not stats:
+            stats = UserStats(user_id=user_id, total_points=0, level=1)
+            db.session.add(stats)
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+                # Try to fetch again in case of race condition
+                stats = UserStats.query.filter_by(user_id=user_id).first()
+        
+        student_points = stats.total_points if stats else 0
+        student_level = stats.level if stats else 1
+
     # Get global multiplier and level lock setting
     global_multiplier = float(SystemSetting.get('global_points_multiplier', 5.0))
     level_lock_enabled = SystemSetting.get('prize_level_lock_enabled', 'false') == 'true'
-    
+
     # Get all active prizes
     prizes = Prize.query.filter_by(is_active=True).order_by(Prize.tier, Prize.sort_order).all()
-    
+
     result = []
     for prize in prizes:
         if school:
@@ -5976,11 +6077,11 @@ def get_available_prizes():
             # No school selected - use global multiplier only
             point_cost = int(prize.base_point_cost * global_multiplier)
             stock = None
-        
+
         # Check level requirement
         min_level = prize.minimum_level or 0
         meets_level = student_level >= min_level if level_lock_enabled else True
-        
+
         result.append({
             'id': prize.id,
             'name': prize.name,
@@ -5995,16 +6096,16 @@ def get_available_prizes():
             'level_lock_enabled': level_lock_enabled,
             'stock_available': stock
         })
-    
+
     # Get school-specific prizes if school is selected
     school_specific = []
     if school:
         custom_prizes = SchoolPrize.query.filter_by(
-            school_id=school.id, 
+            school_id=school.id,
             prize_id=None,
             is_enabled=True
         ).all()
-        
+
         for sp in custom_prizes:
             school_specific.append({
                 'id': None,
@@ -6019,7 +6120,7 @@ def get_available_prizes():
                 'stock_available': sp.stock_available,
                 'is_school_specific': True
             })
-    
+
     return jsonify({
         'prizes': result,
         'school_prizes': school_specific,
@@ -6037,7 +6138,7 @@ def get_available_prizes():
 def get_prize_schools_for_student():
     """Get list of approved schools for student to select"""
     schools = PrizeSchool.query.filter_by(status='approved').order_by(PrizeSchool.county, PrizeSchool.name).all()
-    
+
     return jsonify({
         'schools': [{'id': s.id, 'name': s.name, 'county': s.county} for s in schools]
     })
@@ -6050,13 +6151,31 @@ def select_prize_school():
     """Student selects their school for prize redemption"""
     data = request.get_json()
     school_id = data.get('school_id')
-    
+
     if school_id:
         school = PrizeSchool.query.get(school_id)
         if not school or school.status != 'approved':
             return jsonify({'error': 'Invalid school'}), 400
-        
+
+        # Save to session for immediate use
         session['prize_school_id'] = school_id
+        
+        # Save to user profile for persistence (registered users only)
+        user_id = session.get('user_id')
+        user = User.query.get(user_id)
+        if user and not user.email.startswith('guest_'):
+            try:
+                from sqlalchemy import text
+                db.session.execute(text("""
+                    UPDATE users 
+                    SET default_school_id = :school_id 
+                    WHERE id = :user_id
+                """), {'school_id': school_id, 'user_id': user_id})
+                db.session.commit()
+            except:
+                # Column might not exist yet, ignore
+                pass
+        
         return jsonify({'success': True, 'school': school.to_dict()})
     else:
         session.pop('prize_school_id', None)
@@ -6070,29 +6189,29 @@ def request_new_school():
     """Student requests to add their school to the programme"""
     data = request.get_json()
     user_id = session.get('user_id')
-    
+
     # Check for existing pending request from this user
     existing = SchoolRequest.query.filter_by(
         requested_by=user_id,
         status='pending'
     ).first()
-    
+
     if existing:
         return jsonify({
             'error': 'You already have a pending school request',
             'existing_request': existing.to_dict()
         }), 400
-    
+
     school_request = SchoolRequest(
         school_name=data['school_name'],
         county=data.get('county'),
         suggested_rep_email=data.get('suggested_rep_email'),
         requested_by=user_id
     )
-    
+
     db.session.add(school_request)
     db.session.commit()
-    
+
     return jsonify({
         'success': True,
         'message': 'School request submitted! An admin will review it soon.',
@@ -6107,23 +6226,23 @@ def redeem_prize():
     """Student redeems points for a prize"""
     if not FEATURE_FLAGS.get('PRIZE_SYSTEM_ENABLED', False):
         return jsonify({'error': 'Prize system not enabled'}), 403
-    
+
     data = request.get_json()
     user_id = session.get('user_id')
     school_id = session.get('prize_school_id')
-    
+
     # Must have school selected
     if not school_id:
         return jsonify({'error': 'Please select your school first'}), 400
-    
+
     school = PrizeSchool.query.get(school_id)
     if not school or school.status != 'approved':
         return jsonify({'error': 'Invalid school'}), 400
-    
+
     # Get prize
     prize_id = data.get('prize_id')
     school_prize_id = data.get('school_prize_id')
-    
+
     if prize_id:
         prize = Prize.query.get(prize_id)
         if not prize or not prize.is_active:
@@ -6139,12 +6258,12 @@ def redeem_prize():
         prize = None
     else:
         return jsonify({'error': 'No prize specified'}), 400
-    
+
     # Check student has enough points and level
     stats = UserStats.query.filter_by(user_id=user_id).first()
     if not stats or stats.total_points < point_cost:
         return jsonify({'error': 'Not enough points'}), 400
-    
+
     # Check level requirement (only for global prizes)
     level_lock_enabled = SystemSetting.get('prize_level_lock_enabled', 'false') == 'true'
     if prize_id and level_lock_enabled and prize:
@@ -6152,7 +6271,7 @@ def redeem_prize():
         student_level = stats.level if stats else 1
         if student_level < min_level:
             return jsonify({'error': f'You need to reach Level {min_level} to redeem this prize'}), 400
-    
+
     # Check stock if applicable
     if school_prize_id:
         sp = SchoolPrize.query.get(school_prize_id)
@@ -6162,14 +6281,14 @@ def redeem_prize():
         override = SchoolPrize.query.filter_by(school_id=school_id, prize_id=prize_id).first()
         if override and override.stock_available is not None and override.stock_available <= 0:
             return jsonify({'error': 'Prize out of stock at your school'}), 400
-    
+
     # Generate token
     token = generate_prize_token()
-    
+
     # Calculate expiry
     expiry_days = int(SystemSetting.get('prize_expiry_days', 30))
     expires_at = datetime.utcnow() + timedelta(days=expiry_days)
-    
+
     # Create redemption
     redemption = PrizeRedemption(
         user_id=user_id,
@@ -6181,10 +6300,10 @@ def redeem_prize():
         status='pending',
         expires_at=expires_at
     )
-    
+
     # Deduct points
     stats.total_points -= point_cost
-    
+
     # Decrease stock if applicable
     if school_prize_id:
         sp = SchoolPrize.query.get(school_prize_id)
@@ -6194,10 +6313,10 @@ def redeem_prize():
         override = SchoolPrize.query.filter_by(school_id=school_id, prize_id=prize_id).first()
         if override and override.stock_available is not None:
             override.stock_available -= 1
-    
+
     db.session.add(redemption)
     db.session.commit()
-    
+
     return jsonify({
         'success': True,
         'token': token,
@@ -6216,11 +6335,11 @@ def redeem_prize():
 def get_my_redemptions():
     """Get student's prize redemption history"""
     user_id = session.get('user_id')
-    
+
     redemptions = PrizeRedemption.query.filter_by(user_id=user_id).order_by(
         PrizeRedemption.redeemed_at.desc()
     ).all()
-    
+
     return jsonify({
         'redemptions': [r.to_dict() for r in redemptions]
     })
@@ -6235,20 +6354,20 @@ def school_rep_required(f):
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return jsonify({'error': 'Please log in first'}), 401
-        
+
         user_id = session['user_id']
         user = User.query.get(user_id)
-        
+
         if not user:
             return jsonify({'error': 'User not found'}), 401
-        
+
         # Check if user is a rep for any school
         school = PrizeSchool.query.filter_by(rep_user_id=user_id, status='approved').first()
-        
+
         # Also allow admins and teachers
         if not school and user.role not in ['admin', 'teacher']:
             return jsonify({'error': 'You are not authorized as a school rep'}), 403
-        
+
         return f(*args, **kwargs)
     return decorated_function
 
@@ -6260,18 +6379,18 @@ def school_rep_dashboard():
     if not FEATURE_FLAGS.get('PRIZE_SYSTEM_ENABLED', False):
         flash('Prize system is not enabled.', 'warning')
         return redirect(url_for('dashboard'))
-    
+
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    
+
     # Check if user is a school rep
     school = PrizeSchool.query.filter_by(rep_user_id=user_id, status='approved').first()
-    
+
     # Allow admin/teacher to access (they can select school)
     if not school and user.role not in ['admin', 'teacher']:
         flash('You are not registered as a school rep.', 'warning')
         return redirect(url_for('dashboard'))
-    
+
     return render_template('school_rep_dashboard.html')
 
 
@@ -6281,14 +6400,14 @@ def get_rep_schools():
     """Get schools this user is a rep for"""
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    
+
     # Reps see their assigned schools
     schools = PrizeSchool.query.filter_by(rep_user_id=user_id, status='approved').all()
-    
+
     # Admins see all schools
     if user.role == 'admin':
         schools = PrizeSchool.query.filter_by(status='approved').all()
-    
+
     return jsonify({
         'schools': [s.to_dict() for s in schools],
         'is_admin': user.role == 'admin'
@@ -6301,17 +6420,17 @@ def get_pending_redemptions(school_id):
     """Get pending redemptions for a school"""
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    
+
     # Verify access
     school = PrizeSchool.query.get_or_404(school_id)
     if school.rep_user_id != user_id and user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     redemptions = PrizeRedemption.query.filter_by(
         school_id=school_id,
         status='pending'
     ).order_by(PrizeRedemption.redeemed_at.desc()).all()
-    
+
     return jsonify({
         'school': school.to_dict(),
         'redemptions': [r.to_dict(include_user=True) for r in redemptions],
@@ -6326,22 +6445,22 @@ def search_token():
     user_id = session.get('user_id')
     user = User.query.get(user_id)
     data = request.get_json()
-    
+
     token = data.get('token', '').strip().upper()
-    
+
     if not token:
         return jsonify({'error': 'Please enter a token'}), 400
-    
+
     redemption = PrizeRedemption.query.filter_by(token=token).first()
-    
+
     if not redemption:
         return jsonify({'error': 'Token not found', 'found': False}), 404
-    
+
     # Verify access to this school
     school = redemption.school
     if school.rep_user_id != user_id and user.role != 'admin':
         return jsonify({'error': 'This token belongs to a different school', 'found': False}), 403
-    
+
     return jsonify({
         'found': True,
         'redemption': redemption.to_dict(include_user=True),
@@ -6356,25 +6475,25 @@ def fulfil_redemption(redemption_id):
     user_id = session.get('user_id')
     user = User.query.get(user_id)
     data = request.get_json() or {}
-    
+
     redemption = PrizeRedemption.query.get_or_404(redemption_id)
     school = redemption.school
-    
+
     # Verify access
     if school.rep_user_id != user_id and user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     if redemption.status != 'pending':
         return jsonify({'error': f'Redemption already {redemption.status}'}), 400
-    
+
     # Mark as fulfilled
     redemption.status = 'fulfilled'
     redemption.fulfilled_at = datetime.utcnow()
     redemption.fulfilled_by = user_id
     redemption.fulfilment_notes = data.get('notes', '')
-    
+
     db.session.commit()
-    
+
     return jsonify({
         'success': True,
         'message': 'Prize marked as delivered!',
@@ -6388,18 +6507,18 @@ def get_fulfilment_history(school_id):
     """Get fulfilment history for a school"""
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    
+
     # Verify access
     school = PrizeSchool.query.get_or_404(school_id)
     if school.rep_user_id != user_id and user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     # Get fulfilled redemptions
     redemptions = PrizeRedemption.query.filter_by(
         school_id=school_id,
         status='fulfilled'
     ).order_by(PrizeRedemption.fulfilled_at.desc()).limit(50).all()
-    
+
     return jsonify({
         'school': school.to_dict(),
         'redemptions': [r.to_dict(include_user=True) for r in redemptions]
@@ -6412,22 +6531,22 @@ def get_school_rep_stats(school_id):
     """Get stats for a school"""
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    
+
     # Verify access
     school = PrizeSchool.query.get_or_404(school_id)
     if school.rep_user_id != user_id and user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
-    
+
     from sqlalchemy import func
-    
+
     pending = PrizeRedemption.query.filter_by(school_id=school_id, status='pending').count()
     fulfilled = PrizeRedemption.query.filter_by(school_id=school_id, status='fulfilled').count()
     expired = PrizeRedemption.query.filter_by(school_id=school_id, status='expired').count()
-    
+
     total_points = db.session.query(func.sum(PrizeRedemption.points_spent)).filter_by(
         school_id=school_id, status='fulfilled'
     ).scalar() or 0
-    
+
     return jsonify({
         'school': school.to_dict(),
         'stats': {
@@ -6457,6 +6576,52 @@ def admin_required(f):
 
         return f(*args, **kwargs)
     return decorated_function
+    return decorated_function
+
+
+# Helper function for Who Am I answer variants - MUST BE BEFORE ROUTES
+def auto_generate_variants(answer):
+    """
+    Auto-generate acceptable answer variants
+    Returns a list of lowercase variants
+    """
+    variants = set()
+    answer_lower = answer.lower().strip()
+    variants.add(answer_lower)
+
+    # Remove common titles
+    titles = ['dr.', 'dr', 'sir', 'professor', 'prof.', 'prof', 'dame', 'lord', 'lady']
+    for title in titles:
+        if answer_lower.startswith(title + ' '):
+            without_title = answer_lower.replace(title + ' ', '', 1).strip()
+            variants.add(without_title)
+
+    # Split into name parts
+    parts = answer_lower.split()
+
+    if len(parts) >= 2:
+        # First name only
+        variants.add(parts[0])
+
+        # Last name only
+        variants.add(parts[-1])
+
+        # First and last (skip middle)
+        if len(parts) > 2:
+            variants.add(f"{parts[0]} {parts[-1]}")
+
+        # Remove middle initials
+        filtered_parts = [p for p in parts if len(p) > 2 or not p.endswith('.')]
+        if len(filtered_parts) != len(parts):
+            variants.add(' '.join(filtered_parts))
+
+    # Remove punctuation variants
+    import string
+    no_punct = answer_lower.translate(str.maketrans('', '', string.punctuation))
+    if no_punct != answer_lower:
+        variants.add(no_punct)
+
+    return sorted(list(variants))
 
 
 @app.route('/admin/who-am-i')
@@ -6465,7 +6630,7 @@ def admin_who_am_i():
     """Display all Who Am I images with multi-topic support"""
     from sqlalchemy import text
 
-    # Get all images with their topics
+    # Get all images with their topics - INCLUDE accepted_answers
     query = text("""
         SELECT
             i.id,
@@ -6476,6 +6641,7 @@ def admin_who_am_i():
             i.active,
             i.created_at,
             i.topic as primary_topic,
+            i.accepted_answers,
             GROUP_CONCAT(t.topic) as all_topics
         FROM who_am_i_images i
         LEFT JOIN who_am_i_image_topics t ON i.id = t.image_id
@@ -6489,16 +6655,26 @@ def admin_who_am_i():
     for row in results:
         # Parse comma-separated topics
         topics = row.all_topics.split(',') if row.all_topics else []
+        
+        # Parse accepted answers to get count
+        accepted_answers_count = 0
+        if row.accepted_answers:
+            try:
+                accepted_answers_count = len(json.loads(row.accepted_answers))
+            except:
+                pass
+        
         images.append({
             'id': row.id,
             'primary_topic': row.primary_topic,
-            'topics': topics,  # List of all assigned topics
+            'topics': topics,
             'difficulty': row.difficulty,
             'image_filename': row.image_filename,
             'answer': row.answer,
             'hint': row.hint,
             'active': row.active,
-            'created_at': row.created_at
+            'created_at': row.created_at,
+            'accepted_answers_count': accepted_answers_count
         })
 
     # Get ALL topics from questions table
@@ -6537,6 +6713,17 @@ def admin_who_am_i_upload():
     difficulty = request.form.get('difficulty')
     answer = request.form.get('answer')
     hint = request.form.get('hint', '')
+
+    # Handle accepted answers
+    accepted_answers_text = request.form.get('accepted_answers', '').strip()
+    if accepted_answers_text:
+        # Parse from textarea (one per line)
+        variants = [v.strip() for v in accepted_answers_text.split('\n') if v.strip()]
+        accepted_answers_json = json.dumps(variants)
+    else:
+        # Auto-generate if not provided
+        variants = auto_generate_variants(answer)
+        accepted_answers_json = json.dumps(variants)
 
     if file.filename == '':
         flash('No file selected', 'danger')
@@ -6661,81 +6848,103 @@ def admin_who_am_i_delete(image_id):
     return redirect(url_for('admin_who_am_i'))
 
 
+
+@app.route('/admin/who-am-i/get/<int:image_id>')
+@admin_required
+def admin_who_am_i_get(image_id):
+    """Get image details for editing (including accepted_answers)"""
+    from sqlalchemy import text
+
+    query = text("""
+        SELECT
+            i.id,
+            i.answer,
+            i.hint,
+            i.difficulty,
+            i.accepted_answers,
+            i.active,
+            GROUP_CONCAT(t.topic) as topics
+        FROM who_am_i_images i
+        LEFT JOIN who_am_i_image_topics t ON i.id = t.image_id
+        WHERE i.id = :image_id
+        GROUP BY i.id
+    """)
+
+    result = db.session.execute(query, {'image_id': image_id}).fetchone()
+
+    if not result:
+        return jsonify({'error': 'Image not found'}), 404
+
+    topics = result.topics.split(',') if result.topics else []
+
+    return jsonify({
+        'id': result.id,
+        'answer': result.answer,
+        'hint': result.hint,
+        'difficulty': result.difficulty,
+        'accepted_answers': result.accepted_answers,
+        'active': result.active,
+        'topics': topics
+    })
+
+
 @app.route('/admin/who-am-i/edit/<int:image_id>', methods=['GET', 'POST'])
 @admin_required
 def admin_who_am_i_edit(image_id):
-    """Edit an existing image's details"""
+    """Edit image details including accepted_answers"""
     from sqlalchemy import text
 
-    if request.method == 'POST':
-        # Update image details
-        answer = request.form.get('answer')
-        hint = request.form.get('hint', '')
-        difficulty = request.form.get('difficulty')
-        selected_topics = request.form.getlist('topics[]')
-        primary_topic = request.form.get('primary_topic') or (selected_topics[0] if selected_topics else None)
+    if request.method == 'GET':
+        # Redirect to main page (handled by GET endpoint now)
+        return redirect(url_for('admin_who_am_i'))
 
-        if not answer or not difficulty or not selected_topics:
-            return jsonify({'success': False, 'error': 'Answer, difficulty, and at least one topic required'}), 400
+    # POST - handle edit
+    answer = request.form.get('answer')
+    hint = request.form.get('hint', '')
+    difficulty = request.form.get('difficulty')
+    selected_topics = request.form.getlist('topics[]')
 
-        # Update main image record
-        db.session.execute(text("""
-            UPDATE who_am_i_images
-            SET answer = :answer, hint = :hint, difficulty = :difficulty, topic = :primary_topic
-            WHERE id = :id
-        """), {
-            'answer': answer,
-            'hint': hint,
-            'difficulty': difficulty,
-            'primary_topic': primary_topic,
-            'id': image_id
-        })
+    # Handle accepted answers from form
+    accepted_answers_json = request.form.get('accepted_answers')
 
-        # Delete existing topic associations
-        db.session.execute(text("DELETE FROM who_am_i_image_topics WHERE image_id = :id"), {'id': image_id})
+    # If not provided or empty, auto-generate
+    if not accepted_answers_json:
+        variants = auto_generate_variants(answer)
+        accepted_answers_json = json.dumps(variants)
 
-        # Add new topic associations
+    # Update image
+    db.session.execute(text("""
+        UPDATE who_am_i_images
+        SET answer = :answer,
+            hint = :hint,
+            difficulty = :difficulty,
+            accepted_answers = :accepted_answers
+        WHERE id = :image_id
+    """), {
+        'answer': answer,
+        'hint': hint,
+        'difficulty': difficulty,
+        'accepted_answers': accepted_answers_json,
+        'image_id': image_id
+    })
+
+    # Update topics - delete old associations
+    db.session.execute(text("""
+        DELETE FROM who_am_i_image_topics WHERE image_id = :image_id
+    """), {'image_id': image_id})
+
+    # Insert new topic associations
+    if selected_topics:
         for topic in selected_topics:
             db.session.execute(text("""
                 INSERT INTO who_am_i_image_topics (image_id, topic)
                 VALUES (:image_id, :topic)
             """), {'image_id': image_id, 'topic': topic})
 
-        db.session.commit()
+    db.session.commit()
 
-        return jsonify({'success': True, 'message': 'Image updated successfully'})
-
-    # GET request - return image data
-    result = db.session.execute(text("""
-        SELECT id, topic, difficulty, image_filename, answer, hint, active
-        FROM who_am_i_images
-        WHERE id = :id
-    """), {'id': image_id}).fetchone()
-
-    if not result:
-        return jsonify({'success': False, 'error': 'Image not found'}), 404
-
-    # Get associated topics
-    topics_result = db.session.execute(text("""
-        SELECT topic FROM who_am_i_image_topics WHERE image_id = :id
-    """), {'id': image_id}).fetchall()
-
-    topics = [row.topic for row in topics_result]
-
-    return jsonify({
-        'success': True,
-        'image': {
-            'id': result.id,
-            'primary_topic': result.topic,
-            'topics': topics,
-            'difficulty': result.difficulty,
-            'image_filename': result.image_filename,
-            'answer': result.answer,
-            'hint': result.hint,
-            'active': result.active
-        }
-    })
-
+    flash('Image updated successfully', 'success')
+    return jsonify({'success': True})
 
 @app.route('/admin/who-am-i/bulk-assign', methods=['POST'])
 @admin_required
@@ -6935,7 +7144,8 @@ def who_am_i_guess():
 
     # Get session and image details - IMPORTANT: Include quiz_attempt_id!
     result = db.session.execute(text("""
-        SELECT s.tiles_revealed, s.guesses_made, s.correct_guess, s.quiz_attempt_id, i.answer
+        SELECT s.tiles_revealed, s.guesses_made, s.correct_guess, s.quiz_attempt_id,
+               i.answer, i.accepted_answers
         FROM who_am_i_sessions s
         JOIN who_am_i_images i ON s.image_id = i.id
         WHERE s.id = :session_id AND s.user_id = :user_id
@@ -6949,6 +7159,7 @@ def who_am_i_guess():
     correct_guess = result.correct_guess
     quiz_attempt_id = result.quiz_attempt_id  # NOW IT'S RETRIEVED!
     correct_answer = result.answer
+    accepted_answers_json = result.accepted_answers
 
     # Check if already guessed correctly
     if correct_guess:
@@ -6958,8 +7169,24 @@ def who_am_i_guess():
     if guesses_made >= 3:
         return jsonify({'error': 'No guesses remaining', 'correct': False, 'answer': correct_answer}), 400
 
-    # Check if guess is correct (case-insensitive)
-    is_correct = guess.lower() == correct_answer.lower()
+    # Flexible answer checking with variants
+    # Parse accepted answers
+    accepted_answers = []
+    if accepted_answers_json:
+        try:
+            accepted_answers = json.loads(accepted_answers_json)
+        except:
+            pass
+
+    # If no variants defined, fall back to original answer only
+    if not accepted_answers:
+        accepted_answers = [correct_answer.lower().strip()]
+
+    # Normalize guess
+    guess_normalized = guess.lower().strip()
+
+    # Check if guess matches any accepted variant
+    is_correct = guess_normalized in [a.lower().strip() for a in accepted_answers]
     guesses_made += 1
 
     # Calculate bonus points if correct
@@ -7103,19 +7330,19 @@ def avatar_shop_page():
     if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
         flash('Avatar shop is currently unavailable', 'warning')
         return redirect(url_for('student_app'))
-    
+
     user_id = session.get('user_id')
     guest_code = session.get('guest_code')
     is_casual_guest = session.get('is_guest', False)
-    
+
     if not user_id and not guest_code:
         flash('Please log in to access the avatar shop', 'warning')
         return redirect(url_for('login'))
-    
+
     # Get user info based on user type
     user_name = None
     display_name = None
-    
+
     if guest_code:
         # Repeat guest with animal code - use guest_code as name
         display_name = guest_code
@@ -7127,7 +7354,7 @@ def avatar_shop_page():
         user = User.query.get(user_id)
         user_name = user.full_name if user else None
         display_name = user_name
-    
+
     # Get points - prioritize guest_code for repeat guests
     if guest_code:
         points, level = get_avatar_user_points(None, guest_code)
@@ -7136,7 +7363,7 @@ def avatar_shop_page():
     else:
         # Casual guests don't have persistent points for avatar shop
         points, level = 0, 1
-    
+
     return render_template('avatar_shop.html',
         user_name=display_name,
         guest_code=guest_code,
@@ -7150,15 +7377,15 @@ def api_avatar_items():
     """Get all available shop items"""
     if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
         return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
-    
+
     item_type = request.args.get('type')  # Optional filter
-    
+
     query = AvatarItem.query.filter_by(is_active=True)
     if item_type:
         query = query.filter_by(item_type=item_type)
-    
+
     items = query.order_by(AvatarItem.sort_order).all()
-    
+
     return jsonify({
         'success': True,
         'items': [item.to_dict() for item in items]
@@ -7169,11 +7396,11 @@ def api_avatar_inventory():
     """Get current user's inventory and points"""
     if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
         return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
-    
+
     user_id = session.get('user_id')
     guest_code = session.get('guest_code')
     is_casual_guest = session.get('is_guest', False)
-    
+
     if not user_id and not guest_code:
         return jsonify({
             'success': False,
@@ -7181,7 +7408,7 @@ def api_avatar_inventory():
             'inventory': [],
             'points': 0
         })
-    
+
     # Get inventory based on user type
     query = UserAvatarInventory.query
     if guest_code:
@@ -7201,9 +7428,9 @@ def api_avatar_inventory():
             'level': 1,
             'is_casual_guest': True
         })
-    
+
     inventory = query.all()
-    
+
     return jsonify({
         'success': True,
         'inventory': [inv.to_dict() for inv in inventory],
@@ -7216,18 +7443,18 @@ def api_avatar_equipped():
     """Get currently equipped avatar configuration"""
     if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
         return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
-    
+
     user_id = session.get('user_id')
     guest_code = session.get('guest_code')
-    
+
     # DEBUG: Log what we're looking for
     print(f"🔍 api_avatar_equipped called: user_id={user_id}, guest_code={guest_code}")
-    
+
     equipped = get_equipped_avatar(user_id, guest_code)
-    
+
     # DEBUG: Log what we found
     print(f"🎭 Returning equipped: {equipped}")
-    
+
     return jsonify({
         'success': True,
         'equipped': equipped,
@@ -7242,34 +7469,34 @@ def api_avatar_purchase():
     """Purchase an item"""
     if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
         return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
-    
+
     if not FEATURE_FLAGS.get('AVATAR_SHOP_ENABLED', False):
         return jsonify({'success': False, 'message': 'Avatar shop disabled'}), 503
-    
+
     user_id = session.get('user_id')
     guest_code = session.get('guest_code')
-    
+
     if not user_id and not guest_code:
         return jsonify({'success': False, 'message': 'You must be logged in to purchase items'}), 401
-    
+
     data = request.get_json()
     item_id = data.get('item_id')
-    
+
     if not item_id:
         return jsonify({'success': False, 'message': 'Item ID is required'}), 400
-    
+
     # Get the item
     item = AvatarItem.query.get(item_id)
     if not item:
         return jsonify({'success': False, 'message': 'Item not found'}), 404
-    
+
     if not item.is_active:
         return jsonify({'success': False, 'message': 'Item is not available'}), 400
-    
+
     # Check if already owned
     if avatar_owns_item(item_id, user_id, guest_code):
         return jsonify({'success': False, 'message': 'You already own this item'}), 400
-    
+
     # Check if it's a free/default item
     if item.is_default or item.point_cost == 0:
         # Just add to inventory, no points needed
@@ -7285,21 +7512,21 @@ def api_avatar_purchase():
             'message': f"Added {item.display_name} to your collection!",
             'new_points': None
         })
-    
+
     # Get current points
     current_points, _ = get_avatar_user_points(user_id, guest_code)
-    
+
     # Check if enough points
     if current_points < item.point_cost:
         return jsonify({
             'success': False,
             'message': f"Not enough points. You need {item.point_cost} but have {current_points}"
         }), 400
-    
+
     # Deduct points
     from sqlalchemy import text
     new_points = current_points - item.point_cost
-    
+
     # Deduct from correct table (guest_code takes priority)
     if guest_code:
         db.session.execute(text(
@@ -7309,7 +7536,7 @@ def api_avatar_purchase():
         db.session.execute(text(
             "UPDATE user_stats SET total_points = :points WHERE user_id = :uid"
         ), {"points": new_points, "uid": user_id})
-    
+
     # Add to inventory (store both for tracking, but guest_code is primary for guests)
     inventory_entry = UserAvatarInventory(
         user_id=user_id if not guest_code else None,  # Only set user_id for actual registered users
@@ -7317,10 +7544,10 @@ def api_avatar_purchase():
         item_id=item_id
     )
     db.session.add(inventory_entry)
-    
+
     # AUTO-EQUIP: Automatically equip the purchased item
     print(f"🛒 AUTO-EQUIP: user_id={user_id}, guest_code={guest_code}, item_type={item.item_type}, item_key={item.item_key}")
-    
+
     if guest_code:
         equipped = UserAvatarEquipped.query.filter_by(guest_code=guest_code).first()
         print(f"🔍 Found equipped for guest_code={guest_code}: {equipped}")
@@ -7337,7 +7564,7 @@ def api_avatar_purchase():
             print(f"📝 Created new equipped record for user_id={user_id}")
     else:
         equipped = None
-    
+
     # Set the appropriate slot based on item type
     if equipped:
         print(f"📝 Before equip: animal={equipped.animal_key}, hat={equipped.hat_key}, glasses={equipped.glasses_key}")
@@ -7353,7 +7580,7 @@ def api_avatar_purchase():
             equipped.accessory_key = item.item_key
         equipped.updated_at = datetime.utcnow()
         print(f"📝 After equip: animal={equipped.animal_key}, hat={equipped.hat_key}, glasses={equipped.glasses_key}")
-    
+
     # Log the purchase
     purchase_log = AvatarPurchaseLog(
         user_id=user_id,
@@ -7364,9 +7591,9 @@ def api_avatar_purchase():
         points_after=new_points
     )
     db.session.add(purchase_log)
-    
+
     db.session.commit()
-    
+
     return jsonify({
         'success': True,
         'message': f"Purchased {item.display_name} for {item.point_cost} points!",
@@ -7378,33 +7605,33 @@ def api_avatar_equip():
     """Equip an item"""
     if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
         return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
-    
+
     user_id = session.get('user_id')
     guest_code = session.get('guest_code')
-    
+
     if not user_id and not guest_code:
         return jsonify({'success': False, 'message': 'You must be logged in to equip items'}), 401
-    
+
     data = request.get_json()
     item_type = data.get('item_type')
     item_key = data.get('item_key')
-    
+
     if not item_type or not item_key:
         return jsonify({'success': False, 'message': 'Item type and key are required'}), 400
-    
+
     # Verify item exists
     item = AvatarItem.query.filter_by(
         item_type=item_type,
         item_key=item_key
     ).first()
-    
+
     if not item:
         return jsonify({'success': False, 'message': 'Item not found'}), 404
-    
+
     # Check ownership (default items are always available)
     if not item.is_default and not avatar_owns_item(item.id, user_id, guest_code):
         return jsonify({'success': False, 'message': "You don't own this item"}), 400
-    
+
     # Get or create equipped record (guest_code takes priority)
     if guest_code:
         equipped = UserAvatarEquipped.query.filter_by(guest_code=guest_code).first()
@@ -7418,7 +7645,7 @@ def api_avatar_equip():
             db.session.add(equipped)
     else:
         return jsonify({'success': False, 'message': 'No user or guest identified'}), 400
-    
+
     # Update the appropriate slot
     if item_type == 'animal':
         equipped.animal_key = item_key
@@ -7432,10 +7659,10 @@ def api_avatar_equip():
         equipped.accessory_key = item_key
     else:
         return jsonify({'success': False, 'message': f'Unknown item type: {item_type}'}), 400
-    
+
     equipped.updated_at = datetime.utcnow()
     db.session.commit()
-    
+
     return jsonify({
         'success': True,
         'message': f"Equipped {item.display_name}!"
@@ -7446,15 +7673,15 @@ def api_avatar_grant_defaults():
     """Grant default items to current user (call on first login)"""
     if not FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False):
         return jsonify({'success': False, 'message': 'Avatar system disabled'}), 503
-    
+
     user_id = session.get('user_id')
     guest_code = session.get('guest_code')
-    
+
     if not user_id and not guest_code:
         return jsonify({'success': False, 'message': 'Not logged in'}), 401
-    
+
     grant_default_avatar_items(user_id, guest_code)
-    
+
     return jsonify({
         'success': True,
         'message': 'Default items granted'
@@ -7479,6 +7706,834 @@ except ImportError:
     print("Warning: question_generator.py not found - question generator disabled")
 except Exception as e:
     print(f"Warning: Could not load question generator: {e}")
+
+
+
+# =============================================================================
+# PHASE 4: RAFFLE SYSTEM (Student & Admin Routes)
+# =============================================================================
+
+# Admin Raffle Management Routes
+@app.route('/api/admin/raffles', methods=['GET'])
+@login_required
+@role_required('admin')
+def api_admin_get_raffles():
+    """Get all raffles"""
+    from sqlalchemy import text
+    
+    raffles = db.session.execute(text("""
+        SELECT r.*, ps.name as school_name,
+               (SELECT COUNT(*) FROM raffle_entries WHERE raffle_id = r.id AND is_active = 1) as active_entries
+        FROM raffles r
+        LEFT JOIN prize_schools ps ON r.school_id = ps.id
+        ORDER BY r.created_at DESC
+    """)).fetchall()
+    
+    return jsonify([{
+        'id': r.id,
+        'name': r.name,
+        'description': r.description,
+        'prize_description': r.prize_description,
+        'emoji': r.emoji,
+        'school_name': r.school_name or 'All Schools',
+        'entry_cost': r.entry_cost,
+        'max_entries_per_student': r.max_entries_per_student,
+        'draw_frequency': r.draw_frequency,
+        'is_active': bool(r.is_active),
+        'auto_draw_enabled': bool(r.auto_draw_enabled),
+        'total_entries': r.total_entries,
+        'total_draws': r.total_draws,
+        'active_entries': r.active_entries
+    } for r in raffles])
+
+
+@app.route('/api/admin/raffles', methods=['POST'])
+@login_required
+@role_required('admin')
+def api_admin_create_raffle():
+    """Create raffle"""
+    from sqlalchemy import text
+    
+    data = request.json
+    
+    try:
+        result = db.session.execute(text("""
+            INSERT INTO raffles (
+                name, description, prize_description, emoji,
+                school_id, entry_cost, max_entries_per_student,
+                draw_frequency, draw_day_of_week, draw_time,
+                prize_type, prize_value,
+                is_active, auto_draw_enabled, created_by
+            ) VALUES (
+                :name, :description, :prize_description, :emoji,
+                :school_id, :entry_cost, :max_entries,
+                :frequency, :day_of_week, :draw_time,
+                :prize_type, :prize_value,
+                :is_active, :auto_draw, :created_by
+            )
+        """), {
+            'name': data['name'],
+            'description': data.get('description'),
+            'prize_description': data['prize_description'],
+            'emoji': data.get('emoji', '🎟️'),
+            'school_id': data.get('school_id'),
+            'entry_cost': data['entry_cost'],
+            'max_entries': data.get('max_entries_per_student', 10),
+            'frequency': data.get('draw_frequency', 'weekly'),
+            'day_of_week': data.get('draw_day_of_week', 5),
+            'draw_time': data.get('draw_time', '15:00:00'),
+            'prize_type': data.get('prize_type', 'physical'),
+            'prize_value': data.get('prize_value'),
+            'is_active': data.get('is_active', True),
+            'auto_draw': data.get('auto_draw_enabled', True),
+            'created_by': session['user_id']
+        })
+        
+        raffle_id = result.lastrowid
+        db.session.commit()
+        
+        return jsonify({'success': True, 'raffle_id': raffle_id})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/raffles/<int:raffle_id>/draw', methods=['POST'])
+@login_required
+@role_required('admin')
+def api_admin_manual_draw(raffle_id):
+    """Manual draw"""
+    draw_id = perform_raffle_draw(raffle_id)
+    
+    if draw_id:
+        return jsonify({'success': True, 'draw_id': draw_id})
+    else:
+        return jsonify({'error': 'Draw failed'}), 500
+
+
+# Student Raffle Routes
+@app.route('/api/raffles/available')
+@login_required
+def api_raffles_available():
+    """Get available raffles for student"""
+    from sqlalchemy import text
+    
+    user_id = session['user_id']
+    school_id = get_user_school_id(user_id)
+    
+    raffles = db.session.execute(text("""
+        SELECT r.*,
+               (SELECT COUNT(*) FROM raffle_entries WHERE raffle_id = r.id AND student_id = :user_id AND is_active = 1) as my_entries,
+               (SELECT COUNT(DISTINCT student_id) FROM raffle_entries WHERE raffle_id = r.id AND is_active = 1) as total_participants
+        FROM raffles r
+        WHERE r.is_active = 1
+        AND (r.school_id IS NULL OR r.school_id = :school_id)
+        ORDER BY r.created_at DESC
+    """), {'user_id': user_id, 'school_id': school_id}).fetchall()
+    
+    return jsonify([{
+        'id': r.id,
+        'name': r.name,
+        'description': r.description,
+        'prize_description': r.prize_description,
+        'emoji': r.emoji,
+        'entry_cost': r.entry_cost,
+        'max_entries_per_student': r.max_entries_per_student,
+        'draw_frequency': r.draw_frequency,
+        'my_entries': r.my_entries,
+        'total_participants': r.total_participants
+    } for r in raffles])
+
+
+@app.route('/api/raffles/<int:raffle_id>/enter', methods=['POST'])
+@login_required
+def api_raffle_enter(raffle_id):
+    """Buy raffle entries"""
+    from sqlalchemy import text
+    
+    data = request.json
+    num_entries = data.get('entries', 1)
+    
+    user_id = session['user_id']
+    school_id = get_user_school_id(user_id)
+    
+    if not school_id:
+        return jsonify({'error': 'No school assigned'}), 400
+    
+    try:
+        raffle = db.session.execute(text("""
+            SELECT * FROM raffles WHERE id = :raffle_id AND is_active = 1
+        """), {'raffle_id': raffle_id}).fetchone()
+        
+        if not raffle:
+            return jsonify({'error': 'Raffle not found'}), 404
+        
+        current = db.session.execute(text("""
+            SELECT COALESCE(SUM(entry_count), 0) as total
+            FROM raffle_entries
+            WHERE raffle_id = :raffle_id AND student_id = :user_id AND is_active = 1
+        """), {'raffle_id': raffle_id, 'user_id': user_id}).fetchone()
+        
+        if current.total + num_entries > raffle.max_entries_per_student:
+            return jsonify({'error': f'Max {raffle.max_entries_per_student} entries per student'}), 400
+        
+        cost = raffle.entry_cost * num_entries
+        points = db.session.execute(text("""
+            SELECT points FROM users WHERE id = :user_id
+        """), {'user_id': user_id}).fetchone()
+        
+        if points.points < cost:
+            return jsonify({'error': 'Not enough points'}), 400
+        
+        db.session.execute(text("""
+            UPDATE users SET points = points - :cost WHERE id = :user_id
+        """), {'cost': cost, 'user_id': user_id})
+        
+        db.session.execute(text("""
+            INSERT INTO raffle_entries (
+                raffle_id, student_id, school_id, entry_count, points_spent
+            ) VALUES (
+                :raffle_id, :student_id, :school_id, :entries, :cost
+            )
+        """), {
+            'raffle_id': raffle_id,
+            'student_id': user_id,
+            'school_id': school_id,
+            'entries': num_entries,
+            'cost': cost
+        })
+        
+        db.session.execute(text("""
+            UPDATE raffles SET total_entries = total_entries + :entries
+            WHERE id = :raffle_id
+        """), {'entries': num_entries, 'raffle_id': raffle_id})
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'entries_purchased': num_entries})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/raffles/check-wins')
+@login_required
+def api_check_raffle_wins():
+    """Check for unacknowledged wins"""
+    from sqlalchemy import text
+    
+    wins = db.session.execute(text("""
+        SELECT wn.*, rd.token, rd.token_expires_at,
+               r.name as raffle_name, r.prize_description, r.emoji
+        FROM winner_notifications wn
+        JOIN raffle_draws rd ON wn.draw_id = rd.id
+        JOIN raffles r ON rd.raffle_id = r.id
+        WHERE wn.winner_id = :user_id AND wn.acknowledged = 0
+    """), {'user_id': session['user_id']}).fetchall()
+    
+    return jsonify([{
+        'id': w.id,
+        'draw_id': w.draw_id,
+        'raffle_name': w.raffle_name,
+        'prize_description': w.prize_description,
+        'emoji': w.emoji,
+        'token': w.token,
+        'expires_at': str(w.token_expires_at),
+        'message': w.message
+    } for w in wins])
+
+
+@app.route('/api/raffles/acknowledge-win/<int:notification_id>', methods=['POST'])
+@login_required
+def api_acknowledge_win(notification_id):
+    """Acknowledge winner notification"""
+    from sqlalchemy import text
+    
+    db.session.execute(text("""
+        UPDATE winner_notifications
+        SET acknowledged = 1, acknowledged_at = CURRENT_TIMESTAMP
+        WHERE id = :notification_id AND winner_id = :user_id
+    """), {'notification_id': notification_id, 'user_id': session['user_id']})
+    
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+
+# =============================================================================
+# RAFFLE HELPER FUNCTIONS
+# =============================================================================
+
+def generate_raffle_token():
+    """Generate unique token for raffle prize collection"""
+    import secrets
+    return secrets.token_urlsafe(12)
+
+
+def get_user_school_id(user_id):
+    """Get the school_id for a student"""
+    from sqlalchemy import text
+    result = db.session.execute(text("""
+        SELECT school_id FROM prize_redemptions 
+        WHERE user_id = :user_id 
+        LIMIT 1
+    """), {'user_id': user_id}).fetchone()
+    
+    if result:
+        return result.school_id
+    
+    result = db.session.execute(text("""
+        SELECT c.school_id 
+        FROM class_enrollments ce
+        JOIN classes c ON ce.class_id = c.id
+        WHERE ce.student_id = :user_id
+        LIMIT 1
+    """), {'user_id': user_id}).fetchone()
+    
+    return result.school_id if result else None
+
+
+def select_raffle_winner(raffle_id, draw_id):
+    """Randomly select a winner from active entries"""
+    from sqlalchemy import text
+    import random
+    
+    entries = db.session.execute(text("""
+        SELECT id, student_id, entry_count
+        FROM raffle_entries
+        WHERE raffle_id = :raffle_id 
+        AND is_active = 1
+        AND (draw_id IS NULL OR draw_id = :draw_id)
+    """), {'raffle_id': raffle_id, 'draw_id': draw_id}).fetchall()
+    
+    if not entries:
+        return None, None
+    
+    weighted_entries = []
+    for entry in entries:
+        for _ in range(entry.entry_count):
+            weighted_entries.append((entry.id, entry.student_id))
+    
+    if weighted_entries:
+        winning_entry_id, winner_id = random.choice(weighted_entries)
+        return winner_id, winning_entry_id
+    
+    return None, None
+
+
+def perform_raffle_draw(raffle_id):
+    """Perform a raffle draw"""
+    from sqlalchemy import text
+    from datetime import datetime, timedelta
+    
+    try:
+        raffle = db.session.execute(text("""
+            SELECT * FROM raffles WHERE id = :raffle_id
+        """), {'raffle_id': raffle_id}).fetchone()
+        
+        if not raffle:
+            return None
+        
+        draw_date = datetime.now().date()
+        draw_time = datetime.now()
+        
+        result = db.session.execute(text("""
+            INSERT INTO raffle_draws (
+                raffle_id, school_id, draw_date, draw_time,
+                status, drawn_at, drawn_by
+            ) VALUES (
+                :raffle_id, :school_id, :draw_date, :draw_time,
+                'drawing', CURRENT_TIMESTAMP, 'system'
+            )
+        """), {
+            'raffle_id': raffle_id,
+            'school_id': raffle.school_id,
+            'draw_date': draw_date,
+            'draw_time': draw_time
+        })
+        
+        draw_id = result.lastrowid
+        db.session.commit()
+        
+        winner_id, winning_entry_id = select_raffle_winner(raffle_id, draw_id)
+        
+        stats = db.session.execute(text("""
+            SELECT COUNT(*) as total_entries,
+                   COUNT(DISTINCT student_id) as total_participants
+            FROM raffle_entries
+            WHERE raffle_id = :raffle_id AND is_active = 1
+        """), {'raffle_id': raffle_id}).fetchone()
+        
+        if winner_id:
+            token = generate_raffle_token()
+            token_expires = draw_time + timedelta(days=7)
+            
+            db.session.execute(text("""
+                UPDATE raffle_draws
+                SET winner_id = :winner_id,
+                    winning_entry_id = :winning_entry_id,
+                    total_entries = :total_entries,
+                    total_participants = :total_participants,
+                    token = :token,
+                    token_expires_at = :token_expires,
+                    status = 'drawn'
+                WHERE id = :draw_id
+            """), {
+                'winner_id': winner_id,
+                'winning_entry_id': winning_entry_id,
+                'total_entries': stats.total_entries,
+                'total_participants': stats.total_participants,
+                'token': token,
+                'token_expires': token_expires,
+                'draw_id': draw_id
+            })
+            
+            db.session.execute(text("""
+                UPDATE raffle_entries
+                SET is_active = 0, draw_id = :draw_id
+                WHERE raffle_id = :raffle_id AND is_active = 1
+            """), {'draw_id': draw_id, 'raffle_id': raffle_id})
+            
+            message = f"🎉 Congratulations! You won the {raffle.name}! Prize: {raffle.prize_description}"
+            
+            db.session.execute(text("""
+                INSERT INTO winner_notifications (
+                    draw_id, winner_id, notification_type, message
+                ) VALUES (
+                    :draw_id, :winner_id, 'on_login', :message
+                )
+            """), {
+                'draw_id': draw_id,
+                'winner_id': winner_id,
+                'message': message
+            })
+            
+            db.session.commit()
+            
+        else:
+            db.session.execute(text("""
+                UPDATE raffle_draws
+                SET status = 'no_entries',
+                    total_entries = 0,
+                    total_participants = 0
+                WHERE id = :draw_id
+            """), {'draw_id': draw_id})
+            db.session.commit()
+        
+        db.session.execute(text("""
+            UPDATE raffles
+            SET total_draws = total_draws + 1
+            WHERE id = :raffle_id
+        """), {'raffle_id': raffle_id})
+        db.session.commit()
+        
+        return draw_id
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error drawing raffle {raffle_id}: {e}")
+        return None
+
+
+# =============================================================================
+# ADMIN USER ANALYTICS & MANAGEMENT ROUTES
+# =============================================================================
+
+@app.route('/api/admin/analytics/overview')
+@login_required
+@role_required('admin')
+def admin_analytics_overview():
+    """Get overview statistics"""
+    from sqlalchemy import text
+    
+    # Count registered users (exclude guest accounts)
+    registered_count = db.session.execute(text("""
+        SELECT COUNT(*) 
+        FROM users 
+        WHERE email NOT LIKE 'guest%@%' 
+        AND role = 'student'
+    """)).scalar()
+    
+    # Count repeat guests
+    repeat_guests_count = db.session.execute(text("""
+        SELECT COUNT(*) FROM guest_users
+    """)).scalar() or 0
+    
+    # Count inactive guests (60+ days)
+    sixty_days_ago = datetime.utcnow() - timedelta(days=60)
+    inactive_guests = db.session.execute(text("""
+        SELECT COUNT(*) 
+        FROM guest_users 
+        WHERE last_active < :cutoff
+    """), {'cutoff': sixty_days_ago}).scalar() or 0
+    
+    # Count casual sessions today (approximate from guest_sessions if exists)
+    try:
+        casual_today = db.session.execute(text("""
+            SELECT COUNT(*) 
+            FROM guest_sessions 
+            WHERE DATE(created_at) = DATE('now')
+        """)).scalar() or 0
+    except:
+        casual_today = 0
+    
+    return jsonify({
+        'registered_users': registered_count,
+        'repeat_guests': repeat_guests_count,
+        'inactive_guests': inactive_guests,
+        'casual_sessions_today': casual_today
+    })
+
+
+@app.route('/api/admin/analytics/registered-users')
+@login_required
+@role_required('admin')
+def admin_analytics_registered_users():
+    """Get list of all registered users with stats"""
+    from sqlalchemy import text
+    
+    users = db.session.execute(text("""
+        SELECT 
+            u.id,
+            u.email,
+            u.full_name,
+            u.created_at,
+            COALESCE(us.total_points, 0) as points,
+            COALESCE(us.total_quizzes, 0) as quizzes,
+            us.updated_at as last_active
+        FROM users u
+        LEFT JOIN user_stats us ON u.id = us.user_id
+        WHERE u.email NOT LIKE 'guest%@%'
+        AND u.role = 'student'
+        ORDER BY us.updated_at DESC
+    """)).fetchall()
+    
+    result = []
+    now = datetime.utcnow()
+    
+    for user in users:
+        last_active = user.last_active if user.last_active else user.created_at
+        days_inactive = (now - last_active).days if last_active else 999
+        
+        # Determine activity status
+        if days_inactive < 7:
+            activity_status = 'active'
+            activity_label = 'Active'
+        elif days_inactive < 30:
+            activity_status = 'stale'
+            activity_label = 'Inactive'
+        else:
+            activity_status = 'inactive'
+            activity_label = f'{days_inactive}d ago'
+        
+        result.append({
+            'id': user.id,
+            'email': user.email,
+            'full_name': user.full_name,
+            'points': user.points,
+            'quizzes': user.quizzes,
+            'last_active': last_active.isoformat() if last_active else None,
+            'activity_status': activity_status,
+            'activity_label': activity_label
+        })
+    
+    return jsonify(result)
+
+
+@app.route('/api/admin/analytics/repeat-guests')
+@login_required
+@role_required('admin')
+def admin_analytics_repeat_guests():
+    """Get list of all repeat guests with stats"""
+    from sqlalchemy import text
+    
+    guests = db.session.execute(text("""
+        SELECT 
+            guest_code,
+            nickname,
+            total_score,
+            quizzes_completed,
+            created_at,
+            last_active
+        FROM guest_users
+        ORDER BY last_active DESC
+    """)).fetchall()
+    
+    result = []
+    now = datetime.utcnow()
+    
+    for guest in guests:
+        days_inactive = (now - guest.last_active).days if guest.last_active else 999
+        
+        # Determine activity status
+        if days_inactive < 7:
+            activity_status = 'active'
+            activity_label = 'Active'
+        elif days_inactive < 60:
+            activity_status = 'stale'
+            activity_label = f'{days_inactive}d ago'
+        else:
+            activity_status = 'inactive'
+            activity_label = f'Inactive {days_inactive}d'
+        
+        result.append({
+            'guest_code': guest.guest_code,
+            'nickname': guest.nickname,
+            'total_score': guest.total_score,
+            'quizzes_completed': guest.quizzes_completed,
+            'created_at': guest.created_at.isoformat() if guest.created_at else None,
+            'last_active': guest.last_active.isoformat() if guest.last_active else None,
+            'days_inactive': days_inactive,
+            'activity_status': activity_status,
+            'activity_label': activity_label
+        })
+    
+    return jsonify(result)
+
+
+@app.route('/api/admin/analytics/inactive-users')
+@login_required
+@role_required('admin')
+def admin_analytics_inactive_users():
+    """Get list of inactive users (60+ days)"""
+    from sqlalchemy import text
+    
+    sixty_days_ago = datetime.utcnow() - timedelta(days=60)
+    
+    # Get inactive repeat guests
+    inactive_guests = db.session.execute(text("""
+        SELECT 
+            'Guest' as type,
+            guest_code as identifier,
+            last_active,
+            total_score as points
+        FROM guest_users
+        WHERE last_active < :cutoff
+        ORDER BY last_active ASC
+    """), {'cutoff': sixty_days_ago}).fetchall()
+    
+    result = []
+    now = datetime.utcnow()
+    
+    for user in inactive_guests:
+        days_inactive = (now - user.last_active).days if user.last_active else 999
+        
+        result.append({
+            'type': user.type,
+            'identifier': user.identifier,
+            'last_active': user.last_active.isoformat() if user.last_active else None,
+            'days_inactive': days_inactive,
+            'points': user.points
+        })
+    
+    return jsonify(result)
+
+
+@app.route('/api/admin/analytics/user-detail')
+@login_required
+@role_required('admin')
+def admin_analytics_user_detail():
+    """Get detailed info about a specific user"""
+    from sqlalchemy import text
+    
+    user_type = request.args.get('type')
+    user_id = request.args.get('id')
+    
+    if user_type == 'registered':
+        # Get registered user details
+        user = User.query.get(user_id)
+        stats = UserStats.query.filter_by(user_id=user_id).first()
+        
+        # Get recent activity
+        recent_attempts = db.session.execute(text("""
+            SELECT topic, difficulty, score, total_questions, completed_at
+            FROM quiz_attempts
+            WHERE user_id = :user_id
+            ORDER BY completed_at DESC
+            LIMIT 10
+        """), {'user_id': user_id}).fetchall()
+        
+        recent_activity_html = '<ul>' + ''.join([
+            f'<li>{att.topic} ({att.difficulty}): {att.score}/{att.total_questions} - {att.completed_at.strftime("%Y-%m-%d")}</li>'
+            for att in recent_attempts
+        ]) + '</ul>' if recent_attempts else '<p>No recent activity</p>'
+        
+        return jsonify({
+            'full_name': user.full_name,
+            'email': user.email,
+            'role': user.role,
+            'points': stats.total_points if stats else 0,
+            'level': stats.level if stats else 1,
+            'quizzes': stats.total_quizzes if stats else 0,
+            'accuracy': round((stats.total_correct_answers / stats.total_questions_answered * 100), 1) if stats and stats.total_questions_answered > 0 else 0,
+            'streak': stats.current_streak_days if stats else 0,
+            'recent_activity': recent_activity_html
+        })
+    
+    else:  # guest
+        # Get guest details
+        guest = db.session.execute(text("""
+            SELECT * FROM guest_users WHERE guest_code = :code
+        """), {'code': user_id}).fetchone()
+        
+        if not guest:
+            return jsonify({'error': 'Guest not found'}), 404
+        
+        # Get recent quizzes
+        recent_quizzes = db.session.execute(text("""
+            SELECT topic, difficulty, score, total_questions, completed_at
+            FROM guest_quiz_attempts
+            WHERE guest_code = :code
+            ORDER BY completed_at DESC
+            LIMIT 10
+        """), {'code': user_id}).fetchall()
+        
+        recent_quizzes_html = '<ul>' + ''.join([
+            f'<li>{quiz.topic} ({quiz.difficulty}): {quiz.score}/{quiz.total_questions}</li>'
+            for quiz in recent_quizzes
+        ]) + '</ul>' if recent_quizzes else '<p>No quizzes yet</p>'
+        
+        now = datetime.utcnow()
+        days_old = (now - guest.created_at).days if guest.created_at else 0
+        days_inactive = (now - guest.last_active).days if guest.last_active else 999
+        
+        return jsonify({
+            'guest_code': guest.guest_code,
+            'nickname': guest.nickname,
+            'total_score': guest.total_score,
+            'quizzes_completed': guest.quizzes_completed,
+            'days_old': days_old,
+            'days_inactive': days_inactive,
+            'recent_quizzes': recent_quizzes_html
+        })
+
+
+@app.route('/api/admin/analytics/recycle-guest', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_analytics_recycle_guest():
+    """Manually recycle a guest code (delete all data)"""
+    from sqlalchemy import text
+    
+    data = request.json
+    guest_code = data.get('guest_code')
+    
+    try:
+        # Delete guest quiz attempts
+        db.session.execute(text("""
+            DELETE FROM guest_quiz_attempts WHERE guest_code = :code
+        """), {'code': guest_code})
+        
+        # Delete guest badges
+        try:
+            db.session.execute(text("""
+                DELETE FROM guest_badges WHERE guest_code = :code
+            """), {'code': guest_code})
+        except:
+            pass  # Table might not exist
+        
+        # Delete guest user record
+        db.session.execute(text("""
+            DELETE FROM guest_users WHERE guest_code = :code
+        """), {'code': guest_code})
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': f'Guest code {guest_code} recycled'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/admin/analytics/run-cleanup', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_analytics_run_cleanup():
+    """Run cleanup process now"""
+    from sqlalchemy import text
+    
+    # Get cleanup threshold from settings (default 60 days)
+    cleanup_days = int(SystemSetting.get('cleanup_days_threshold', '60'))
+    cutoff_date = datetime.utcnow() - timedelta(days=cleanup_days)
+    
+    # Find inactive guest codes
+    inactive_codes = db.session.execute(text("""
+        SELECT guest_code 
+        FROM guest_users 
+        WHERE last_active < :cutoff
+    """), {'cutoff': cutoff_date}).fetchall()
+    
+    recycled_count = 0
+    
+    for row in inactive_codes:
+        guest_code = row.guest_code
+        
+        try:
+            # Delete all related data
+            db.session.execute(text("""
+                DELETE FROM guest_quiz_attempts WHERE guest_code = :code
+            """), {'code': guest_code})
+            
+            try:
+                db.session.execute(text("""
+                    DELETE FROM guest_badges WHERE guest_code = :code
+                """), {'code': guest_code})
+            except:
+                pass
+            
+            db.session.execute(text("""
+                DELETE FROM guest_users WHERE guest_code = :code
+            """), {'code': guest_code})
+            
+            recycled_count += 1
+        except Exception as e:
+            print(f"Error recycling {guest_code}: {e}")
+            continue
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'recycled_count': recycled_count,
+        'message': f'Recycled {recycled_count} inactive guest codes'
+    })
+
+
+@app.route('/api/admin/analytics/cleanup-settings', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def admin_analytics_cleanup_settings():
+    """Get or update cleanup settings"""
+    
+    if request.method == 'GET':
+        return jsonify({
+            'days_threshold': int(SystemSetting.get('cleanup_days_threshold', '60')),
+            'auto_enabled': SystemSetting.get('auto_cleanup_enabled', 'false') == 'true'
+        })
+    
+    else:  # POST
+        data = request.json
+        user_id = session.get('user_id')
+        
+        SystemSetting.set(
+            'cleanup_days_threshold',
+            str(data.get('days_threshold', 60)),
+            'Days of inactivity before guest code cleanup',
+            user_id
+        )
+        
+        SystemSetting.set(
+            'auto_cleanup_enabled',
+            'true' if data.get('auto_enabled') else 'false',
+            'Enable automatic daily cleanup',
+            user_id
+        )
+        
+        return jsonify({'success': True})
+
 
 if __name__ == '__main__':
     with app.app_context():

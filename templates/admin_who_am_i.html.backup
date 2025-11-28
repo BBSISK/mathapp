@@ -327,44 +327,6 @@
                                        placeholder="e.g., Famous physicist">
                             </div>
                         </div>
-                    
-                    <!-- NEW: Acceptable Answer Variants -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            Acceptable Answer Variants
-                            <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" 
-                               title="Enter all acceptable answers, one per line. Students can use any variant."></i>
-                        </label>
-                        <textarea class="form-control" name="accepted_answers" rows="4" 
-                                  placeholder="Enter variants (one per line, or leave blank to auto-generate):
-newton
-isaac newton
-sir isaac newton"></textarea>
-                        <small class="text-muted">
-                            💡 Leave blank to auto-generate common variants
-                        </small>
-                    </div>
-                    <div class="row">
-                        </div>
-                    
-                    <!-- NEW: Acceptable Answer Variants -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            Acceptable Answer Variants
-                            <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" 
-                               title="Enter all acceptable answers, one per line. Students can use any variant."></i>
-                        </label>
-                        <textarea class="form-control" name="accepted_answers" rows="4" 
-                                  placeholder="Enter variants (one per line, or leave blank to auto-generate):
-newton
-isaac newton
-sir isaac newton"></textarea>
-                        <small class="text-muted">
-                            💡 Leave blank to auto-generate common variants
-                        </small>
-                    </div>
-                    <div class="row">
-                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Difficulty *</label>
@@ -420,34 +382,8 @@ sir isaac newton"></textarea>
                     <input type="hidden" id="edit_image_id">
                     <div class="mb-3">
                         <label class="form-label">Answer *</label>
-                    <input type="hidden" id="edit_image_id">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Primary Answer *</label>
-                    <input type="hidden" id="edit_image_id">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Primary Answer *</label>
                         <input type="text" class="form-control" id="edit_answer" required>
-                        <small class="text-muted">Main answer displayed to students</small>
                     </div>
-                    
-                    <!-- NEW: Acceptable Answer Variants -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            Acceptable Answer Variants
-                            <button type="button" class="btn btn-sm btn-outline-primary ms-2" 
-                                    onclick="autoGenerateVariants()">
-                                <i class="fas fa-magic"></i> Auto-Generate
-                            </button>
-                        </label>
-                        <textarea class="form-control" id="edit_accepted_answers" rows="5" 
-                                  placeholder="Enter accepted variants, one per line"></textarea>
-                        <small class="text-muted">
-                            Students can answer with any of these (case-insensitive)
-                        </small>
-                    </div>
-                    
                     <div class="mb-3">
                         <label class="form-label">Hint</label>
                         <input type="text" class="form-control" id="edit_hint">
@@ -554,147 +490,35 @@ function closeUploadModal() {
     uploadModal.hide();
 }
 
-
-// NEW: Auto-generate answer variants
-function autoGenerateVariants() {
-    const answer = document.getElementById('edit_answer').value.trim();
-    if (!answer) {
-        alert('Please enter a primary answer first');
-        return;
-    }
-    const variants = generateAnswerVariants(answer);
-    document.getElementById('edit_accepted_answers').value = variants.join('\n');
-}
-
-function generateAnswerVariants(answer) {
-    const variants = new Set();
-    const answerLower = answer.toLowerCase().trim();
-    variants.add(answerLower);
-    
-    // Remove titles
-    const titles = ['dr.', 'dr', 'sir', 'professor', 'prof.', 'prof', 'dame', 'lord', 'lady'];
-    for (const title of titles) {
-        if (answerLower.startsWith(title + ' ')) {
-            const withoutTitle = answerLower.replace(title + ' ', '').trim();
-            variants.add(withoutTitle);
-        }
-    }
-    
-    // Name parts
-    const parts = answerLower.split(/\s+/);
-    if (parts.length >= 2) {
-        variants.add(parts[0]);  // First name
-        variants.add(parts[parts.length - 1]);  // Last name
-        if (parts.length > 2) {
-            variants.add(`${parts[0]} ${parts[parts.length - 1]}`);
-        }
-        
-        // Remove middle initials
-        const filtered = parts.filter(p => p.length > 2 || !p.endsWith('.'));
-        if (filtered.length !== parts.length) {
-            variants.add(filtered.join(' '));
-        }
-    }
-    
-    // Remove punctuation
-    const noPunct = answerLower.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').trim();
-    if (noPunct !== answerLower) {
-        variants.add(noPunct);
-    }
-    
-    return Array.from(variants).sort();
-}
-
-
-// NEW: Auto-generate answer variants
-function autoGenerateVariants() {
-    const answer = document.getElementById('edit_answer').value.trim();
-    if (!answer) {
-        alert('Please enter a primary answer first');
-        return;
-    }
-    const variants = generateAnswerVariants(answer);
-    document.getElementById('edit_accepted_answers').value = variants.join('\n');
-}
-
-function generateAnswerVariants(answer) {
-    const variants = new Set();
-    const answerLower = answer.toLowerCase().trim();
-    variants.add(answerLower);
-    
-    // Remove titles
-    const titles = ['dr.', 'dr', 'sir', 'professor', 'prof.', 'prof', 'dame', 'lord', 'lady'];
-    for (const title of titles) {
-        if (answerLower.startsWith(title + ' ')) {
-            const withoutTitle = answerLower.replace(title + ' ', '').trim();
-            variants.add(withoutTitle);
-        }
-    }
-    
-    // Name parts
-    const parts = answerLower.split(/\s+/);
-    if (parts.length >= 2) {
-        variants.add(parts[0]);  // First name
-        variants.add(parts[parts.length - 1]);  // Last name
-        if (parts.length > 2) {
-            variants.add(`${parts[0]} ${parts[parts.length - 1]}`);
-        }
-        
-        // Remove middle initials
-        const filtered = parts.filter(p => p.length > 2 || !p.endsWith('.'));
-        if (filtered.length !== parts.length) {
-            variants.add(filtered.join(' '));
-        }
-    }
-    
-    // Remove punctuation
-    const noPunct = answerLower.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').trim();
-    if (noPunct !== answerLower) {
-        variants.add(noPunct);
-    }
-    
-    return Array.from(variants).sort();
-}
-
 function openEditModal(imageId) {
-    fetch(`/admin/who-am-i/get/${imageId}`)
+    fetch(`/admin/who-am-i/edit/${imageId}`)
         .then(response => response.json())
         .then(data => {
-            document.getElementById('edit_image_id').value = data.id;
-            document.getElementById('edit_answer').value = data.answer;
-            document.getElementById('edit_hint').value = data.hint || '';
-            document.getElementById('edit_difficulty').value = data.difficulty;
-            
-            // Load accepted answers
-            if (data.accepted_answers) {
-                try {
-                    const variants = JSON.parse(data.accepted_answers);
-                    document.getElementById('edit_accepted_answers').value = variants.join('\n');
-                } catch(e) {
-                    document.getElementById('edit_accepted_answers').value = '';
-                }
-            } else {
-                document.getElementById('edit_accepted_answers').value = '';
+            if (data.success) {
+                document.getElementById('edit_image_id').value = data.image.id;
+                document.getElementById('edit_answer').value = data.image.answer;
+                document.getElementById('edit_hint').value = data.image.hint || '';
+                document.getElementById('edit_difficulty').value = data.image.difficulty;
+                
+                // Populate topics checkboxes
+                const topicsList = document.getElementById('edit_topics_list');
+                topicsList.innerHTML = '';
+                const allTopics = {{ all_topics|tojson }};
+                allTopics.forEach(topic => {
+                    const label = document.createElement('label');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = topic;
+                    if (data.image.topics.includes(topic)) {
+                        checkbox.checked = true;
+                    }
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(' ' + topic));
+                    topicsList.appendChild(label);
+                });
+                
+                editModal.show();
             }
-            
-            // Populate topics checkboxes
-            const topicsList = document.getElementById('edit_topics_list');
-            topicsList.innerHTML = '';
-            const allTopics = {{ all_topics|tojson }};
-            allTopics.forEach(topic => {
-                const label = document.createElement('label');
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.value = topic;
-                if (data.topics && data.topics.includes(topic)) {
-                    checkbox.checked = true;
-                }
-                label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(' ' + topic));
-                topicsList.appendChild(label);
-            });
-            
-            editModal.show();
         });
 }
 
@@ -705,15 +529,6 @@ function saveEdit(event) {
     formData.append('answer', document.getElementById('edit_answer').value);
     formData.append('hint', document.getElementById('edit_hint').value);
     formData.append('difficulty', document.getElementById('edit_difficulty').value);
-    
-    // NEW: Add accepted answers
-    const acceptedAnswersText = document.getElementById('edit_accepted_answers').value.trim();
-    if (acceptedAnswersText) {
-        const variants = acceptedAnswersText.split('\n')
-            .map(v => v.trim())
-            .filter(v => v.length > 0);
-        formData.append('accepted_answers', JSON.stringify(variants));
-    }
     
     const selectedTopics = Array.from(document.querySelectorAll('#edit_topics_list input:checked'))
         .map(cb => cb.value);
@@ -727,13 +542,7 @@ function saveEdit(event) {
     .then(data => {
         if (data.success) {
             location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'Failed to save changes'));
         }
-    })
-    .catch(error => {
-        console.error('Error saving:', error);
-        alert('Error saving changes');
     });
 }
 

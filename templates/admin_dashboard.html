@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - AgentMath.app</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script type='text/javascript' src='https://www.pythonanywhere.com/t9mc-CLX62g07X6oTzl0x9GZw4zYQr2pMy4p1UTC36zrEHBgpfZQfQ5vIdGMWJOXr9gaIu-VvSHcDaXwt43IWjXzJaTpuEMKL34vDps_aYw6H87KN-HtJxcojfZoFeMxKMDX1lkTMW8zKD-5_IwrYbAnOCVQuLGVwCmWZDMX93Y='></script><script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
@@ -22,7 +22,7 @@
 
     <div class="container mx-auto px-4 py-8">
         <!-- Statistics Cards -->
-        <div class="grid md:grid-cols-4 gap-6 mb-8" id="statsCards"></div>
+        <div class="grid md:grid-cols-5 gap-6 mb-8" id="statsCards"></div>
 
         <!-- Tab Navigation -->
         <div class="bg-white rounded-lg shadow-md mb-6">
@@ -55,6 +55,9 @@
                 </button>
                 <button onclick="location.href='/admin/who-am-i'" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
                     <i class="fas fa-image mr-2"></i>Who Am I?
+                </button>
+                <button onclick="location.href='/admin/prizes'" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
+                    <i class="fas fa-gift mr-2"></i>Prize Management
                 </button>
             
 
@@ -89,24 +92,7 @@
                         <label class="block font-semibold mb-2">Topic:</label>
                         <select id="filterTopic" onchange="loadQuestionsByFilter()" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
                             <option value="">All Topics</option>
-                            <option value="arithmetic">Arithmetic</option>
-                            <option value="fractions">Fractions</option>
-                            <option value="decimals">Decimals</option>
-                            <option value="multiplication_division">Multiplication & Division</option>
-                            <option value="number_systems">Number Systems</option>
-                            <option value="bodmas">BODMAS</option>
-                            <option value="introductory_algebra">Introductory Algebra</option>
-                            <option value="patterns">Patterns</option>
-                            <option value="functions">Functions</option>
-                            <option value="solving_equations">Solving Equations</option>
-                            <option value="simplifying_expressions">Simplifying Expressions</option>
-                            <option value="expanding_factorising">Expanding & Factorising</option>
-                            <option value="surds">Surds</option>
-                            <option value="sets">Sets</option>
-                            <option value="probability">Probability</option>
-                            <option value="descriptive_statistics">Descriptive Statistics</option>
-                            <option value="complex_numbers_intro">Complex Numbers Intro</option>
-                            <option value="complex_numbers_expanded">Complex Numbers - Expanded</option>
+                            <!-- Topics will be loaded dynamically -->
                         </select>
                     </div>
                     <div>
@@ -354,6 +340,11 @@
                 <span id="requests-badge" class="badge badge-warning ml-1">0</span>
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link" id="user-analytics-tab" data-toggle="tab" href="#user-analytics" role="tab">
+                <i class="fas fa-chart-line"></i> User Analytics
+            </a>
+        </li>
     </ul>
 
     <div class="tab-content">
@@ -581,6 +572,142 @@
                     <tr><td colspan="9" class="text-center py-4">Loading topics...</td></tr>
                 </tbody>
             </table>
+        </div>
+        
+        <!-- User Analytics Tab -->
+        <div class="tab-pane" id="user-analytics" role="tabpanel">
+            <p class="text-muted small mb-4">Monitor user activity and manage inactive accounts</p>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center bg-primary text-white">
+                        <div class="card-body">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <h2 id="total-registered" class="mb-0">0</h2>
+                            <small>Registered Users</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center bg-success text-white">
+                        <div class="card-body">
+                            <i class="fas fa-ticket-alt fa-2x mb-2"></i>
+                            <h2 id="total-repeat-guests" class="mb-0">0</h2>
+                            <small>Repeat Guests</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center bg-warning text-white">
+                        <div class="card-body">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <h2 id="inactive-guests" class="mb-0">0</h2>
+                            <small>Inactive (60+ days)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center bg-info text-white">
+                        <div class="card-body">
+                            <i class="fas fa-user-clock fa-2x mb-2"></i>
+                            <h2 id="total-casual" class="mb-0">0</h2>
+                            <small>Casual Today</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cleanup Warning -->
+            <div id="cleanup-alert" class="alert alert-warning" style="display: none;">
+                <strong><i class="fas fa-exclamation-triangle"></i> Auto-Cleanup:</strong>
+                <span id="cleanup-status"></span>
+                <button class="btn btn-sm btn-warning float-right" onclick="runCleanupNow()">Run Now</button>
+            </div>
+
+            <!-- User Lists -->
+            <ul class="nav nav-pills mb-3">
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="pill" href="#registered-list">Registered</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="pill" href="#guests-list">Repeat Guests</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="pill" href="#inactive-list">Inactive</a>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- Registered Users -->
+                <div class="tab-pane fade show active" id="registered-list">
+                    <div class="card">
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Email</th>
+                                        <th>Points</th>
+                                        <th>Last Active</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="registered-users-table">
+                                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Repeat Guests -->
+                <div class="tab-pane fade" id="guests-list">
+                    <div class="card">
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Nickname</th>
+                                        <th>Points</th>
+                                        <th>Last Active</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="repeat-guests-table">
+                                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inactive Users -->
+                <div class="tab-pane fade" id="inactive-list">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="alert alert-info small">
+                                Guest codes inactive 60+ days can be recycled. Registered users are never deleted.
+                            </div>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Identifier</th>
+                                        <th>Days Inactive</th>
+                                        <th>Points</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inactive-users-table">
+                                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -1993,6 +2120,7 @@ function updateRestrictedTeachersCount() {
             await loadAdminName();
             await loadStatistics();
             await loadPendingTeachers();
+            await loadTopicsDropdown(); // Load topics dynamically
         };
 
         async function loadAdminName() {
@@ -2010,7 +2138,7 @@ function updateRestrictedTeachersCount() {
                 const response = await fetch('/api/admin/statistics');
                 const stats = await response.json();
 
-                document.getElementById('statsCards').innerHTML = `
+                let statsHTML = `
                     <div class="bg-blue-500 text-white rounded-lg p-6 shadow-lg">
                         <div class="text-4xl font-bold">${stats.total_students}</div>
                         <div class="text-sm opacity-90">Total Students</div>
@@ -2028,8 +2156,51 @@ function updateRestrictedTeachersCount() {
                         <div class="text-sm opacity-90">Total Classes</div>
                     </div>
                 `;
+                
+                // Add prize statistics card if prize system is enabled
+                if (stats.prize_stats) {
+                    statsHTML += `
+                        <div class="bg-pink-500 text-white rounded-lg p-6 shadow-lg cursor-pointer hover:bg-pink-600 transition" onclick="location.href='/admin/prizes'">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="text-3xl font-bold">${stats.prize_stats.active_prizes}</div>
+                                <i class="fas fa-gift text-2xl opacity-75"></i>
+                            </div>
+                            <div class="text-sm opacity-90">Active Prizes</div>
+                            <div class="mt-3 pt-3 border-t border-pink-400 text-xs opacity-90">
+                                <div>${stats.prize_stats.total_schools} Schools • ${stats.prize_stats.pending_redemptions} Pending</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('statsCards').innerHTML = statsHTML;
             } catch (error) {
                 console.error('Error loading statistics:', error);
+            }
+        }
+        
+        async function loadTopicsDropdown() {
+            try {
+                // Fetch all distinct topics from the database
+                const response = await fetch('/api/admin/topics-list');
+                const data = await response.json();
+                
+                const select = document.getElementById('filterTopic');
+                
+                // Keep the "All Topics" option
+                select.innerHTML = '<option value="">All Topics</option>';
+                
+                // Add each topic from the database
+                data.topics.forEach(topic => {
+                    const option = document.createElement('option');
+                    option.value = topic.value;
+                    option.textContent = `${topic.name} (${topic.count})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading topics:', error);
+                // Fall back to static list if API fails
+                console.log('Using fallback topic list');
             }
         }
 
@@ -3471,6 +3642,179 @@ function updateRestrictedTeachersCount() {
             checkApiKeyStatus();
             populateGeneratorTopics();
         }
+        
+        // =================================================================
+        // USER ANALYTICS FUNCTIONS
+        // =================================================================
+        
+        function loadAnalytics() {
+            fetch('/api/admin/analytics/overview')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('total-registered').textContent = data.registered_users;
+                    document.getElementById('total-repeat-guests').textContent = data.repeat_guests;
+                    document.getElementById('inactive-guests').textContent = data.inactive_guests;
+                    document.getElementById('total-casual').textContent = data.casual_sessions_today;
+                    
+                    if (data.inactive_guests > 0) {
+                        document.getElementById('cleanup-alert').style.display = 'block';
+                        document.getElementById('cleanup-status').textContent = 
+                            `${data.inactive_guests} guest codes ready for cleanup`;
+                    }
+                });
+        }
+        
+        function loadRegisteredUsers() {
+            fetch('/api/admin/analytics/registered-users')
+                .then(r => r.json())
+                .then(users => {
+                    const tbody = document.getElementById('registered-users-table');
+                    if (users.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No users</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = users.map(u => `
+                        <tr>
+                            <td>${u.full_name}</td>
+                            <td>${u.email}</td>
+                            <td><span class="badge badge-primary">${u.points}</span></td>
+                            <td>${formatDate(u.last_active)}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="viewUserDetail('registered',${u.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                });
+        }
+        
+        function loadRepeatGuests() {
+            fetch('/api/admin/analytics/repeat-guests')
+                .then(r => r.json())
+                .then(guests => {
+                    const tbody = document.getElementById('repeat-guests-table');
+                    if (guests.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No guests</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = guests.map(g => `
+                        <tr>
+                            <td><code>${g.guest_code}</code></td>
+                            <td>${g.nickname || '-'}</td>
+                            <td><span class="badge badge-success">${g.total_score}</span></td>
+                            <td>${formatDate(g.last_active)}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="viewUserDetail('guest','${g.guest_code}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                ${g.days_inactive > 60 ? `
+                                    <button class="btn btn-sm btn-danger" onclick="recycleGuest('${g.guest_code}')">
+                                        <i class="fas fa-recycle"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `).join('');
+                });
+        }
+        
+        function loadInactiveUsers() {
+            fetch('/api/admin/analytics/inactive-users')
+                .then(r => r.json())
+                .then(inactive => {
+                    const tbody = document.getElementById('inactive-users-table');
+                    if (inactive.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No inactive users</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = inactive.map(u => `
+                        <tr>
+                            <td><span class="badge badge-secondary">${u.type}</span></td>
+                            <td>${u.identifier}</td>
+                            <td>${u.days_inactive}d</td>
+                            <td>${u.points}</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" onclick="recycleGuest('${u.identifier}')">
+                                    <i class="fas fa-recycle"></i> Recycle
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                });
+        }
+        
+        function viewUserDetail(type, id) {
+            fetch(`/api/admin/analytics/user-detail?type=${type}&id=${id}`)
+                .then(r => r.json())
+                .then(data => {
+                    let html = '';
+                    if (type === 'registered') {
+                        html = `<h5>${data.full_name}</h5>
+                                <p>Email: ${data.email}<br>Points: ${data.points}<br>Level: ${data.level}</p>
+                                <h6>Recent Activity:</h6>${data.recent_activity}`;
+                    } else {
+                        html = `<h5>Guest: ${data.guest_code}</h5>
+                                <p>Nickname: ${data.nickname || 'None'}<br>Points: ${data.total_score}<br>
+                                Quizzes: ${data.quizzes_completed}</p>
+                                <h6>Recent:</h6>${data.recent_quizzes}`;
+                    }
+                    alert(html.replace(/<[^>]*>/g, '\n'));
+                });
+        }
+        
+        function recycleGuest(code) {
+            if (!confirm(`Recycle guest code ${code}? This permanently deletes all data.`)) return;
+            
+            fetch('/api/admin/analytics/recycle-guest', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({guest_code: code})
+            })
+            .then(r => r.json())
+            .then(result => {
+                alert(result.success ? 'Recycled successfully!' : 'Error: ' + result.error);
+                refreshAnalytics();
+            });
+        }
+        
+        function runCleanupNow() {
+            if (!confirm('Run cleanup now? This will recycle all inactive guest codes (60+ days).')) return;
+            
+            fetch('/api/admin/analytics/run-cleanup', {method: 'POST'})
+                .then(r => r.json())
+                .then(result => {
+                    alert(`Cleanup complete! Recycled ${result.recycled_count} guest codes.`);
+                    refreshAnalytics();
+                });
+        }
+        
+        function showCleanupSettings() {
+            alert('Cleanup settings: Use /api/admin/analytics/cleanup-settings to configure automatic cleanup.');
+        }
+        
+        function refreshAnalytics() {
+            loadAnalytics();
+            loadRegisteredUsers();
+            loadRepeatGuests();
+            loadInactiveUsers();
+        }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Never';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+            if (diff === 0) return 'Today';
+            if (diff === 1) return 'Yesterday';
+            if (diff < 7) return `${diff}d ago`;
+            return date.toLocaleDateString();
+        }
+        
+        // Load analytics when tab is clicked
+        $(document).on('shown.bs.tab', 'a[href="#user-analytics"]', function() {
+            refreshAnalytics();
+        });
     </script>
 </body>
 </html>
