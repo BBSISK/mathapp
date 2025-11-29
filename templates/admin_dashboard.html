@@ -24,44 +24,117 @@
         <!-- Statistics Cards -->
         <div class="grid md:grid-cols-5 gap-6 mb-8" id="statsCards"></div>
 
-        <!-- Tab Navigation -->
-        <div class="bg-white rounded-lg shadow-md mb-6">
-            <div class="flex border-b overflow-x-auto">
-                <button onclick="showTab('pending')" id="pendingTab" class="tab-button px-6 py-3 font-semibold border-b-2 border-purple-600 whitespace-nowrap">
-                    <i class="fas fa-clock mr-2"></i>Pending Teachers
+        <!-- Tab Navigation - Grid Layout with Color Coding -->
+        <div class="bg-white rounded-lg shadow-md mb-6 p-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                
+                <!-- Users & Teachers - Blue -->
+                <button onclick="showTab('pending')" id="pendingTab" class="admin-tab-btn bg-blue-500 hover:bg-blue-600 text-white">
+                    <i class="fas fa-clock text-lg mb-1"></i>
+                    <span>Pending Teachers</span>
+                    <span id="pendingTeachersCount" class="badge bg-white text-blue-600 hidden">0</span>
                 </button>
-                <button onclick="location.href='/admin/users'" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fas fa-users-cog mr-2"></i>User Management
+                <button onclick="location.href='/admin/users'" class="admin-tab-btn bg-blue-400 hover:bg-blue-500 text-white">
+                    <i class="fas fa-users-cog text-lg mb-1"></i>
+                    <span>User Management</span>
                 </button>
-                <button onclick="showTab('classes')" id="classesTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fas fa-chalkboard mr-2"></i>All Classes
+                <button onclick="showTab('userAnalytics')" id="userAnalyticsTab" class="admin-tab-btn bg-blue-300 hover:bg-blue-400 text-blue-900">
+                    <i class="fas fa-chart-line text-lg mb-1"></i>
+                    <span>User Analytics</span>
                 </button>
-                <button onclick="showTab('comparison')" id="comparisonTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fas fa-chart-bar mr-2"></i>Class Comparison
+                
+                <!-- Classes - Green -->
+                <button onclick="showTab('classes')" id="classesTab" class="admin-tab-btn bg-green-500 hover:bg-green-600 text-white">
+                    <i class="fas fa-chalkboard text-lg mb-1"></i>
+                    <span>All Classes</span>
                 </button>
-                <button onclick="showTab('manageQuestions')" id="manageQuestionsTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fas fa-edit mr-2"></i>Manage Questions
+                <button onclick="showTab('comparison')" id="comparisonTab" class="admin-tab-btn bg-green-400 hover:bg-green-500 text-white">
+                    <i class="fas fa-chart-bar text-lg mb-1"></i>
+                    <span>Class Comparison</span>
                 </button>
-                <button onclick="showTab('questions')" id="questionsTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fas fa-question-circle mr-2"></i>Question Flags
-                    <span id="pendingFlagsCount" class="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs hidden"></span>
+                
+                <!-- Content & Questions - Purple -->
+                <button onclick="showTab('manageQuestions')" id="manageQuestionsTab" class="admin-tab-btn bg-purple-500 hover:bg-purple-600 text-white">
+                    <i class="fas fa-edit text-lg mb-1"></i>
+                    <span>Manage Questions</span>
                 </button>
+                <button onclick="showTab('questions')" id="questionsTab" class="admin-tab-btn bg-purple-400 hover:bg-purple-500 text-white relative">
+                    <i class="fas fa-flag text-lg mb-1"></i>
+                    <span>Question Flags</span>
+                    <span id="pendingFlagsCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full hidden">0</span>
+                </button>
+                <button onclick="showTab('topicManagement')" id="topicManagementTab" class="admin-tab-btn bg-purple-300 hover:bg-purple-400 text-purple-900">
+                    <i class="fas fa-book-open text-lg mb-1"></i>
+                    <span>Topic Management</span>
+                </button>
+                
+                <!-- Games & Features - Orange/Pink -->
+                <button onclick="location.href='/admin/who-am-i'" class="admin-tab-btn bg-orange-500 hover:bg-orange-600 text-white">
+                    <i class="fas fa-image text-lg mb-1"></i>
+                    <span>Who Am I?</span>
+                </button>
+                <button onclick="location.href='/admin/prizes'" class="admin-tab-btn bg-pink-500 hover:bg-pink-600 text-white">
+                    <i class="fas fa-gift text-lg mb-1"></i>
+                    <span>Prize Management</span>
+                </button>
+                <button onclick="showTab('puzzle')" id="puzzleTab" class="admin-tab-btn bg-indigo-500 hover:bg-indigo-600 text-white">
+                    <i class="fas fa-puzzle-piece text-lg mb-1"></i>
+                    <span>Puzzle of Week</span>
+                </button>
+                
+                <!-- System - Teal -->
+                <button onclick="showTab('domains')" id="domainsTab" class="admin-tab-btn bg-teal-500 hover:bg-teal-600 text-white">
+                    <i class="fas fa-shield-alt text-lg mb-1"></i>
+                    <span>Domain Management</span>
+                </button>
+                <button onclick="showTab('siteSettings')" id="siteSettingsTab" class="admin-tab-btn bg-teal-400 hover:bg-teal-500 text-white">
+                    <i class="fas fa-cog text-lg mb-1"></i>
+                    <span>Site Settings</span>
+                </button>
+                
+            </div>
             
-                <button onclick="showTab('domains')" id="domainsTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fas fa-shield-alt mr-2"></i>Domain Management
-                </button>
-                <button onclick="showTab('topicManagement')" id="topicManagementTab" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fas fa-book-open mr-2"></i>Topic Management
-                </button>
-                <button onclick="location.href='/admin/who-am-i'" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fas fa-image mr-2"></i>Who Am I?
-                </button>
-                <button onclick="location.href='/admin/prizes'" class="tab-button px-6 py-3 font-semibold text-gray-600 hover:text-gray-800 whitespace-nowrap">
-                    <i class="fas fa-gift mr-2"></i>Prize Management
-                </button>
-            
-
+            <!-- Legend -->
+            <div class="flex flex-wrap gap-4 mt-4 pt-3 border-t text-xs text-gray-500">
+                <span><span class="inline-block w-3 h-3 rounded bg-blue-500 mr-1"></span>Users</span>
+                <span><span class="inline-block w-3 h-3 rounded bg-green-500 mr-1"></span>Classes</span>
+                <span><span class="inline-block w-3 h-3 rounded bg-purple-500 mr-1"></span>Content</span>
+                <span><span class="inline-block w-3 h-3 rounded bg-orange-500 mr-1"></span>Games</span>
+                <span><span class="inline-block w-3 h-3 rounded bg-teal-500 mr-1"></span>System</span>
+            </div>
         </div>
+
+        <style>
+            .admin-tab-btn {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem 0.75rem;
+                border-radius: 0.75rem;
+                font-weight: 600;
+                font-size: 0.75rem;
+                text-align: center;
+                transition: all 0.2s;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                min-height: 80px;
+            }
+            .admin-tab-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }
+            .admin-tab-btn.active {
+                ring: 4px;
+                ring-offset: 2px;
+                transform: scale(1.02);
+            }
+            .admin-tab-btn .badge {
+                font-size: 0.65rem;
+                padding: 0.15rem 0.4rem;
+                border-radius: 9999px;
+                margin-top: 0.25rem;
+            }
+        </style>
 
         <!-- Pending Teachers Tab -->
         <div id="pendingContent" class="tab-content">
@@ -281,6 +354,506 @@
         </div>
     </div>
 
+        <!-- User Analytics Tab (Main) -->
+        <div id="userAnalyticsContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-2">📊 User Analytics</h2>
+            <p class="text-gray-600 text-sm mb-6">Monitor user activity and manage inactive accounts</p>
+
+            <!-- Statistics Cards -->
+            <div class="grid md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-blue-500 text-white rounded-lg p-6 shadow-lg text-center">
+                    <i class="fas fa-users text-3xl mb-2"></i>
+                    <div class="text-3xl font-bold" id="analytics-total-registered">0</div>
+                    <div class="text-sm opacity-90">Registered Users</div>
+                </div>
+                <div class="bg-green-500 text-white rounded-lg p-6 shadow-lg text-center">
+                    <i class="fas fa-ticket-alt text-3xl mb-2"></i>
+                    <div class="text-3xl font-bold" id="analytics-total-repeat-guests">0</div>
+                    <div class="text-sm opacity-90">Repeat Guests</div>
+                </div>
+                <div class="bg-yellow-500 text-white rounded-lg p-6 shadow-lg text-center">
+                    <i class="fas fa-clock text-3xl mb-2"></i>
+                    <div class="text-3xl font-bold" id="analytics-inactive-guests">0</div>
+                    <div class="text-sm opacity-90">Inactive (60+ days)</div>
+                </div>
+                <div class="bg-cyan-500 text-white rounded-lg p-6 shadow-lg text-center">
+                    <i class="fas fa-user-clock text-3xl mb-2"></i>
+                    <div class="text-3xl font-bold" id="analytics-total-casual">0</div>
+                    <div class="text-sm opacity-90">Casual Today</div>
+                </div>
+            </div>
+
+            <!-- Cleanup Warning Banner -->
+            <div id="analytics-cleanup-alert" class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6 hidden">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <strong class="text-yellow-800"><i class="fas fa-exclamation-triangle mr-2"></i>Cleanup Available:</strong>
+                        <span id="analytics-cleanup-status" class="text-yellow-700"></span>
+                    </div>
+                    <button onclick="runAnalyticsCleanup()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">
+                        Run Cleanup Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- User List Tabs -->
+            <div class="bg-white rounded-lg shadow-md">
+                <div class="flex border-b">
+                    <button onclick="showAnalyticsSubTab('registered')" id="analyticsRegisteredTab" class="analytics-sub-tab px-6 py-3 font-semibold border-b-2 border-blue-600 text-blue-600">
+                        Registered Users
+                    </button>
+                    <button onclick="showAnalyticsSubTab('guests')" id="analyticsGuestsTab" class="analytics-sub-tab px-6 py-3 font-semibold text-gray-600 hover:text-gray-800">
+                        Repeat Guests
+                    </button>
+                    <button onclick="showAnalyticsSubTab('inactive')" id="analyticsInactiveTab" class="analytics-sub-tab px-6 py-3 font-semibold text-gray-600 hover:text-gray-800">
+                        Inactive
+                    </button>
+                </div>
+
+                <!-- Registered Users List -->
+                <div id="analyticsRegisteredContent" class="analytics-sub-content p-6">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">User</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Email</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Points</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Last Active</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analytics-registered-users-table" class="divide-y">
+                                <tr><td colspan="5" class="text-center py-4 text-gray-500">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Repeat Guests List -->
+                <div id="analyticsGuestsContent" class="analytics-sub-content p-6 hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Code</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Nickname</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Points</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Last Active</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analytics-repeat-guests-table" class="divide-y">
+                                <tr><td colspan="5" class="text-center py-4 text-gray-500">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Inactive Users List -->
+                <div id="analyticsInactiveContent" class="analytics-sub-content p-6 hidden">
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4">
+                        <p class="text-sm text-blue-700">Guest codes inactive 60+ days can be recycled. Registered users are never deleted.</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Type</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Identifier</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Days Inactive</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Points</th>
+                                    <th class="px-4 py-2 text-left text-sm font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analytics-inactive-users-table" class="divide-y">
+                                <tr><td colspan="5" class="text-center py-4 text-gray-500">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Puzzle of the Week Management Tab -->
+        <div id="puzzleContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-2"><i class="fas fa-puzzle-piece text-purple-600 mr-2"></i>Puzzle of the Week</h2>
+            <p class="text-gray-600 mb-6">Create and manage weekly puzzles for students. Puzzles appear as splash screens and answers can be revealed after completing quizzes.</p>
+
+            <!-- Current Week Info -->
+            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg p-6 mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">Current Week: <span id="puzzle-current-week">--</span>, <span id="puzzle-current-year">----</span></h3>
+                        <p id="puzzle-active-status" class="mt-1">Loading...</p>
+                    </div>
+                    <button onclick="openPuzzleModal()" class="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-purple-50 transition">
+                        <i class="fas fa-plus mr-2"></i>Create New Puzzle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Puzzle Display -->
+            <div id="active-puzzle-section" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold text-green-600"><i class="fas fa-check-circle mr-2"></i>Active Puzzle This Week</h3>
+                    <div class="flex gap-2">
+                        <button onclick="viewPuzzleStats(activePuzzleId)" class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200">
+                            <i class="fas fa-chart-bar mr-1"></i>Stats
+                        </button>
+                        <button onclick="editPuzzle(activePuzzleId)" class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm hover:bg-yellow-200">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </button>
+                        <button onclick="deactivatePuzzle(activePuzzleId)" class="bg-red-100 text-red-700 px-3 py-1 rounded text-sm hover:bg-red-200">
+                            <i class="fas fa-stop mr-1"></i>Deactivate
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Puzzle Preview -->
+                    <div>
+                        <h4 class="font-semibold mb-2">Puzzle</h4>
+                        <div id="active-puzzle-preview" class="border rounded-lg p-4 bg-gray-50 min-h-48">
+                            <!-- Puzzle content will be inserted here -->
+                        </div>
+                    </div>
+                    <!-- Answer Preview -->
+                    <div>
+                        <h4 class="font-semibold mb-2">Answer</h4>
+                        <div id="active-answer-preview" class="border rounded-lg p-4 bg-gray-50 min-h-48">
+                            <!-- Answer content will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Stats Row -->
+                <div class="grid grid-cols-4 gap-4 mt-4">
+                    <div class="bg-blue-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-blue-600" id="active-puzzle-views">0</div>
+                        <div class="text-sm text-gray-600">Views</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-green-600" id="active-puzzle-reveals">0</div>
+                        <div class="text-sm text-gray-600">Answer Reveals</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-yellow-600" id="active-puzzle-hints">0</div>
+                        <div class="text-sm text-gray-600">Hints Viewed</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-purple-600" id="active-puzzle-users">0</div>
+                        <div class="text-sm text-gray-600">Unique Users</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Active Puzzle Alert -->
+            <div id="no-active-puzzle-alert" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6 hidden">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl mr-4"></i>
+                    <div>
+                        <h4 class="font-bold text-yellow-700">No Active Puzzle This Week</h4>
+                        <p class="text-yellow-600">Students won't see a puzzle splash screen. Create or activate a puzzle for the current week.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Puzzle Library -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-bold mb-4"><i class="fas fa-archive mr-2 text-gray-600"></i>Puzzle Library</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Week</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Title</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Type</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Stats</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="puzzle-library-table" class="divide-y">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-500">Loading puzzles...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Puzzle Create/Edit Modal -->
+        <div id="puzzle-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
+                <div class="p-6 border-b flex justify-between items-center bg-purple-600 text-white rounded-t-lg">
+                    <h3 class="text-xl font-bold" id="puzzle-modal-title">Create New Puzzle</h3>
+                    <button onclick="closePuzzleModal()" class="text-white hover:text-purple-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="puzzle-form" class="p-6">
+                    <input type="hidden" id="puzzle-id" value="">
+                    
+                    <!-- Basic Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Title *</label>
+                            <input type="text" id="puzzle-title" required class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., Number Sequence Challenge">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Type</label>
+                            <select id="puzzle-type" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" onchange="togglePuzzleType()">
+                                <option value="image">Image</option>
+                                <option value="text">Text</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Week Selection -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Week Number *</label>
+                            <input type="number" id="puzzle-week" min="1" max="53" required class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Year *</label>
+                            <input type="number" id="puzzle-year" min="2024" max="2030" required class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500">
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                        <textarea id="puzzle-description" rows="2" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500" placeholder="Brief description of the puzzle..."></textarea>
+                    </div>
+
+                    <!-- Puzzle Content Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Puzzle -->
+                        <div class="border rounded-lg p-4 bg-gray-50">
+                            <h4 class="font-semibold mb-3 text-purple-600"><i class="fas fa-puzzle-piece mr-2"></i>Puzzle Content</h4>
+                            
+                            <!-- Image Upload (shown when type=image) -->
+                            <div id="puzzle-image-section">
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Puzzle Image (800×600)</label>
+                                <div class="border-2 border-dashed rounded-lg p-4 text-center mb-2" id="puzzle-image-dropzone">
+                                    <input type="file" id="puzzle-image-input" accept="image/*" class="hidden" onchange="handlePuzzleImageUpload(this, 'puzzle')">
+                                    <div id="puzzle-image-preview" class="hidden mb-2">
+                                        <img src="" alt="Puzzle preview" class="max-h-48 mx-auto rounded">
+                                    </div>
+                                    <button type="button" onclick="document.getElementById('puzzle-image-input').click()" class="bg-purple-100 text-purple-700 px-4 py-2 rounded hover:bg-purple-200">
+                                        <i class="fas fa-upload mr-2"></i>Upload Image
+                                    </button>
+                                    <p class="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 5MB</p>
+                                </div>
+                                <input type="hidden" id="puzzle-image-path">
+                            </div>
+                            
+                            <!-- Text Input (shown when type=text) -->
+                            <div id="puzzle-text-section" class="hidden">
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Puzzle Text</label>
+                                <textarea id="puzzle-text" rows="6" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 font-mono" placeholder="Enter the puzzle text...&#10;&#10;What comes next?&#10;2, 4, 8, 16, ?"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Answer -->
+                        <div class="border rounded-lg p-4 bg-gray-50">
+                            <h4 class="font-semibold mb-3 text-green-600"><i class="fas fa-check-circle mr-2"></i>Answer Content</h4>
+                            
+                            <!-- Answer Image Upload -->
+                            <div id="answer-image-section">
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Answer Image (800×600)</label>
+                                <div class="border-2 border-dashed rounded-lg p-4 text-center mb-2">
+                                    <input type="file" id="answer-image-input" accept="image/*" class="hidden" onchange="handlePuzzleImageUpload(this, 'answer')">
+                                    <div id="answer-image-preview" class="hidden mb-2">
+                                        <img src="" alt="Answer preview" class="max-h-48 mx-auto rounded">
+                                    </div>
+                                    <button type="button" onclick="document.getElementById('answer-image-input').click()" class="bg-green-100 text-green-700 px-4 py-2 rounded hover:bg-green-200">
+                                        <i class="fas fa-upload mr-2"></i>Upload Image
+                                    </button>
+                                    <p class="text-sm text-gray-500 mt-2">PNG, JPG, GIF up to 5MB</p>
+                                </div>
+                                <input type="hidden" id="answer-image-path">
+                            </div>
+                            
+                            <!-- Answer Text (always visible for explanation) -->
+                            <div class="mt-3">
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Answer Text / Explanation</label>
+                                <textarea id="answer-text" rows="4" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500" placeholder="The answer is 32!&#10;&#10;Pattern: Each number doubles."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hint -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1"><i class="fas fa-lightbulb text-yellow-500 mr-1"></i>Hint (optional)</label>
+                        <textarea id="puzzle-hint" rows="2" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-yellow-500" placeholder="A helpful hint for stuck students..."></textarea>
+                    </div>
+
+                    <!-- Activate Option -->
+                    <div class="mb-6 flex items-center">
+                        <input type="checkbox" id="puzzle-active" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 mr-3">
+                        <label for="puzzle-active" class="text-sm font-semibold text-gray-700">Activate immediately (make this the live puzzle for its week)</label>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="flex justify-end gap-3 pt-4 border-t">
+                        <button type="button" onclick="closePuzzleModal()" class="px-6 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                            <i class="fas fa-save mr-2"></i>Save Puzzle
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Puzzle Stats Modal -->
+        <div id="puzzle-stats-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-lg m-4">
+                <div class="p-6 border-b flex justify-between items-center">
+                    <h3 class="text-xl font-bold"><i class="fas fa-chart-bar mr-2 text-blue-600"></i>Puzzle Statistics</h3>
+                    <button onclick="closePuzzleStatsModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <h4 id="stats-puzzle-title" class="font-bold text-lg mb-1">--</h4>
+                    <p id="stats-puzzle-week" class="text-gray-600 mb-4">Week --, ----</p>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-blue-50 rounded-lg p-4 text-center">
+                            <div class="text-3xl font-bold text-blue-600" id="stats-views">0</div>
+                            <div class="text-sm text-gray-600">Total Views</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4 text-center">
+                            <div class="text-3xl font-bold text-green-600" id="stats-reveals">0</div>
+                            <div class="text-sm text-gray-600">Answer Reveals</div>
+                        </div>
+                        <div class="bg-yellow-50 rounded-lg p-4 text-center">
+                            <div class="text-3xl font-bold text-yellow-600" id="stats-hints">0</div>
+                            <div class="text-sm text-gray-600">Hints Viewed</div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4 text-center">
+                            <div class="text-3xl font-bold text-purple-600" id="stats-users">0</div>
+                            <div class="text-sm text-gray-600">Unique Users</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Reveal Rate:</span>
+                            <span id="stats-reveal-rate" class="font-semibold">--%</span>
+                        </div>
+                        <div class="flex justify-between text-sm mt-2">
+                            <span class="text-gray-600">Hint Usage Rate:</span>
+                            <span id="stats-hint-rate" class="font-semibold">--%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 border-t bg-gray-50 rounded-b-lg">
+                    <button onclick="closePuzzleStatsModal()" class="w-full py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Site Settings Tab -->
+        <div id="siteSettingsContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-2"><i class="fas fa-cog text-teal-600 mr-2"></i>Site Settings</h2>
+            <p class="text-gray-600 mb-6">Configure global settings for AgentMath.app</p>
+
+            <!-- Login Settings Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-lg font-bold mb-4"><i class="fas fa-sign-in-alt mr-2 text-blue-600"></i>Login Page Settings</h3>
+                
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <h4 class="font-semibold text-gray-800">Full Account Login</h4>
+                        <p class="text-sm text-gray-600 mt-1">Show the "Full Account" login option on the login page (email/password login for students and teachers)</p>
+                        <p class="text-xs text-orange-600 mt-2"><i class="fas fa-exclamation-triangle mr-1"></i>Currently disabled for GDPR compliance</p>
+                    </div>
+                    <div class="flex items-center">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="fullAccountLoginToggle" class="sr-only peer" onchange="toggleFullAccountLogin()">
+                            <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-teal-600"></div>
+                            <span class="ml-3 text-sm font-medium text-gray-700" id="fullAccountLoginStatus">Disabled</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prize Shop PIN Settings Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-lg font-bold mb-4"><i class="fas fa-lock mr-2 text-yellow-600"></i>Prize Shop PIN Protection</h3>
+                <p class="text-sm text-gray-600 mb-4">Protect Prize Shop access with a PIN when students have high point balances. This helps prevent unauthorized spending.</p>
+                
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-800">Points Threshold</h4>
+                            <p class="text-sm text-gray-600 mt-1">Students with points at or above this amount will need to set a PIN to access the Prize Shop</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="number" id="prizePinThreshold" 
+                                   class="w-32 px-4 py-2 border border-gray-300 rounded-lg text-center font-bold text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500" 
+                                   min="500" max="10000" step="100" value="2000">
+                            <span class="text-gray-600 font-medium">points</span>
+                            <button onclick="savePrizePinThreshold()" 
+                                    class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-semibold">
+                                <i class="fas fa-save mr-1"></i>Save
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p class="text-sm text-yellow-800">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            <strong>How it works:</strong> When a quiz brings a student's points above this threshold for the first time, they'll be asked to create a memorable passcode (like a pet's name) with a hint. They'll need this passcode to access the Prize Shop.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Settings Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-lg font-bold mb-4"><i class="fas fa-sliders-h mr-2 text-purple-600"></i>Other Settings</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-gray-50 rounded-lg opacity-50">
+                        <h4 class="font-semibold text-gray-600">📧 Email Notifications</h4>
+                        <p class="text-sm text-gray-500">Coming soon...</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg opacity-50">
+                        <h4 class="font-semibold text-gray-600">🎮 Game Features</h4>
+                        <p class="text-sm text-gray-500">Coming soon...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Settings Summary -->
+            <div class="bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg p-6">
+                <h3 class="text-lg font-bold mb-3"><i class="fas fa-info-circle mr-2"></i>Current Configuration</h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div class="bg-white bg-opacity-20 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold" id="settings-full-account">OFF</div>
+                        <div class="text-sm opacity-90">Full Account Login</div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold">ON</div>
+                        <div class="text-sm opacity-90">Guest Codes</div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold">ON</div>
+                        <div class="text-sm opacity-90">Quick Try Mode</div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold" id="settings-avatar">ON</div>
+                        <div class="text-sm opacity-90">Avatar System</div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold" id="settings-pin-threshold">2000</div>
+                        <div class="text-sm opacity-90">PIN Threshold</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     
         <!-- Domain Management Tab -->
         <div id="domainsContent" class="tab-content hidden">
@@ -338,11 +911,6 @@
             <a class="nav-link" id="access-requests-tab" data-toggle="tab" href="#access-requests" role="tab">
                 <i class="fas fa-inbox"></i> Access Requests
                 <span id="requests-badge" class="badge badge-warning ml-1">0</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="user-analytics-tab" data-toggle="tab" href="#user-analytics" role="tab">
-                <i class="fas fa-chart-line"></i> User Analytics
             </a>
         </li>
     </ul>
@@ -574,141 +1142,7 @@
             </table>
         </div>
         
-        <!-- User Analytics Tab -->
-        <div class="tab-pane" id="user-analytics" role="tabpanel">
-            <p class="text-muted small mb-4">Monitor user activity and manage inactive accounts</p>
-
-            <!-- Statistics Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card text-center bg-primary text-white">
-                        <div class="card-body">
-                            <i class="fas fa-users fa-2x mb-2"></i>
-                            <h2 id="total-registered" class="mb-0">0</h2>
-                            <small>Registered Users</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center bg-success text-white">
-                        <div class="card-body">
-                            <i class="fas fa-ticket-alt fa-2x mb-2"></i>
-                            <h2 id="total-repeat-guests" class="mb-0">0</h2>
-                            <small>Repeat Guests</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center bg-warning text-white">
-                        <div class="card-body">
-                            <i class="fas fa-clock fa-2x mb-2"></i>
-                            <h2 id="inactive-guests" class="mb-0">0</h2>
-                            <small>Inactive (60+ days)</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center bg-info text-white">
-                        <div class="card-body">
-                            <i class="fas fa-user-clock fa-2x mb-2"></i>
-                            <h2 id="total-casual" class="mb-0">0</h2>
-                            <small>Casual Today</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Cleanup Warning -->
-            <div id="cleanup-alert" class="alert alert-warning" style="display: none;">
-                <strong><i class="fas fa-exclamation-triangle"></i> Auto-Cleanup:</strong>
-                <span id="cleanup-status"></span>
-                <button class="btn btn-sm btn-warning float-right" onclick="runCleanupNow()">Run Now</button>
-            </div>
-
-            <!-- User Lists -->
-            <ul class="nav nav-pills mb-3">
-                <li class="nav-item">
-                    <a class="nav-link active" data-toggle="pill" href="#registered-list">Registered</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="pill" href="#guests-list">Repeat Guests</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="pill" href="#inactive-list">Inactive</a>
-                </li>
-            </ul>
-
-            <div class="tab-content">
-                <!-- Registered Users -->
-                <div class="tab-pane fade show active" id="registered-list">
-                    <div class="card">
-                        <div class="card-body">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>User</th>
-                                        <th>Email</th>
-                                        <th>Points</th>
-                                        <th>Last Active</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="registered-users-table">
-                                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Repeat Guests -->
-                <div class="tab-pane fade" id="guests-list">
-                    <div class="card">
-                        <div class="card-body">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Code</th>
-                                        <th>Nickname</th>
-                                        <th>Points</th>
-                                        <th>Last Active</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="repeat-guests-table">
-                                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Inactive Users -->
-                <div class="tab-pane fade" id="inactive-list">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="alert alert-info small">
-                                Guest codes inactive 60+ days can be recycled. Registered users are never deleted.
-                            </div>
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Type</th>
-                                        <th>Identifier</th>
-                                        <th>Days Inactive</th>
-                                        <th>Points</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="inactive-users-table">
-                                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Note: User Analytics moved to main tab navigation -->
     </div>
     
     <!-- Question Generator Section -->
@@ -2449,6 +2883,18 @@ function updateRestrictedTeachersCount() {
                     initQuestionGenerator();
                 });
             }
+            else if (tab === 'userAnalytics') {
+                console.log('User Analytics tab activated - loading data...');
+                loadUserAnalyticsData();
+            }
+            else if (tab === 'puzzle') {
+                console.log('Puzzle of the Week tab activated - loading data...');
+                loadPuzzleData();
+            }
+            else if (tab === 'siteSettings') {
+                console.log('Site Settings tab activated - loading data...');
+                loadSiteSettings();
+            }
         }
 
         // ==================== MANAGE QUESTIONS FUNCTIONS ====================
@@ -3811,10 +4257,746 @@ function updateRestrictedTeachersCount() {
             return date.toLocaleDateString();
         }
         
-        // Load analytics when tab is clicked
-        $(document).on('shown.bs.tab', 'a[href="#user-analytics"]', function() {
-            refreshAnalytics();
+        // ==================== NEW USER ANALYTICS FUNCTIONS (MAIN TAB) ====================
+        
+        function loadUserAnalyticsData() {
+            console.log('Loading User Analytics data...');
+            loadAnalyticsOverview();
+            loadAnalyticsRegisteredUsers();
+            loadAnalyticsRepeatGuests();
+            loadAnalyticsInactiveUsers();
+        }
+        
+        function loadAnalyticsOverview() {
+            fetch('/api/admin/analytics/overview')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('analytics-total-registered').textContent = data.registered_users || 0;
+                    document.getElementById('analytics-total-repeat-guests').textContent = data.repeat_guests || 0;
+                    document.getElementById('analytics-inactive-guests').textContent = data.inactive_guests || 0;
+                    document.getElementById('analytics-total-casual').textContent = data.casual_sessions_today || 0;
+                    
+                    // Show cleanup banner if there are inactive guests
+                    const cleanupAlert = document.getElementById('analytics-cleanup-alert');
+                    if (data.inactive_guests > 0) {
+                        cleanupAlert.classList.remove('hidden');
+                        document.getElementById('analytics-cleanup-status').textContent = 
+                            `${data.inactive_guests} guest code(s) inactive 60+ days ready for cleanup`;
+                    } else {
+                        cleanupAlert.classList.add('hidden');
+                    }
+                })
+                .catch(err => console.error('Error loading analytics overview:', err));
+        }
+        
+        function loadAnalyticsRegisteredUsers() {
+            fetch('/api/admin/analytics/registered-users')
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.getElementById('analytics-registered-users-table');
+                    // Check if it's an error response
+                    if (data && data.error) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">API Error: ${data.error}</td></tr>`;
+                        console.error('API Error:', data);
+                        return;
+                    }
+                    if (!data || !Array.isArray(data) || data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No registered users found</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = data.map(u => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2">${u.full_name || 'N/A'}</td>
+                            <td class="px-4 py-2">${u.email || 'N/A'}</td>
+                            <td class="px-4 py-2"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${u.points || 0}</span></td>
+                            <td class="px-4 py-2 text-sm text-gray-600">${formatDate(u.last_active)}</td>
+                            <td class="px-4 py-2">
+                                <button onclick="viewAnalyticsUserDetail('registered',${u.id})" class="bg-cyan-500 hover:bg-cyan-600 text-white px-2 py-1 rounded text-sm">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    document.getElementById('analytics-registered-users-table').innerHTML = 
+                        `<tr><td colspan="5" class="text-center py-4 text-red-500">Fetch Error: ${err.message}</td></tr>`;
+                });
+        }
+        
+        function loadAnalyticsRepeatGuests() {
+            fetch('/api/admin/analytics/repeat-guests')
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.getElementById('analytics-repeat-guests-table');
+                    // Check if it's an error response
+                    if (data && data.error) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">API Error: ${data.error}</td></tr>`;
+                        console.error('API Error:', data);
+                        return;
+                    }
+                    if (!data || !Array.isArray(data) || data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No repeat guests found</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = data.map(g => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2"><code class="bg-gray-100 px-2 py-1 rounded">${g.guest_code}</code></td>
+                            <td class="px-4 py-2">${g.nickname || '-'}</td>
+                            <td class="px-4 py-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">${g.total_score || 0}</span></td>
+                            <td class="px-4 py-2 text-sm text-gray-600">${formatDate(g.last_active)}</td>
+                            <td class="px-4 py-2">
+                                <button onclick="viewAnalyticsUserDetail('guest','${g.guest_code}')" class="bg-cyan-500 hover:bg-cyan-600 text-white px-2 py-1 rounded text-sm mr-1">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                ${g.days_inactive > 60 ? `
+                                    <button onclick="recycleAnalyticsGuest('${g.guest_code}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm">
+                                        <i class="fas fa-recycle"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    document.getElementById('analytics-repeat-guests-table').innerHTML = 
+                        `<tr><td colspan="5" class="text-center py-4 text-red-500">Fetch Error: ${err.message}</td></tr>`;
+                });
+        }
+        
+        function loadAnalyticsInactiveUsers() {
+            fetch('/api/admin/analytics/inactive-users')
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.getElementById('analytics-inactive-users-table');
+                    // Check if it's an error response
+                    if (data && data.error) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">API Error: ${data.error}</td></tr>`;
+                        console.error('API Error:', data);
+                        return;
+                    }
+                    if (!data || !Array.isArray(data) || data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No inactive users (60+ days) found</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = data.map(u => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2"><span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-sm">${u.type}</span></td>
+                            <td class="px-4 py-2">${u.identifier}</td>
+                            <td class="px-4 py-2 text-orange-600 font-semibold">${u.days_inactive}d</td>
+                            <td class="px-4 py-2">${u.points || 0}</td>
+                            <td class="px-4 py-2">
+                                <button onclick="recycleAnalyticsGuest('${u.identifier}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                                    <i class="fas fa-recycle mr-1"></i>Recycle
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    document.getElementById('analytics-inactive-users-table').innerHTML = 
+                        `<tr><td colspan="5" class="text-center py-4 text-red-500">Fetch Error: ${err.message}</td></tr>`;
+                });
+        }
+        
+        function showAnalyticsSubTab(tab) {
+            // Hide all sub-contents
+            document.querySelectorAll('.analytics-sub-content').forEach(el => el.classList.add('hidden'));
+            // Remove active styling from all sub-tabs
+            document.querySelectorAll('.analytics-sub-tab').forEach(el => {
+                el.classList.remove('border-blue-600', 'text-blue-600', 'border-b-2');
+                el.classList.add('text-gray-600');
+            });
+            
+            // Show selected content
+            const contentId = 'analytics' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Content';
+            const content = document.getElementById(contentId);
+            if (content) {
+                content.classList.remove('hidden');
+            }
+            
+            // Style selected tab
+            const tabBtn = document.getElementById('analytics' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'Tab');
+            if (tabBtn) {
+                tabBtn.classList.add('border-blue-600', 'text-blue-600', 'border-b-2');
+                tabBtn.classList.remove('text-gray-600');
+            }
+        }
+        
+        function viewAnalyticsUserDetail(type, id) {
+            fetch(`/api/admin/analytics/user-detail?type=${type}&id=${id}`)
+                .then(r => r.json())
+                .then(data => {
+                    let msg = '';
+                    if (type === 'registered') {
+                        msg = `User: ${data.full_name}\nEmail: ${data.email}\nPoints: ${data.points}\nLevel: ${data.level}\n\nRecent Activity:\n${data.recent_activity || 'None'}`;
+                    } else {
+                        msg = `Guest Code: ${data.guest_code}\nNickname: ${data.nickname || 'None'}\nPoints: ${data.total_score}\nQuizzes: ${data.quizzes_completed}\n\nRecent Quizzes:\n${data.recent_quizzes || 'None'}`;
+                    }
+                    alert(msg.replace(/<[^>]*>/g, ''));
+                })
+                .catch(err => alert('Error loading user details'));
+        }
+        
+        function recycleAnalyticsGuest(code) {
+            if (!confirm(`Recycle guest code "${code}"?\n\nThis permanently deletes:\n- All quiz attempts\n- All badges\n- All progress data\n\nThis cannot be undone.`)) return;
+            
+            fetch('/api/admin/analytics/recycle-guest', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({guest_code: code})
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
+                    alert('Guest code recycled successfully!');
+                    loadUserAnalyticsData(); // Refresh all data
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            })
+            .catch(err => alert('Error recycling guest code'));
+        }
+        
+        function runAnalyticsCleanup() {
+            if (!confirm('Run bulk cleanup?\n\nThis will permanently delete ALL guest codes inactive for 60+ days.\n\nThis cannot be undone.')) return;
+            
+            fetch('/api/admin/analytics/run-cleanup', {method: 'POST'})
+                .then(r => r.json())
+                .then(result => {
+                    alert(`Cleanup complete!\n\nRecycled ${result.recycled_count || 0} guest code(s).`);
+                    loadUserAnalyticsData(); // Refresh all data
+                })
+                .catch(err => alert('Error running cleanup'));
+        }
+        
+        // End of analytics functions
+
+        // ==================== PUZZLE OF THE WEEK FUNCTIONS ====================
+        
+        let allPuzzlesData = [];
+        let activePuzzleId = null;
+        let currentWeek = null;
+        let currentYear = null;
+
+        async function loadPuzzleData() {
+            try {
+                const response = await fetch('/api/admin/puzzles');
+                const data = await response.json();
+                
+                // Check for API error
+                if (data.error) {
+                    console.error('API returned error:', data.error);
+                    document.getElementById('puzzle-library-table').innerHTML = 
+                        `<tr><td colspan="6" class="text-center py-8 text-red-500">API Error: ${data.error}</td></tr>`;
+                }
+                
+                allPuzzlesData = data.puzzles || [];
+                currentWeek = data.current_week;
+                currentYear = data.current_year;
+                
+                // Update current week display
+                document.getElementById('puzzle-current-week').textContent = `Week ${currentWeek}`;
+                document.getElementById('puzzle-current-year').textContent = currentYear;
+                
+                // Set default values in the create form
+                document.getElementById('puzzle-week').value = currentWeek;
+                document.getElementById('puzzle-year').value = currentYear;
+                
+                // Find active puzzle for current week
+                const activePuzzle = allPuzzlesData.find(p => 
+                    p.week_number === currentWeek && 
+                    p.year === currentYear && 
+                    p.is_active
+                );
+                
+                if (activePuzzle) {
+                    activePuzzleId = activePuzzle.id;
+                    document.getElementById('puzzle-active-status').innerHTML = `<i class="fas fa-check-circle mr-2"></i>Active: "${activePuzzle.title}"`;
+                    showActivePuzzle(activePuzzle);
+                    document.getElementById('active-puzzle-section').classList.remove('hidden');
+                    document.getElementById('no-active-puzzle-alert').classList.add('hidden');
+                } else {
+                    activePuzzleId = null;
+                    document.getElementById('puzzle-active-status').innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>No active puzzle`;
+                    document.getElementById('active-puzzle-section').classList.add('hidden');
+                    document.getElementById('no-active-puzzle-alert').classList.remove('hidden');
+                }
+                
+                // Render puzzle library
+                renderPuzzleLibrary();
+                
+            } catch (error) {
+                console.error('Error loading puzzles:', error);
+                document.getElementById('puzzle-current-week').textContent = `Week ??`;
+                document.getElementById('puzzle-current-year').textContent = '????';
+                document.getElementById('puzzle-active-status').innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error loading`;
+                document.getElementById('puzzle-library-table').innerHTML = 
+                    `<tr><td colspan="6" class="text-center py-8 text-red-500">Error loading puzzles: ${error.message}</td></tr>`;
+            }
+        }
+
+        function showActivePuzzle(puzzle) {
+            // Show puzzle content
+            const puzzlePreview = document.getElementById('active-puzzle-preview');
+            if (puzzle.puzzle_type === 'image' && puzzle.puzzle_image) {
+                puzzlePreview.innerHTML = `<img src="${puzzle.puzzle_image}" alt="Puzzle" class="max-w-full rounded">`;
+            } else if (puzzle.puzzle_text) {
+                puzzlePreview.innerHTML = `<pre class="whitespace-pre-wrap font-mono text-sm">${escapeHtml(puzzle.puzzle_text)}</pre>`;
+            } else {
+                puzzlePreview.innerHTML = '<p class="text-gray-500 italic">No puzzle content</p>';
+            }
+            
+            // Show answer content
+            const answerPreview = document.getElementById('active-answer-preview');
+            if (puzzle.answer_image) {
+                answerPreview.innerHTML = `<img src="${puzzle.answer_image}" alt="Answer" class="max-w-full rounded">`;
+            } else if (puzzle.answer_text) {
+                answerPreview.innerHTML = `<pre class="whitespace-pre-wrap font-mono text-sm">${escapeHtml(puzzle.answer_text)}</pre>`;
+            } else {
+                answerPreview.innerHTML = '<p class="text-gray-500 italic">No answer content</p>';
+            }
+            
+            // Update stats
+            document.getElementById('active-puzzle-views').textContent = puzzle.view_count || 0;
+            document.getElementById('active-puzzle-reveals').textContent = puzzle.reveal_count || 0;
+            document.getElementById('active-puzzle-hints').textContent = puzzle.hint_view_count || 0;
+            
+            // Load detailed stats for unique users
+            loadActivePuzzleStats(puzzle.id);
+        }
+
+        async function loadActivePuzzleStats(puzzleId) {
+            try {
+                const response = await fetch(`/api/admin/puzzles/${puzzleId}/stats`);
+                const stats = await response.json();
+                document.getElementById('active-puzzle-users').textContent = stats.unique_users || 0;
+            } catch (error) {
+                console.error('Error loading puzzle stats:', error);
+            }
+        }
+
+        function renderPuzzleLibrary() {
+            const tbody = document.getElementById('puzzle-library-table');
+            
+            if (allPuzzlesData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No puzzles yet. Create your first puzzle!</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = allPuzzlesData.map(puzzle => {
+                const isCurrentWeek = puzzle.week_number === currentWeek && puzzle.year === currentYear;
+                const statusBadge = puzzle.is_active 
+                    ? '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold"><i class="fas fa-check-circle mr-1"></i>Live</span>'
+                    : isCurrentWeek 
+                        ? '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-semibold">Ready</span>'
+                        : '<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-semibold">Scheduled</span>';
+                
+                const typeBadge = puzzle.puzzle_type === 'image'
+                    ? '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs"><i class="fas fa-image mr-1"></i>Image</span>'
+                    : '<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs"><i class="fas fa-font mr-1"></i>Text</span>';
+                
+                return `
+                    <tr class="hover:bg-gray-50 ${isCurrentWeek ? 'bg-purple-50' : ''}">
+                        <td class="px-4 py-3">
+                            <span class="font-semibold">Week ${puzzle.week_number}</span>
+                            <span class="text-gray-500">, ${puzzle.year}</span>
+                            ${isCurrentWeek ? '<span class="ml-2 text-purple-600 text-xs">(Current)</span>' : ''}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="font-medium">${escapeHtml(puzzle.title)}</div>
+                            ${puzzle.description ? `<div class="text-sm text-gray-500">${escapeHtml(puzzle.description.substring(0, 50))}${puzzle.description.length > 50 ? '...' : ''}</div>` : ''}
+                        </td>
+                        <td class="px-4 py-3">${typeBadge}</td>
+                        <td class="px-4 py-3">${statusBadge}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">
+                            <i class="fas fa-eye mr-1"></i>${puzzle.view_count || 0}
+                            <i class="fas fa-check-circle ml-2 mr-1"></i>${puzzle.reveal_count || 0}
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex gap-1">
+                                <button onclick="viewPuzzleStats(${puzzle.id})" class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-200" title="View Stats">
+                                    <i class="fas fa-chart-bar"></i>
+                                </button>
+                                <button onclick="editPuzzle(${puzzle.id})" class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs hover:bg-yellow-200" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                ${!puzzle.is_active ? `
+                                    <button onclick="activatePuzzle(${puzzle.id})" class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs hover:bg-green-200" title="Activate">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                ` : `
+                                    <button onclick="deactivatePuzzle(${puzzle.id})" class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs hover:bg-orange-200" title="Deactivate">
+                                        <i class="fas fa-stop"></i>
+                                    </button>
+                                `}
+                                <button onclick="deletePuzzle(${puzzle.id})" class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs hover:bg-red-200" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openPuzzleModal(puzzleId = null) {
+            document.getElementById('puzzle-modal').classList.remove('hidden');
+            document.getElementById('puzzle-form').reset();
+            
+            // Reset image previews
+            document.getElementById('puzzle-image-preview').classList.add('hidden');
+            document.getElementById('answer-image-preview').classList.add('hidden');
+            document.getElementById('puzzle-image-path').value = '';
+            document.getElementById('answer-image-path').value = '';
+            
+            if (puzzleId) {
+                // Edit mode
+                const puzzle = allPuzzlesData.find(p => p.id === puzzleId);
+                if (puzzle) {
+                    document.getElementById('puzzle-modal-title').textContent = 'Edit Puzzle';
+                    document.getElementById('puzzle-id').value = puzzle.id;
+                    document.getElementById('puzzle-title').value = puzzle.title || '';
+                    document.getElementById('puzzle-type').value = puzzle.puzzle_type || 'image';
+                    document.getElementById('puzzle-week').value = puzzle.week_number;
+                    document.getElementById('puzzle-year').value = puzzle.year;
+                    document.getElementById('puzzle-description').value = puzzle.description || '';
+                    document.getElementById('puzzle-text').value = puzzle.puzzle_text || '';
+                    document.getElementById('answer-text').value = puzzle.answer_text || '';
+                    document.getElementById('puzzle-hint').value = puzzle.hint || '';
+                    document.getElementById('puzzle-active').checked = puzzle.is_active;
+                    
+                    // Show existing images
+                    if (puzzle.puzzle_image) {
+                        document.getElementById('puzzle-image-path').value = puzzle.puzzle_image;
+                        document.getElementById('puzzle-image-preview').classList.remove('hidden');
+                        document.getElementById('puzzle-image-preview').querySelector('img').src = puzzle.puzzle_image;
+                    }
+                    if (puzzle.answer_image) {
+                        document.getElementById('answer-image-path').value = puzzle.answer_image;
+                        document.getElementById('answer-image-preview').classList.remove('hidden');
+                        document.getElementById('answer-image-preview').querySelector('img').src = puzzle.answer_image;
+                    }
+                    
+                    togglePuzzleType();
+                }
+            } else {
+                // Create mode
+                document.getElementById('puzzle-modal-title').textContent = 'Create New Puzzle';
+                document.getElementById('puzzle-id').value = '';
+                document.getElementById('puzzle-week').value = currentWeek;
+                document.getElementById('puzzle-year').value = currentYear;
+                togglePuzzleType();
+            }
+        }
+
+        function closePuzzleModal() {
+            document.getElementById('puzzle-modal').classList.add('hidden');
+        }
+
+        function togglePuzzleType() {
+            const type = document.getElementById('puzzle-type').value;
+            if (type === 'image') {
+                document.getElementById('puzzle-image-section').classList.remove('hidden');
+                document.getElementById('puzzle-text-section').classList.add('hidden');
+            } else {
+                document.getElementById('puzzle-image-section').classList.add('hidden');
+                document.getElementById('puzzle-text-section').classList.remove('hidden');
+            }
+        }
+
+        async function handlePuzzleImageUpload(input, imageType) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', imageType);
+            
+            try {
+                const response = await fetch('/api/admin/puzzles/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (imageType === 'puzzle') {
+                        document.getElementById('puzzle-image-path').value = result.path;
+                        document.getElementById('puzzle-image-preview').classList.remove('hidden');
+                        document.getElementById('puzzle-image-preview').querySelector('img').src = result.path;
+                    } else {
+                        document.getElementById('answer-image-path').value = result.path;
+                        document.getElementById('answer-image-preview').classList.remove('hidden');
+                        document.getElementById('answer-image-preview').querySelector('img').src = result.path;
+                    }
+                } else {
+                    alert('Upload failed: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Upload failed. Please try again.');
+            }
+        }
+
+        // Form submission
+        document.getElementById('puzzle-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const puzzleId = document.getElementById('puzzle-id').value;
+            const isEdit = !!puzzleId;
+            
+            const data = {
+                title: document.getElementById('puzzle-title').value,
+                description: document.getElementById('puzzle-description').value,
+                puzzle_type: document.getElementById('puzzle-type').value,
+                puzzle_image: document.getElementById('puzzle-image-path').value || null,
+                puzzle_text: document.getElementById('puzzle-text').value || null,
+                answer_image: document.getElementById('answer-image-path').value || null,
+                answer_text: document.getElementById('answer-text').value || null,
+                hint: document.getElementById('puzzle-hint').value || null,
+                week_number: parseInt(document.getElementById('puzzle-week').value),
+                year: parseInt(document.getElementById('puzzle-year').value),
+                is_active: document.getElementById('puzzle-active').checked
+            };
+            
+            try {
+                const url = isEdit ? `/api/admin/puzzles/${puzzleId}` : '/api/admin/puzzles';
+                const method = isEdit ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    closePuzzleModal();
+                    loadPuzzleData();
+                    alert(isEdit ? 'Puzzle updated successfully!' : 'Puzzle created successfully!');
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('Error saving puzzle: ' + error.message);
+            }
         });
+
+        function editPuzzle(puzzleId) {
+            openPuzzleModal(puzzleId);
+        }
+
+        async function activatePuzzle(puzzleId) {
+            if (!confirm('Activate this puzzle? It will become the live puzzle for its week.')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/puzzles/${puzzleId}/activate`, {method: 'POST'});
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadPuzzleData();
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Activate error:', error);
+                alert('Error activating puzzle.');
+            }
+        }
+
+        async function deactivatePuzzle(puzzleId) {
+            if (!confirm('Deactivate this puzzle? Students will no longer see it.')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/puzzles/${puzzleId}/deactivate`, {method: 'POST'});
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadPuzzleData();
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Deactivate error:', error);
+                alert('Error deactivating puzzle.');
+            }
+        }
+
+        async function deletePuzzle(puzzleId) {
+            if (!confirm('Delete this puzzle? This cannot be undone.')) return;
+            
+            try {
+                const response = await fetch(`/api/admin/puzzles/${puzzleId}`, {method: 'DELETE'});
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadPuzzleData();
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Error deleting puzzle.');
+            }
+        }
+
+        async function viewPuzzleStats(puzzleId) {
+            try {
+                const response = await fetch(`/api/admin/puzzles/${puzzleId}/stats`);
+                const stats = await response.json();
+                
+                document.getElementById('stats-puzzle-title').textContent = stats.title;
+                document.getElementById('stats-puzzle-week').textContent = `Week ${stats.week_number}, ${stats.year}`;
+                document.getElementById('stats-views').textContent = stats.view_count || 0;
+                document.getElementById('stats-reveals').textContent = stats.answer_reveals || 0;
+                document.getElementById('stats-hints').textContent = stats.hints_viewed || 0;
+                document.getElementById('stats-users').textContent = stats.unique_users || 0;
+                
+                // Calculate rates
+                const revealRate = stats.unique_users > 0 
+                    ? Math.round((stats.answer_reveals / stats.unique_users) * 100) 
+                    : 0;
+                const hintRate = stats.unique_users > 0 
+                    ? Math.round((stats.hints_viewed / stats.unique_users) * 100) 
+                    : 0;
+                
+                document.getElementById('stats-reveal-rate').textContent = `${revealRate}%`;
+                document.getElementById('stats-hint-rate').textContent = `${hintRate}%`;
+                
+                document.getElementById('puzzle-stats-modal').classList.remove('hidden');
+            } catch (error) {
+                console.error('Stats error:', error);
+                alert('Error loading puzzle stats.');
+            }
+        }
+
+        function closePuzzleStatsModal() {
+            document.getElementById('puzzle-stats-modal').classList.add('hidden');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // End of puzzle functions
+
+        // ==================== SITE SETTINGS FUNCTIONS ====================
+        
+        async function loadSiteSettings() {
+            try {
+                const response = await fetch('/api/admin/site-settings');
+                const settings = await response.json();
+                
+                // Update Full Account Login toggle state
+                const toggle = document.getElementById('fullAccountLoginToggle');
+                const statusText = document.getElementById('fullAccountLoginStatus');
+                const summaryText = document.getElementById('settings-full-account');
+                
+                if (toggle) {
+                    toggle.checked = settings.full_account_login_enabled;
+                }
+                if (statusText) {
+                    statusText.textContent = settings.full_account_login_enabled ? 'Enabled' : 'Disabled';
+                }
+                if (summaryText) {
+                    summaryText.textContent = settings.full_account_login_enabled ? 'ON' : 'OFF';
+                }
+                
+                // Update Prize PIN Threshold
+                const thresholdInput = document.getElementById('prizePinThreshold');
+                const thresholdSummary = document.getElementById('settings-pin-threshold');
+                
+                if (thresholdInput) {
+                    thresholdInput.value = settings.prize_pin_threshold || 2000;
+                }
+                if (thresholdSummary) {
+                    thresholdSummary.textContent = settings.prize_pin_threshold || 2000;
+                }
+                
+                console.log('Site settings loaded:', settings);
+                
+            } catch (error) {
+                console.error('Error loading site settings:', error);
+            }
+        }
+        
+        async function toggleFullAccountLogin() {
+            const toggle = document.getElementById('fullAccountLoginToggle');
+            const enabled = toggle.checked;
+            
+            try {
+                const response = await fetch('/api/admin/site-settings/full-account-login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ enabled: enabled })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update UI
+                    document.getElementById('fullAccountLoginStatus').textContent = enabled ? 'Enabled' : 'Disabled';
+                    document.getElementById('settings-full-account').textContent = enabled ? 'ON' : 'OFF';
+                    
+                    // Show notification
+                    alert(result.message);
+                } else {
+                    // Revert toggle if failed
+                    toggle.checked = !enabled;
+                    alert('Error: ' + (result.error || 'Failed to update setting'));
+                }
+                
+            } catch (error) {
+                console.error('Error toggling full account login:', error);
+                toggle.checked = !enabled;
+                alert('Error updating setting. Please try again.');
+            }
+        }
+        
+        async function savePrizePinThreshold() {
+            const thresholdInput = document.getElementById('prizePinThreshold');
+            const threshold = parseInt(thresholdInput.value) || 2000;
+            
+            // Validate range
+            if (threshold < 500 || threshold > 10000) {
+                alert('Threshold must be between 500 and 10,000 points');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/site-settings/prize-pin-threshold', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ threshold: threshold })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update summary
+                    document.getElementById('settings-pin-threshold').textContent = threshold;
+                    alert(result.message);
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to update threshold'));
+                }
+                
+            } catch (error) {
+                console.error('Error saving prize PIN threshold:', error);
+                alert('Error updating setting. Please try again.');
+            }
+        }
+
+        // End of site settings functions
     </script>
 </body>
 </html>

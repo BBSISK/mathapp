@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prize Shop - PIN Required</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        @keyframes bounce-in {
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .card {
+            animation: bounce-in 0.4s ease-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .shake {
+            animation: shake 0.3s ease-in-out;
+        }
+        
+        .points-badge {
+            background: linear-gradient(135deg, #ffd700, #ffb347);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Back button -->
+        <a href="/app" class="inline-flex items-center text-white hover:text-yellow-200 mb-4 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+        </a>
+        
+        {% if needs_setup %}
+        <!-- PIN SETUP CARD -->
+        <div class="card bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-yellow-400 to-orange-500 p-6 text-white text-center">
+                <div class="text-6xl mb-3">🔐</div>
+                <h1 class="text-2xl font-bold">Protect Your Points!</h1>
+                <p class="opacity-90 mt-2">You have <strong>{{ points }}</strong> points - let's keep them safe!</p>
+            </div>
+            
+            <div class="p-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                    <p class="text-blue-800 text-sm">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Since you have {{ points }} points (over {{ threshold }}), you need to create a passcode to protect your Prize Shop access.
+                    </p>
+                </div>
+                
+                <form id="pinSetupForm" onsubmit="savePrizePin(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-key text-yellow-500 mr-1"></i> Your Secret Passcode
+                            </label>
+                            <input type="text" id="pinCode" 
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 text-lg"
+                                   placeholder="e.g., fluffy, max, granny"
+                                   maxlength="50"
+                                   autocomplete="off"
+                                   required>
+                            <p class="text-xs text-gray-500 mt-2">
+                                💡 Use a name you'll remember: a pet, family member, friend, or favourite character
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-lightbulb text-yellow-500 mr-1"></i> Hint (to help you remember)
+                            </label>
+                            <select id="pinHint" 
+                                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 text-lg"
+                                    onchange="toggleCustomHint()"
+                                    required>
+                                <option value="">Choose a hint...</option>
+                                <option value="My pet's name">🐕 My pet's name</option>
+                                <option value="Family member">👨‍👩‍👧 Family member</option>
+                                <option value="Best friend">👫 Best friend</option>
+                                <option value="Favourite character">🦸 Favourite character</option>
+                                <option value="Favourite food">🍕 Favourite food</option>
+                                <option value="Special place">🏠 Special place</option>
+                                <option value="custom">✏️ Write my own hint...</option>
+                            </select>
+                            <input type="text" id="customHint" 
+                                   class="hidden w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-yellow-500 mt-2"
+                                   placeholder="Type your own hint..."
+                                   maxlength="100">
+                        </div>
+                    </div>
+                    
+                    <div id="errorMessage" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
+                    
+                    <button type="submit" 
+                            class="w-full mt-6 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold text-lg rounded-xl hover:from-yellow-500 hover:to-orange-600 transition-all transform hover:scale-[1.02] shadow-lg">
+                        <i class="fas fa-lock mr-2"></i> Save & Enter Prize Shop
+                    </button>
+                </form>
+                
+                <p class="text-center text-xs text-gray-400 mt-4">
+                    You'll need this passcode each time you visit the Prize Shop
+                </p>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- PIN ENTRY CARD -->
+        <div class="card bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white text-center">
+                <div class="text-6xl mb-3">🎁</div>
+                <h1 class="text-2xl font-bold">Prize Shop</h1>
+                <p class="opacity-90 mt-2">Enter your passcode to continue</p>
+            </div>
+            
+            <div class="p-6">
+                <!-- Points display -->
+                <div class="flex justify-center mb-6">
+                    <div class="points-badge text-gray-800 px-6 py-3 rounded-full font-bold text-lg shadow-lg">
+                        <i class="fas fa-coins mr-2"></i>{{ points }} Points
+                    </div>
+                </div>
+                
+                <!-- Hint box -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                    <p class="text-yellow-800">
+                        <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>
+                        <strong>Hint:</strong> {{ hint or "Think about your passcode..." }}
+                    </p>
+                </div>
+                
+                <form id="pinEntryForm" onsubmit="verifyPrizePin(event)">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Your Passcode
+                        </label>
+                        <input type="text" id="pinCode" 
+                               class="w-full px-4 py-4 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-200 text-xl text-center tracking-wider"
+                               placeholder="Enter your passcode"
+                               maxlength="50"
+                               autocomplete="off"
+                               autofocus
+                               required>
+                    </div>
+                    
+                    <div id="errorMessage" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
+                    
+                    <div class="flex gap-3 mt-6">
+                        <a href="/app" 
+                           class="flex-1 py-4 bg-gray-200 text-gray-700 font-semibold text-center rounded-xl hover:bg-gray-300 transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit" 
+                                class="flex-1 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg">
+                            <i class="fas fa-unlock mr-2"></i> Enter Shop
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="mt-6 pt-4 border-t border-gray-200 text-center">
+                    <p class="text-xs text-gray-400">
+                        <i class="fas fa-question-circle mr-1"></i>
+                        Forgot your passcode? Ask your teacher for help.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        function toggleCustomHint() {
+            const select = document.getElementById('pinHint');
+            const customInput = document.getElementById('customHint');
+            
+            if (select.value === 'custom') {
+                customInput.classList.remove('hidden');
+                customInput.required = true;
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.required = false;
+                customInput.value = '';
+            }
+        }
+        
+        async function savePrizePin(event) {
+            event.preventDefault();
+            
+            const pin = document.getElementById('pinCode').value.trim();
+            const hintSelect = document.getElementById('pinHint').value;
+            const customHint = document.getElementById('customHint')?.value.trim();
+            const hint = hintSelect === 'custom' ? customHint : hintSelect;
+            
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.classList.add('hidden');
+            
+            if (!pin || pin.length < 2) {
+                showError('Please enter a passcode (at least 2 characters)');
+                return;
+            }
+            
+            if (!hint || hint.length < 2) {
+                showError('Please select or enter a hint');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/prize-pin/set', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ pin: pin, hint: hint })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Also verify PIN to set session flag
+                    await fetch('/api/prize-pin/verify', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ pin: pin })
+                    });
+                    
+                    // Redirect to prize shop
+                    window.location.href = '/prizes';
+                } else {
+                    showError(result.error || 'Failed to save passcode');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Connection error. Please try again.');
+            }
+        }
+        
+        async function verifyPrizePin(event) {
+            event.preventDefault();
+            
+            const pin = document.getElementById('pinCode').value.trim();
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.classList.add('hidden');
+            
+            if (!pin) {
+                showError('Please enter your passcode');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/prize-pin/verify', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ pin: pin })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Redirect to prize shop
+                    window.location.href = '/prizes';
+                } else {
+                    showError(result.error || 'Incorrect passcode');
+                    document.getElementById('pinCode').value = '';
+                    document.getElementById('pinCode').focus();
+                    
+                    // Shake the card
+                    document.querySelector('.card').classList.add('shake');
+                    setTimeout(() => {
+                        document.querySelector('.card').classList.remove('shake');
+                    }, 300);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Connection error. Please try again.');
+            }
+        }
+        
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+        }
+        
+        // Focus the input on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const pinInput = document.getElementById('pinCode');
+            if (pinInput) {
+                setTimeout(() => pinInput.focus(), 100);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -344,6 +344,9 @@ class UserStats(db.Model):
     topics_mastered = db.Column(db.Integer, default=0)
     perfect_scores = db.Column(db.Integer, default=0)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Prize Shop PIN protection
+    prize_pin = db.Column(db.String(50), nullable=True)  # The passcode (stored lowercase)
+    prize_pin_hint = db.Column(db.String(100), nullable=True)  # Hint like "Family" or "Pet"
 
     user = db.relationship('User', backref='stats', uselist=False)
 
@@ -972,6 +975,147 @@ class TopicProgress(db.Model):
             'is_mastered': self.is_mastered,
             'last_attempt_at': self.last_attempt_at.isoformat() if self.last_attempt_at else None
         }
+
+
+# ==================== PUZZLE OF THE WEEK MODELS ====================
+
+class WeeklyPuzzle(db.Model):
+    """Weekly puzzle for students"""
+    __tablename__ = 'weekly_puzzles'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    
+    # Puzzle content (either image or text)
+    puzzle_type = db.Column(db.String(20), default='image')  # 'image' or 'text'
+    puzzle_image = db.Column(db.String(500))  # Path to puzzle image (800x600)
+    puzzle_text = db.Column(db.Text)  # Text-based puzzle content
+    
+    # Answer content
+    answer_image = db.Column(db.String(500))  # Path to answer image
+    answer_text = db.Column(db.Text)  # Text-based answer
+    
+    # Hint
+    hint = db.Column(db.Text)
+    
+    # Scheduling
+    week_number = db.Column(db.Integer, nullable=False)  # ISO week 1-52
+    year = db.Column(db.Integer, nullable=False)
+    is_active = db.Column(db.Boolean, default=False)
+    
+    # Stats
+    view_count = db.Column(db.Integer, default=0)
+    reveal_count = db.Column(db.Integer, default=0)
+    hint_view_count = db.Column(db.Integer, default=0)
+    
+    # Admin tracking
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    
+    # Relationships
+    creator = db.relationship('User', foreign_keys=[created_by])
+    
+    def to_dict(self, include_answer=False):
+        data = {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'puzzle_type': self.puzzle_type,
+            'puzzle_image': self.puzzle_image,
+            'puzzle_text': self.puzzle_text,
+            'hint': self.hint,
+            'week_number': self.week_number,
+            'year': self.year,
+            'is_active': self.is_active,
+            'view_count': self.view_count,
+            'reveal_count': self.reveal_count,
+            'hint_view_count': self.hint_view_count,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+        if include_answer:
+            data['answer_image'] = self.answer_image
+            data['answer_text'] = self.answer_text
+        return data
+
+
+class PuzzleUserStatus(db.Model):
+    """Tracks user interaction with puzzles"""
+    __tablename__ = 'puzzle_user_status'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    puzzle_id = db.Column(db.Integer, db.ForeignKey('weekly_puzzles.id'), nullable=False)
+    
+    # User identification (one of these will be set)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    guest_code = db.Column(db.String(20), nullable=True)
+    session_id = db.Column(db.String(100), nullable=True)
+    
+    # Status flags
+    dismissed_popup = db.Column(db.Boolean, default=False)  # Don't show splash this week
+    dismissed_answer = db.Column(db.Boolean, default=False)  # Don't offer answer reveal
+    revealed_answer = db.Column(db.Boolean, default=False)  # Has seen the answer
+    hint_viewed = db.Column(db.Boolean, default=False)  # Has viewed the hint
+    
+    # Stats
+    view_count = db.Column(db.Integer, default=1)  # Times viewed puzzle
+    
+    # Timestamps
+    first_viewed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    answer_revealed_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    puzzle = db.relationship('WeeklyPuzzle', backref='user_statuses')
+    user = db.relationship('User', foreign_keys=[user_id])
+
+
+# ==================== PUZZLE HELPER FUNCTIONS ====================
+
+def get_current_week_year():
+    """Get current ISO week number and year"""
+    now = datetime.utcnow()
+    iso_cal = now.isocalendar()
+    return iso_cal[1], iso_cal[0]  # week_number, year
+
+
+def get_active_puzzle():
+    """Get the currently active puzzle for this week"""
+    week, year = get_current_week_year()
+    return WeeklyPuzzle.query.filter_by(
+        week_number=week,
+        year=year,
+        is_active=True
+    ).first()
+
+
+def get_user_puzzle_status(puzzle_id, user_id=None, guest_code=None, session_id=None):
+    """Get or create puzzle status for a user"""
+    query = PuzzleUserStatus.query.filter_by(puzzle_id=puzzle_id)
+    
+    if user_id:
+        status = query.filter_by(user_id=user_id).first()
+        if not status:
+            status = PuzzleUserStatus(puzzle_id=puzzle_id, user_id=user_id)
+            db.session.add(status)
+            db.session.commit()
+    elif guest_code:
+        status = query.filter_by(guest_code=guest_code).first()
+        if not status:
+            status = PuzzleUserStatus(puzzle_id=puzzle_id, guest_code=guest_code)
+            db.session.add(status)
+            db.session.commit()
+    elif session_id:
+        status = query.filter_by(session_id=session_id).first()
+        if not status:
+            status = PuzzleUserStatus(puzzle_id=puzzle_id, session_id=session_id)
+            db.session.add(status)
+            db.session.commit()
+    else:
+        return None
+    
+    return status
+
 
 # ==================== DECORATORS ====================
 
@@ -1797,6 +1941,37 @@ def get_teacher_domain_statistics(teacher_id):
         'restricted_domains': restricted_domains
     }
 
+
+# ==================== PWA (Progressive Web App) ROUTES ====================
+
+@app.route('/manifest.json')
+def pwa_manifest():
+    """Serve the PWA manifest file"""
+    return send_from_directory(
+        app.static_folder,
+        'manifest.json',
+        mimetype='application/manifest+json'
+    )
+
+@app.route('/sw.js')
+def pwa_service_worker():
+    """Serve the service worker from root (required for scope)"""
+    return send_from_directory(
+        app.static_folder,
+        'sw.js',
+        mimetype='application/javascript'
+    )
+
+@app.route('/offline.html')
+def pwa_offline():
+    """Serve the offline fallback page"""
+    return send_from_directory(
+        app.static_folder,
+        'offline.html',
+        mimetype='text/html'
+    )
+
+
 @app.route('/')
 def index():
     if 'user_id' in session:
@@ -1810,7 +1985,14 @@ def index():
                 return redirect(url_for('teacher_dashboard'))
             else:
                 return render_template('student_app.html')
-    return render_template('login.html')
+    
+    # Check if full account login is enabled (default: False for GDPR)
+    full_account_enabled = SystemSetting.get('FULL_ACCOUNT_LOGIN_ENABLED', False)
+    # Convert string 'true'/'false' to boolean if needed
+    if isinstance(full_account_enabled, str):
+        full_account_enabled = full_account_enabled.lower() == 'true'
+    
+    return render_template('login.html', full_account_enabled=full_account_enabled)
 
 @app.route('/register', methods=['GET'])
 def register_page():
@@ -2926,12 +3108,13 @@ def get_student_mastery():
     Returns best score for each topic/difficulty combination.
     Mastery threshold: >80%
     OPTIMIZED: Single query instead of 36 separate queries
+    Now supports both registered users AND guest_code users
     """
-    # Guest users don't have mastery data
-    if 'is_guest' in session:
+    from sqlalchemy import text
+    
+    # Casual guest users (no guest_code) don't have mastery data
+    if 'is_guest' in session and 'guest_code' not in session:
         return jsonify({}), 200
-
-    user_id = session['user_id']
 
     # Get all topics - MUST match topics in get_topics() API
     topics = [
@@ -2941,16 +3124,27 @@ def get_student_mastery():
     ]
     difficulties = ['beginner', 'intermediate', 'advanced']
 
-    # OPTIMIZED: Get all best scores in a single query
-    from sqlalchemy import text
-    query = text("""
-        SELECT topic, difficulty, MAX(percentage) as best_score
-        FROM quiz_attempts
-        WHERE user_id = :user_id
-        GROUP BY topic, difficulty
-    """)
-
-    results = db.session.execute(query, {'user_id': user_id}).fetchall()
+    # Check if this is a guest_code user or registered user
+    if 'guest_code' in session:
+        # Guest code user - query guest_quiz_attempts table
+        guest_code = session['guest_code']
+        query = text("""
+            SELECT topic, difficulty, MAX(CAST(score AS FLOAT) / total_questions * 100) as best_score
+            FROM guest_quiz_attempts
+            WHERE guest_code = :guest_code
+            GROUP BY topic, difficulty
+        """)
+        results = db.session.execute(query, {'guest_code': guest_code}).fetchall()
+    else:
+        # Registered user - query quiz_attempts table
+        user_id = session['user_id']
+        query = text("""
+            SELECT topic, difficulty, MAX(percentage) as best_score
+            FROM quiz_attempts
+            WHERE user_id = :user_id
+            GROUP BY topic, difficulty
+        """)
+        results = db.session.execute(query, {'user_id': user_id}).fetchall()
 
     # Build lookup dictionary from query results
     best_scores = {}
@@ -2958,7 +3152,7 @@ def get_student_mastery():
         topic, difficulty, best_score = row
         if topic not in best_scores:
             best_scores[topic] = {}
-        best_scores[topic][difficulty] = best_score
+        best_scores[topic][difficulty] = best_score or 0
 
     # Build mastery data structure
     mastery_data = {}
@@ -4300,12 +4494,21 @@ def admin_statistics():
 
     # Add prize system statistics if enabled
     if FEATURE_FLAGS.get('PRIZE_SYSTEM_ENABLED', False):
-        stats['prize_stats'] = {
-            'active_prizes': Prize.query.filter_by(is_active=True).count(),
-            'total_schools': PrizeSchool.query.filter_by(is_active=True).count(),
-            'pending_redemptions': PrizeRedemption.query.filter_by(status='pending').count(),
-            'total_redemptions': PrizeRedemption.query.count()
-        }
+        try:
+            stats['prize_stats'] = {
+                'active_prizes': Prize.query.filter_by(is_active=True).count(),
+                'total_schools': PrizeSchool.query.filter_by(status='approved').count(),  # Use status column
+                'pending_redemptions': PrizeRedemption.query.filter_by(status='pending').count(),
+                'total_redemptions': PrizeRedemption.query.count()
+            }
+        except Exception as e:
+            print(f"Error getting prize stats: {e}")
+            stats['prize_stats'] = {
+                'active_prizes': 0,
+                'total_schools': 0,
+                'pending_redemptions': 0,
+                'total_redemptions': 0
+            }
 
     return jsonify(stats)
 
@@ -5993,6 +6196,52 @@ def student_prize_shop():
     if not FEATURE_FLAGS.get('PRIZE_SYSTEM_ENABLED', False):
         flash('Prize shop is not available yet.', 'info')
         return redirect(url_for('student_app'))
+    
+    # Check if PIN verification is required
+    from sqlalchemy import text
+    threshold = int(SystemSetting.get('prize_pin_threshold', '2000'))
+    
+    # Get user's points and PIN status
+    requires_pin = False
+    has_pin = False
+    pin_hint = ''
+    points = 0
+    
+    if 'guest_code' in session:
+        # Guest code user
+        guest_code = session['guest_code']
+        result = db.session.execute(
+            text("SELECT total_score, prize_pin, prize_pin_hint FROM guest_users WHERE guest_code = :code"),
+            {'code': guest_code}
+        ).fetchone()
+        
+        if result:
+            points = result[0] or 0
+            has_pin = bool(result[1])
+            pin_hint = result[2] or ''
+    
+    elif 'user_id' in session and 'is_guest' not in session:
+        # Registered user
+        user_id = session['user_id']
+        stats = UserStats.query.filter_by(user_id=user_id).first()
+        
+        if stats:
+            points = stats.total_points or 0
+            has_pin = bool(stats.prize_pin)
+            pin_hint = stats.prize_pin_hint or ''
+    
+    # Check if PIN is required
+    if points >= threshold:
+        requires_pin = True
+        
+        # Check if already verified in this session
+        if not session.get('prize_pin_verified'):
+            # Redirect to PIN verification page
+            return render_template('prize_pin_required.html', 
+                                   needs_setup=not has_pin,
+                                   hint=pin_hint,
+                                   points=points,
+                                   threshold=threshold)
 
     return render_template('prize_shop.html')
 
@@ -8187,6 +8436,46 @@ def admin_analytics_overview():
     })
 
 
+@app.route('/api/admin/analytics/debug')
+@login_required
+@role_required('admin')
+def admin_analytics_debug():
+    """Debug endpoint to check table structure"""
+    from sqlalchemy import text
+    
+    results = {}
+    
+    # Check guest_users columns
+    try:
+        # Get one row to see what columns exist
+        sample = db.session.execute(text("SELECT * FROM guest_users LIMIT 1")).fetchone()
+        if sample:
+            results['guest_users_columns'] = list(sample._mapping.keys()) if hasattr(sample, '_mapping') else f"Row has {len(sample)} columns"
+            results['guest_users_sample'] = [str(x) for x in sample]
+        else:
+            results['guest_users_columns'] = 'Table empty'
+        results['guest_users_count'] = db.session.execute(text("SELECT COUNT(*) FROM guest_users")).scalar()
+    except Exception as e:
+        results['guest_users_error'] = str(e)
+    
+    # Check users table
+    try:
+        sample = db.session.execute(text("SELECT id, email, full_name, role FROM users WHERE role='student' LIMIT 1")).fetchone()
+        if sample:
+            results['users_sample'] = [str(x) for x in sample]
+        results['users_student_count'] = db.session.execute(text("SELECT COUNT(*) FROM users WHERE role='student'")).scalar()
+    except Exception as e:
+        results['users_error'] = str(e)
+    
+    # Check user_stats table
+    try:
+        results['user_stats_count'] = db.session.execute(text("SELECT COUNT(*) FROM user_stats")).scalar()
+    except Exception as e:
+        results['user_stats_error'] = str(e)
+    
+    return jsonify(results)
+
+
 @app.route('/api/admin/analytics/registered-users')
 @login_required
 @role_required('admin')
@@ -8194,52 +8483,84 @@ def admin_analytics_registered_users():
     """Get list of all registered users with stats"""
     from sqlalchemy import text
     
-    users = db.session.execute(text("""
-        SELECT 
-            u.id,
-            u.email,
-            u.full_name,
-            u.created_at,
-            COALESCE(us.total_points, 0) as points,
-            COALESCE(us.total_quizzes, 0) as quizzes,
-            us.updated_at as last_active
-        FROM users u
-        LEFT JOIN user_stats us ON u.id = us.user_id
-        WHERE u.email NOT LIKE 'guest%@%'
-        AND u.role = 'student'
-        ORDER BY us.updated_at DESC
-    """)).fetchall()
-    
-    result = []
-    now = datetime.utcnow()
-    
-    for user in users:
-        last_active = user.last_active if user.last_active else user.created_at
-        days_inactive = (now - last_active).days if last_active else 999
+    try:
+        # Count first
+        count = db.session.execute(text("""
+            SELECT COUNT(*) FROM users 
+            WHERE email NOT LIKE 'guest%@%' AND role = 'student'
+        """)).scalar()
+        print(f"DEBUG: Found {count} registered students")
         
-        # Determine activity status
-        if days_inactive < 7:
-            activity_status = 'active'
-            activity_label = 'Active'
-        elif days_inactive < 30:
-            activity_status = 'stale'
-            activity_label = 'Inactive'
-        else:
-            activity_status = 'inactive'
-            activity_label = f'{days_inactive}d ago'
+        if count == 0:
+            return jsonify([])
         
-        result.append({
-            'id': user.id,
-            'email': user.email,
-            'full_name': user.full_name,
-            'points': user.points,
-            'quizzes': user.quizzes,
-            'last_active': last_active.isoformat() if last_active else None,
-            'activity_status': activity_status,
-            'activity_label': activity_label
-        })
-    
-    return jsonify(result)
+        # Simple query
+        rows = db.session.execute(text("""
+            SELECT id, email, full_name, created_at
+            FROM users
+            WHERE email NOT LIKE 'guest%@%'
+            AND role = 'student'
+            ORDER BY created_at DESC
+            LIMIT 200
+        """)).fetchall()
+        
+        print(f"DEBUG: Query returned {len(rows)} rows")
+        
+        if rows:
+            print(f"DEBUG: First row: {list(rows[0])}")
+        
+        result = []
+        now = datetime.utcnow()
+        
+        for row in rows:
+            row_data = list(row)
+            user_id = row_data[0]
+            email = row_data[1] if len(row_data) > 1 else 'unknown'
+            full_name = row_data[2] if len(row_data) > 2 and row_data[2] else 'Unknown'
+            created_at = row_data[3] if len(row_data) > 3 else None
+            
+            # Try to get stats
+            points = 0
+            last_active = created_at
+            try:
+                stats = db.session.execute(text(
+                    "SELECT total_points, updated_at FROM user_stats WHERE user_id = :uid"
+                ), {'uid': user_id}).fetchone()
+                if stats:
+                    points = stats[0] if stats[0] else 0
+                    if stats[1]:
+                        last_active = stats[1]
+            except Exception as e:
+                print(f"DEBUG: Error getting stats for user {user_id}: {e}")
+            
+            days_inactive = 0
+            if last_active:
+                try:
+                    days_inactive = (now - last_active).days
+                except:
+                    pass
+            
+            result.append({
+                'id': user_id,
+                'email': str(email),
+                'full_name': str(full_name),
+                'points': points,
+                'quizzes': 0,
+                'last_active': last_active.isoformat() if last_active and hasattr(last_active, 'isoformat') else str(last_active) if last_active else None,
+                'activity_status': 'active' if days_inactive < 7 else ('stale' if days_inactive < 30 else 'inactive'),
+                'activity_label': 'Active' if days_inactive < 7 else ('Inactive' if days_inactive < 30 else f'{days_inactive}d ago')
+            })
+        
+        print(f"DEBUG: Returning {len(result)} users")
+        return jsonify(result)
+        
+    except Exception as e:
+        import traceback
+        error_msg = str(e)
+        trace = traceback.format_exc()
+        print(f"ERROR in registered-users: {error_msg}")
+        print(trace)
+        return jsonify({'error': error_msg, 'trace': trace})
 
 
 @app.route('/api/admin/analytics/repeat-guests')
@@ -8249,48 +8570,104 @@ def admin_analytics_repeat_guests():
     """Get list of all repeat guests with stats"""
     from sqlalchemy import text
     
-    guests = db.session.execute(text("""
-        SELECT 
-            guest_code,
-            nickname,
-            total_score,
-            quizzes_completed,
-            created_at,
-            last_active
-        FROM guest_users
-        ORDER BY last_active DESC
-    """)).fetchall()
-    
-    result = []
-    now = datetime.utcnow()
-    
-    for guest in guests:
-        days_inactive = (now - guest.last_active).days if guest.last_active else 999
+    try:
+        # First, let's see what we're working with
+        count = db.session.execute(text("SELECT COUNT(*) FROM guest_users")).scalar()
+        print(f"DEBUG: guest_users has {count} rows")
         
-        # Determine activity status
-        if days_inactive < 7:
-            activity_status = 'active'
-            activity_label = 'Active'
-        elif days_inactive < 60:
-            activity_status = 'stale'
-            activity_label = f'{days_inactive}d ago'
-        else:
-            activity_status = 'inactive'
-            activity_label = f'Inactive {days_inactive}d'
+        if count == 0:
+            return jsonify([])
         
-        result.append({
-            'guest_code': guest.guest_code,
-            'nickname': guest.nickname,
-            'total_score': guest.total_score,
-            'quizzes_completed': guest.quizzes_completed,
-            'created_at': guest.created_at.isoformat() if guest.created_at else None,
-            'last_active': guest.last_active.isoformat() if guest.last_active else None,
-            'days_inactive': days_inactive,
-            'activity_status': activity_status,
-            'activity_label': activity_label
-        })
-    
-    return jsonify(result)
+        # Get column names first
+        try:
+            # SQLite way to get column info
+            columns_info = db.session.execute(text("PRAGMA table_info(guest_users)")).fetchall()
+            column_names = [col[1] for col in columns_info]  # col[1] is the column name
+            print(f"DEBUG: guest_users columns: {column_names}")
+        except Exception as e:
+            print(f"DEBUG: Could not get columns: {e}")
+            column_names = []
+        
+        # Build SELECT based on available columns
+        select_cols = ['guest_code']  # This must exist
+        if 'total_score' in column_names:
+            select_cols.append('total_score')
+        if 'created_at' in column_names:
+            select_cols.append('created_at')
+        if 'last_active' in column_names:
+            select_cols.append('last_active')
+        if 'nickname' in column_names:
+            select_cols.append('nickname')
+        
+        query = f"SELECT {', '.join(select_cols)} FROM guest_users ORDER BY last_active DESC LIMIT 200"
+        print(f"DEBUG: Running query: {query}")
+        
+        rows = db.session.execute(text(query)).fetchall()
+        print(f"DEBUG: Got {len(rows)} rows")
+        
+        if not rows:
+            return jsonify([])
+        
+        # Print first row for debugging
+        if rows:
+            print(f"DEBUG: First row: {list(rows[0])}")
+        
+        result = []
+        now = datetime.utcnow()
+        
+        for row in rows:
+            row_data = list(row)  # Convert to list for index access
+            
+            # Map based on select_cols order
+            guest_code = row_data[0] if len(row_data) > 0 else 'unknown'
+            
+            total_score = 0
+            created_at = None
+            last_active = None
+            nickname = None
+            
+            col_idx = 1
+            if 'total_score' in select_cols:
+                total_score = row_data[col_idx] if len(row_data) > col_idx and row_data[col_idx] else 0
+                col_idx += 1
+            if 'created_at' in select_cols:
+                created_at = row_data[col_idx] if len(row_data) > col_idx else None
+                col_idx += 1
+            if 'last_active' in select_cols:
+                last_active = row_data[col_idx] if len(row_data) > col_idx else None
+                col_idx += 1
+            if 'nickname' in select_cols:
+                nickname = row_data[col_idx] if len(row_data) > col_idx else None
+            
+            days_inactive = 0
+            if last_active:
+                try:
+                    days_inactive = (now - last_active).days
+                except:
+                    pass
+            
+            result.append({
+                'guest_code': str(guest_code),
+                'nickname': nickname,
+                'total_score': total_score or 0,
+                'quizzes_completed': 0,
+                'created_at': created_at.isoformat() if created_at and hasattr(created_at, 'isoformat') else str(created_at) if created_at else None,
+                'last_active': last_active.isoformat() if last_active and hasattr(last_active, 'isoformat') else str(last_active) if last_active else None,
+                'days_inactive': days_inactive,
+                'activity_status': 'active' if days_inactive < 7 else ('stale' if days_inactive < 60 else 'inactive'),
+                'activity_label': 'Active' if days_inactive < 7 else (f'{days_inactive}d ago' if days_inactive < 60 else f'Inactive {days_inactive}d')
+            })
+        
+        print(f"DEBUG: Returning {len(result)} guests")
+        return jsonify(result)
+        
+    except Exception as e:
+        import traceback
+        error_msg = str(e)
+        trace = traceback.format_exc()
+        print(f"ERROR in repeat-guests: {error_msg}")
+        print(trace)
+        return jsonify({'error': error_msg, 'trace': trace, 'debug': 'Check server logs'})
 
 
 @app.route('/api/admin/analytics/inactive-users')
@@ -8300,35 +8677,54 @@ def admin_analytics_inactive_users():
     """Get list of inactive users (60+ days)"""
     from sqlalchemy import text
     
-    sixty_days_ago = datetime.utcnow() - timedelta(days=60)
-    
-    # Get inactive repeat guests
-    inactive_guests = db.session.execute(text("""
-        SELECT 
-            'Guest' as type,
-            guest_code as identifier,
-            last_active,
-            total_score as points
-        FROM guest_users
-        WHERE last_active < :cutoff
-        ORDER BY last_active ASC
-    """), {'cutoff': sixty_days_ago}).fetchall()
-    
-    result = []
-    now = datetime.utcnow()
-    
-    for user in inactive_guests:
-        days_inactive = (now - user.last_active).days if user.last_active else 999
+    try:
+        sixty_days_ago = datetime.utcnow() - timedelta(days=60)
         
-        result.append({
-            'type': user.type,
-            'identifier': user.identifier,
-            'last_active': user.last_active.isoformat() if user.last_active else None,
-            'days_inactive': days_inactive,
-            'points': user.points
-        })
-    
-    return jsonify(result)
+        # Use SELECT * for flexibility
+        rows = db.session.execute(text("""
+            SELECT * FROM guest_users
+            WHERE last_active < :cutoff
+            ORDER BY last_active ASC
+        """), {'cutoff': sixty_days_ago}).fetchall()
+        
+        if not rows:
+            return jsonify([])
+        
+        result = []
+        now = datetime.utcnow()
+        
+        for row in rows:
+            # Get data using _mapping if available
+            if hasattr(row, '_mapping'):
+                data = dict(row._mapping)
+            else:
+                data = {'guest_code': row[0]}
+            
+            guest_code = data.get('guest_code', str(row[0]))
+            last_active = data.get('last_active')
+            points = data.get('total_score', 0) or 0
+            
+            days_inactive = 0
+            if last_active:
+                try:
+                    days_inactive = (now - last_active).days
+                except:
+                    days_inactive = 999
+            
+            result.append({
+                'type': 'Guest',
+                'identifier': guest_code,
+                'last_active': last_active.isoformat() if last_active else None,
+                'days_inactive': days_inactive,
+                'points': points
+            })
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        print(f"Error in inactive-users: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()})
 
 
 @app.route('/api/admin/analytics/user-detail')
@@ -8373,41 +8769,61 @@ def admin_analytics_user_detail():
         })
     
     else:  # guest
-        # Get guest details
-        guest = db.session.execute(text("""
-            SELECT * FROM guest_users WHERE guest_code = :code
-        """), {'code': user_id}).fetchone()
-        
-        if not guest:
-            return jsonify({'error': 'Guest not found'}), 404
-        
-        # Get recent quizzes
-        recent_quizzes = db.session.execute(text("""
-            SELECT topic, difficulty, score, total_questions, completed_at
-            FROM guest_quiz_attempts
-            WHERE guest_code = :code
-            ORDER BY completed_at DESC
-            LIMIT 10
-        """), {'code': user_id}).fetchall()
-        
-        recent_quizzes_html = '<ul>' + ''.join([
-            f'<li>{quiz.topic} ({quiz.difficulty}): {quiz.score}/{quiz.total_questions}</li>'
-            for quiz in recent_quizzes
-        ]) + '</ul>' if recent_quizzes else '<p>No quizzes yet</p>'
-        
-        now = datetime.utcnow()
-        days_old = (now - guest.created_at).days if guest.created_at else 0
-        days_inactive = (now - guest.last_active).days if guest.last_active else 999
-        
-        return jsonify({
-            'guest_code': guest.guest_code,
-            'nickname': guest.nickname,
-            'total_score': guest.total_score,
-            'quizzes_completed': guest.quizzes_completed,
-            'days_old': days_old,
-            'days_inactive': days_inactive,
-            'recent_quizzes': recent_quizzes_html
-        })
+        try:
+            # Get guest details
+            guest = db.session.execute(text("""
+                SELECT 
+                    guest_code,
+                    total_score,
+                    created_at,
+                    last_active
+                FROM guest_users WHERE guest_code = :code
+            """), {'code': user_id}).fetchone()
+            
+            if not guest:
+                return jsonify({'error': 'Guest not found'}), 404
+            
+            # Access by index: 0=guest_code, 1=total_score, 2=created_at, 3=last_active
+            guest_code = guest[0]
+            total_score = guest[1] if guest[1] else 0
+            created_at = guest[2]
+            last_active = guest[3]
+            
+            # Get recent quizzes
+            try:
+                recent_quizzes = db.session.execute(text("""
+                    SELECT topic, difficulty, score, total_questions, completed_at
+                    FROM guest_quiz_attempts
+                    WHERE guest_code = :code
+                    ORDER BY completed_at DESC
+                    LIMIT 10
+                """), {'code': user_id}).fetchall()
+                
+                recent_quizzes_html = '<ul>' + ''.join([
+                    f'<li>{q[0]} ({q[1]}): {q[2]}/{q[3]}</li>'
+                    for q in recent_quizzes
+                ]) + '</ul>' if recent_quizzes else '<p>No quizzes yet</p>'
+            except:
+                recent_quizzes_html = '<p>No quiz data available</p>'
+            
+            now = datetime.utcnow()
+            days_old = (now - created_at).days if created_at else 0
+            days_inactive = (now - last_active).days if last_active else 999
+            
+            return jsonify({
+                'guest_code': guest_code,
+                'nickname': None,
+                'total_score': total_score,
+                'quizzes_completed': 0,
+                'days_old': days_old,
+                'days_inactive': days_inactive,
+                'recent_quizzes': recent_quizzes_html
+            })
+        except Exception as e:
+            import traceback
+            print(f"Error in user-detail guest: {str(e)}")
+            print(traceback.format_exc())
+            return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/admin/analytics/recycle-guest', methods=['POST'])
@@ -8533,6 +8949,794 @@ def admin_analytics_cleanup_settings():
         )
         
         return jsonify({'success': True})
+
+
+# =============================================================================
+# SITE SETTINGS API (Admin)
+# =============================================================================
+
+@app.route('/api/admin/site-settings')
+@login_required
+@role_required('admin')
+def admin_get_site_settings():
+    """Get all site settings for admin dashboard"""
+    return jsonify({
+        'full_account_login_enabled': SystemSetting.get('FULL_ACCOUNT_LOGIN_ENABLED', False) in [True, 'true', 'True'],
+        'cleanup_days_threshold': int(SystemSetting.get('cleanup_days_threshold', '60')),
+        'auto_cleanup_enabled': SystemSetting.get('auto_cleanup_enabled', 'false') == 'true',
+        'prize_pin_threshold': int(SystemSetting.get('prize_pin_threshold', '2000'))
+    })
+
+
+@app.route('/api/admin/site-settings/full-account-login', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_toggle_full_account_login():
+    """Toggle full account login visibility"""
+    data = request.json or {}
+    enabled = data.get('enabled', False)
+    user_id = session.get('user_id')
+    
+    SystemSetting.set(
+        'FULL_ACCOUNT_LOGIN_ENABLED',
+        'true' if enabled else 'false',
+        'Enable full account login on the login page (GDPR compliance)',
+        user_id
+    )
+    
+    return jsonify({
+        'success': True,
+        'enabled': enabled,
+        'message': f'Full account login {"enabled" if enabled else "disabled"}'
+    })
+
+
+@app.route('/api/admin/site-settings/prize-pin-threshold', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_set_prize_pin_threshold():
+    """Set the points threshold for Prize Shop PIN protection"""
+    data = request.json or {}
+    threshold = int(data.get('threshold', 2000))
+    user_id = session.get('user_id')
+    
+    # Validate threshold (minimum 500, maximum 10000)
+    threshold = max(500, min(10000, threshold))
+    
+    SystemSetting.set(
+        'prize_pin_threshold',
+        str(threshold),
+        'Points threshold for Prize Shop PIN protection',
+        user_id
+    )
+    
+    return jsonify({
+        'success': True,
+        'threshold': threshold,
+        'message': f'Prize PIN threshold set to {threshold} points'
+    })
+
+
+# =============================================================================
+# PRIZE SHOP PIN PROTECTION API
+# =============================================================================
+
+@app.route('/api/prize-pin/status')
+@login_required
+def get_prize_pin_status():
+    """Check if user needs PIN for Prize Shop access"""
+    from sqlalchemy import text
+    
+    # Get threshold from settings
+    threshold = int(SystemSetting.get('prize_pin_threshold', '2000'))
+    
+    # Determine user type and get their data
+    if 'guest_code' in session:
+        # Guest code user
+        guest_code = session['guest_code']
+        result = db.session.execute(
+            text("SELECT total_score, prize_pin, prize_pin_hint FROM guest_users WHERE guest_code = :code"),
+            {'code': guest_code}
+        ).fetchone()
+        
+        if not result:
+            return jsonify({'requires_pin': False, 'has_pin': False, 'points': 0, 'threshold': threshold})
+        
+        points = result[0] or 0
+        has_pin = bool(result[1])
+        hint = result[2] or ''
+        
+    elif 'user_id' in session:
+        # Registered user
+        user_id = session['user_id']
+        stats = UserStats.query.filter_by(user_id=user_id).first()
+        
+        if not stats:
+            return jsonify({'requires_pin': False, 'has_pin': False, 'points': 0, 'threshold': threshold})
+        
+        points = stats.total_points or 0
+        has_pin = bool(stats.prize_pin)
+        hint = stats.prize_pin_hint or ''
+    else:
+        # Casual guest - no PIN needed
+        return jsonify({'requires_pin': False, 'has_pin': False, 'points': 0, 'threshold': threshold})
+    
+    requires_pin = points >= threshold
+    
+    return jsonify({
+        'requires_pin': requires_pin,
+        'has_pin': has_pin,
+        'needs_setup': requires_pin and not has_pin,
+        'hint': hint if has_pin else '',
+        'points': points,
+        'threshold': threshold
+    })
+
+
+@app.route('/api/prize-pin/set', methods=['POST'])
+@login_required
+def set_prize_pin():
+    """Set or update the Prize Shop PIN"""
+    from sqlalchemy import text
+    
+    data = request.json or {}
+    pin = data.get('pin', '').strip().lower()  # Store lowercase for case-insensitive matching
+    hint = data.get('hint', '').strip()
+    
+    # Validate PIN
+    if not pin or len(pin) < 2:
+        return jsonify({'error': 'PIN must be at least 2 characters'}), 400
+    
+    if len(pin) > 50:
+        return jsonify({'error': 'PIN is too long (max 50 characters)'}), 400
+    
+    # Validate hint
+    if not hint or len(hint) < 2:
+        return jsonify({'error': 'Please provide a hint (at least 2 characters)'}), 400
+    
+    if len(hint) > 100:
+        return jsonify({'error': 'Hint is too long (max 100 characters)'}), 400
+    
+    # Determine user type and save PIN
+    if 'guest_code' in session:
+        # Guest code user
+        guest_code = session['guest_code']
+        db.session.execute(
+            text("UPDATE guest_users SET prize_pin = :pin, prize_pin_hint = :hint WHERE guest_code = :code"),
+            {'pin': pin, 'hint': hint, 'code': guest_code}
+        )
+        db.session.commit()
+        
+    elif 'user_id' in session:
+        # Registered user
+        user_id = session['user_id']
+        stats = UserStats.query.filter_by(user_id=user_id).first()
+        
+        if not stats:
+            return jsonify({'error': 'User stats not found'}), 404
+        
+        stats.prize_pin = pin
+        stats.prize_pin_hint = hint
+        db.session.commit()
+    else:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    return jsonify({
+        'success': True,
+        'message': 'PIN set successfully! Remember your hint: ' + hint
+    })
+
+
+@app.route('/api/prize-pin/verify', methods=['POST'])
+@login_required
+def verify_prize_pin():
+    """Verify the Prize Shop PIN"""
+    from sqlalchemy import text
+    
+    data = request.json or {}
+    entered_pin = data.get('pin', '').strip().lower()  # Compare lowercase
+    
+    if not entered_pin:
+        return jsonify({'success': False, 'error': 'Please enter your PIN'}), 400
+    
+    # Get stored PIN based on user type
+    stored_pin = None
+    
+    if 'guest_code' in session:
+        guest_code = session['guest_code']
+        result = db.session.execute(
+            text("SELECT prize_pin FROM guest_users WHERE guest_code = :code"),
+            {'code': guest_code}
+        ).fetchone()
+        stored_pin = result[0] if result else None
+        
+    elif 'user_id' in session:
+        user_id = session['user_id']
+        stats = UserStats.query.filter_by(user_id=user_id).first()
+        stored_pin = stats.prize_pin if stats else None
+    
+    if not stored_pin:
+        return jsonify({'success': False, 'error': 'No PIN set'}), 400
+    
+    # Compare PINs (case-insensitive)
+    if entered_pin == stored_pin.lower():
+        # Store verification in session (expires with session)
+        session['prize_pin_verified'] = True
+        return jsonify({
+            'success': True,
+            'message': 'PIN verified! Welcome to the Prize Shop.'
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': 'Incorrect PIN. Check your hint and try again.'
+        }), 401
+
+
+@app.route('/api/prize-pin/reset', methods=['POST'])
+@login_required
+def reset_prize_pin():
+    """Reset/change the Prize Shop PIN (requires knowing current PIN)"""
+    from sqlalchemy import text
+    
+    data = request.json or {}
+    current_pin = data.get('current_pin', '').strip().lower()
+    new_pin = data.get('new_pin', '').strip().lower()
+    new_hint = data.get('new_hint', '').strip()
+    
+    # Validate inputs
+    if not current_pin:
+        return jsonify({'error': 'Current PIN is required'}), 400
+    
+    if not new_pin or len(new_pin) < 2:
+        return jsonify({'error': 'New PIN must be at least 2 characters'}), 400
+    
+    if not new_hint or len(new_hint) < 2:
+        return jsonify({'error': 'Please provide a hint for your new PIN'}), 400
+    
+    # Get and verify current PIN
+    stored_pin = None
+    
+    if 'guest_code' in session:
+        guest_code = session['guest_code']
+        result = db.session.execute(
+            text("SELECT prize_pin FROM guest_users WHERE guest_code = :code"),
+            {'code': guest_code}
+        ).fetchone()
+        stored_pin = result[0] if result else None
+        
+        if stored_pin and current_pin == stored_pin.lower():
+            db.session.execute(
+                text("UPDATE guest_users SET prize_pin = :pin, prize_pin_hint = :hint WHERE guest_code = :code"),
+                {'pin': new_pin, 'hint': new_hint, 'code': guest_code}
+            )
+            db.session.commit()
+        else:
+            return jsonify({'error': 'Current PIN is incorrect'}), 401
+            
+    elif 'user_id' in session:
+        user_id = session['user_id']
+        stats = UserStats.query.filter_by(user_id=user_id).first()
+        stored_pin = stats.prize_pin if stats else None
+        
+        if stored_pin and current_pin == stored_pin.lower():
+            stats.prize_pin = new_pin
+            stats.prize_pin_hint = new_hint
+            db.session.commit()
+        else:
+            return jsonify({'error': 'Current PIN is incorrect'}), 401
+    else:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    return jsonify({
+        'success': True,
+        'message': 'PIN changed successfully!'
+    })
+
+
+# =============================================================================
+# PUZZLE OF THE WEEK - STUDENT/USER API ROUTES
+# =============================================================================
+
+@app.route('/api/puzzle/current')
+def get_current_puzzle():
+    """Get the current week's active puzzle"""
+    puzzle = get_active_puzzle()
+    
+    if not puzzle:
+        return jsonify({'puzzle': None, 'message': 'No active puzzle this week'})
+    
+    # Increment view count
+    puzzle.view_count += 1
+    db.session.commit()
+    
+    return jsonify({
+        'puzzle': puzzle.to_dict(include_answer=False),
+        'week': puzzle.week_number,
+        'year': puzzle.year
+    })
+
+
+@app.route('/api/puzzle/status')
+def get_puzzle_status():
+    """Check user's puzzle status - should they see popup? Can reveal answer?"""
+    puzzle = get_active_puzzle()
+    
+    if not puzzle:
+        return jsonify({
+            'has_puzzle': False,
+            'show_popup': False,
+            'can_reveal_answer': False
+        })
+    
+    # Determine user identity
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    session_id = session.get('session_id', request.cookies.get('session_id'))
+    
+    # Get or create status
+    status = get_user_puzzle_status(
+        puzzle.id,
+        user_id=user_id,
+        guest_code=guest_code,
+        session_id=session_id
+    )
+    
+    if not status:
+        # No way to track this user, show puzzle anyway
+        return jsonify({
+            'has_puzzle': True,
+            'show_popup': True,
+            'can_reveal_answer': True,
+            'already_revealed': False,
+            'hint_available': bool(puzzle.hint),
+            'puzzle': puzzle.to_dict(include_answer=False)
+        })
+    
+    return jsonify({
+        'has_puzzle': True,
+        'show_popup': not status.dismissed_popup,
+        'can_reveal_answer': not status.dismissed_answer,
+        'already_revealed': status.revealed_answer,
+        'hint_viewed': status.hint_viewed,
+        'hint_available': bool(puzzle.hint),
+        'puzzle': puzzle.to_dict(include_answer=status.revealed_answer)
+    })
+
+
+@app.route('/api/puzzle/dismiss-popup', methods=['POST'])
+def dismiss_puzzle_popup():
+    """User dismisses the puzzle splash popup for this week"""
+    puzzle = get_active_puzzle()
+    if not puzzle:
+        return jsonify({'success': False, 'error': 'No active puzzle'})
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    session_id = session.get('session_id', request.cookies.get('session_id'))
+    
+    status = get_user_puzzle_status(
+        puzzle.id,
+        user_id=user_id,
+        guest_code=guest_code,
+        session_id=session_id
+    )
+    
+    if status:
+        status.dismissed_popup = True
+        db.session.commit()
+    
+    return jsonify({'success': True})
+
+
+@app.route('/api/puzzle/dismiss-answer', methods=['POST'])
+def dismiss_puzzle_answer():
+    """User declines to ever see the answer this week"""
+    puzzle = get_active_puzzle()
+    if not puzzle:
+        return jsonify({'success': False, 'error': 'No active puzzle'})
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    session_id = session.get('session_id', request.cookies.get('session_id'))
+    
+    status = get_user_puzzle_status(
+        puzzle.id,
+        user_id=user_id,
+        guest_code=guest_code,
+        session_id=session_id
+    )
+    
+    if status:
+        status.dismissed_answer = True
+        db.session.commit()
+    
+    return jsonify({'success': True})
+
+
+@app.route('/api/puzzle/reveal-answer', methods=['POST'])
+def reveal_puzzle_answer():
+    """User requests to see the puzzle answer"""
+    puzzle = get_active_puzzle()
+    if not puzzle:
+        return jsonify({'success': False, 'error': 'No active puzzle'})
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    session_id = session.get('session_id', request.cookies.get('session_id'))
+    
+    status = get_user_puzzle_status(
+        puzzle.id,
+        user_id=user_id,
+        guest_code=guest_code,
+        session_id=session_id
+    )
+    
+    if status:
+        status.revealed_answer = True
+        status.answer_revealed_at = datetime.utcnow()
+        status.dismissed_answer = True  # Don't offer again
+        db.session.commit()
+    
+    # Increment puzzle reveal count
+    puzzle.reveal_count += 1
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'answer_image': puzzle.answer_image,
+        'answer_text': puzzle.answer_text
+    })
+
+
+@app.route('/api/puzzle/view-hint', methods=['POST'])
+def view_puzzle_hint():
+    """User views the puzzle hint"""
+    puzzle = get_active_puzzle()
+    if not puzzle or not puzzle.hint:
+        return jsonify({'success': False, 'error': 'No hint available'})
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    session_id = session.get('session_id', request.cookies.get('session_id'))
+    
+    status = get_user_puzzle_status(
+        puzzle.id,
+        user_id=user_id,
+        guest_code=guest_code,
+        session_id=session_id
+    )
+    
+    if status:
+        status.hint_viewed = True
+        db.session.commit()
+    
+    # Increment puzzle hint view count
+    puzzle.hint_view_count += 1
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'hint': puzzle.hint
+    })
+
+
+# =============================================================================
+# PUZZLE OF THE WEEK - ADMIN API ROUTES
+# =============================================================================
+
+@app.route('/api/admin/puzzles')
+@login_required
+@role_required('admin')
+def admin_list_puzzles():
+    """List all puzzles"""
+    from sqlalchemy import text
+    
+    try:
+        # First, ensure tables exist
+        try:
+            db.session.execute(text("SELECT 1 FROM weekly_puzzles LIMIT 1"))
+        except Exception as table_error:
+            print(f"Puzzle tables don't exist, creating them...")
+            # Create tables
+            db.session.execute(text("""
+                CREATE TABLE IF NOT EXISTS weekly_puzzles (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title VARCHAR(200) NOT NULL,
+                    description TEXT,
+                    puzzle_type VARCHAR(20) DEFAULT 'image',
+                    puzzle_image VARCHAR(500),
+                    puzzle_text TEXT,
+                    answer_image VARCHAR(500),
+                    answer_text TEXT,
+                    hint TEXT,
+                    week_number INTEGER NOT NULL,
+                    year INTEGER NOT NULL,
+                    is_active BOOLEAN DEFAULT 0,
+                    view_count INTEGER DEFAULT 0,
+                    reveal_count INTEGER DEFAULT 0,
+                    hint_view_count INTEGER DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    created_by INTEGER,
+                    UNIQUE(week_number, year)
+                )
+            """))
+            db.session.execute(text("""
+                CREATE TABLE IF NOT EXISTS puzzle_user_status (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    puzzle_id INTEGER NOT NULL,
+                    user_id INTEGER,
+                    guest_code VARCHAR(20),
+                    session_id VARCHAR(100),
+                    dismissed_popup BOOLEAN DEFAULT 0,
+                    dismissed_answer BOOLEAN DEFAULT 0,
+                    revealed_answer BOOLEAN DEFAULT 0,
+                    hint_viewed BOOLEAN DEFAULT 0,
+                    view_count INTEGER DEFAULT 1,
+                    first_viewed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    answer_revealed_at DATETIME,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (puzzle_id) REFERENCES weekly_puzzles(id)
+                )
+            """))
+            db.session.commit()
+            print("Puzzle tables created successfully!")
+        
+        puzzles = WeeklyPuzzle.query.order_by(
+            WeeklyPuzzle.year.desc(),
+            WeeklyPuzzle.week_number.desc()
+        ).all()
+        
+        current_week, current_year = get_current_week_year()
+        
+        return jsonify({
+            'puzzles': [p.to_dict(include_answer=True) for p in puzzles],
+            'current_week': current_week,
+            'current_year': current_year
+        })
+    except Exception as e:
+        import traceback
+        error_msg = str(e)
+        print(f"ERROR listing puzzles: {error_msg}")
+        print(traceback.format_exc())
+        
+        # If table doesn't exist, return empty with week info
+        current_week, current_year = get_current_week_year()
+        return jsonify({
+            'puzzles': [],
+            'current_week': current_week,
+            'current_year': current_year,
+            'error': error_msg
+        })
+
+
+@app.route('/api/admin/puzzles', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_create_puzzle():
+    """Create a new puzzle"""
+    try:
+        data = request.get_json() or {}
+        
+        print(f"DEBUG: Creating puzzle with data: {data}")
+        
+        # Validate required fields
+        if not data.get('title'):
+            return jsonify({'success': False, 'error': 'Title is required'}), 400
+        if not data.get('week_number') or not data.get('year'):
+            return jsonify({'success': False, 'error': 'Week and year are required'}), 400
+        
+        # Check for existing puzzle in that week
+        existing = WeeklyPuzzle.query.filter_by(
+            week_number=data['week_number'],
+            year=data['year']
+        ).first()
+        
+        if existing:
+            return jsonify({
+                'success': False, 
+                'error': f'Puzzle already exists for Week {data["week_number"]}, {data["year"]}'
+            }), 400
+        
+        puzzle = WeeklyPuzzle(
+            title=data['title'],
+            description=data.get('description'),
+            puzzle_type=data.get('puzzle_type', 'image'),
+            puzzle_image=data.get('puzzle_image'),
+            puzzle_text=data.get('puzzle_text'),
+            answer_image=data.get('answer_image'),
+            answer_text=data.get('answer_text'),
+            hint=data.get('hint'),
+            week_number=data['week_number'],
+            year=data['year'],
+            is_active=data.get('is_active', False),
+            created_by=session.get('user_id')
+        )
+        
+        db.session.add(puzzle)
+        db.session.commit()
+        
+        print(f"DEBUG: Puzzle created with ID: {puzzle.id}")
+        
+        return jsonify({
+            'success': True,
+            'puzzle': puzzle.to_dict(include_answer=True)
+        })
+    except Exception as e:
+        import traceback
+        error_msg = str(e)
+        trace = traceback.format_exc()
+        print(f"ERROR creating puzzle: {error_msg}")
+        print(trace)
+        db.session.rollback()
+        return jsonify({'success': False, 'error': error_msg}), 500
+
+
+@app.route('/api/admin/puzzles/<int:puzzle_id>', methods=['PUT'])
+@login_required
+@role_required('admin')
+def admin_update_puzzle(puzzle_id):
+    """Update an existing puzzle"""
+    puzzle = WeeklyPuzzle.query.get_or_404(puzzle_id)
+    data = request.get_json() or {}
+    
+    # Update fields
+    if 'title' in data:
+        puzzle.title = data['title']
+    if 'description' in data:
+        puzzle.description = data['description']
+    if 'puzzle_type' in data:
+        puzzle.puzzle_type = data['puzzle_type']
+    if 'puzzle_image' in data:
+        puzzle.puzzle_image = data['puzzle_image']
+    if 'puzzle_text' in data:
+        puzzle.puzzle_text = data['puzzle_text']
+    if 'answer_image' in data:
+        puzzle.answer_image = data['answer_image']
+    if 'answer_text' in data:
+        puzzle.answer_text = data['answer_text']
+    if 'hint' in data:
+        puzzle.hint = data['hint']
+    if 'is_active' in data:
+        puzzle.is_active = data['is_active']
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'puzzle': puzzle.to_dict(include_answer=True)
+    })
+
+
+@app.route('/api/admin/puzzles/<int:puzzle_id>', methods=['DELETE'])
+@login_required
+@role_required('admin')
+def admin_delete_puzzle(puzzle_id):
+    """Delete a puzzle"""
+    puzzle = WeeklyPuzzle.query.get_or_404(puzzle_id)
+    
+    # Delete associated user statuses first
+    PuzzleUserStatus.query.filter_by(puzzle_id=puzzle_id).delete()
+    
+    db.session.delete(puzzle)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
+
+@app.route('/api/admin/puzzles/<int:puzzle_id>/activate', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_activate_puzzle(puzzle_id):
+    """Activate a puzzle (deactivate others for same week)"""
+    puzzle = WeeklyPuzzle.query.get_or_404(puzzle_id)
+    
+    # Deactivate any other puzzles for the same week
+    WeeklyPuzzle.query.filter_by(
+        week_number=puzzle.week_number,
+        year=puzzle.year
+    ).update({'is_active': False})
+    
+    # Activate this one
+    puzzle.is_active = True
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'puzzle': puzzle.to_dict(include_answer=True)
+    })
+
+
+@app.route('/api/admin/puzzles/<int:puzzle_id>/deactivate', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_deactivate_puzzle(puzzle_id):
+    """Deactivate a puzzle"""
+    puzzle = WeeklyPuzzle.query.get_or_404(puzzle_id)
+    puzzle.is_active = False
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'puzzle': puzzle.to_dict(include_answer=True)
+    })
+
+
+@app.route('/api/admin/puzzles/<int:puzzle_id>/stats')
+@login_required
+@role_required('admin')
+def admin_puzzle_stats(puzzle_id):
+    """Get detailed stats for a puzzle"""
+    puzzle = WeeklyPuzzle.query.get_or_404(puzzle_id)
+    
+    from sqlalchemy import func, case
+    
+    # Get stats from puzzle_user_status
+    stats = db.session.query(
+        func.count(PuzzleUserStatus.id).label('total_users'),
+        func.sum(case((PuzzleUserStatus.revealed_answer == True, 1), else_=0)).label('reveals'),
+        func.sum(case((PuzzleUserStatus.hint_viewed == True, 1), else_=0)).label('hints_viewed'),
+        func.sum(case((PuzzleUserStatus.dismissed_popup == True, 1), else_=0)).label('dismissed')
+    ).filter_by(puzzle_id=puzzle_id).first()
+    
+    return jsonify({
+        'puzzle_id': puzzle_id,
+        'title': puzzle.title,
+        'week_number': puzzle.week_number,
+        'year': puzzle.year,
+        'is_active': puzzle.is_active,
+        'view_count': puzzle.view_count,
+        'reveal_count': puzzle.reveal_count,
+        'hint_view_count': puzzle.hint_view_count,
+        'unique_users': stats.total_users or 0,
+        'answer_reveals': int(stats.reveals or 0),
+        'hints_viewed': int(stats.hints_viewed or 0),
+        'popup_dismissed': int(stats.dismissed or 0)
+    })
+
+
+@app.route('/api/admin/puzzles/upload-image', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_upload_puzzle_image():
+    """Upload a puzzle or answer image (800x600)"""
+    import os
+    from werkzeug.utils import secure_filename
+    
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'}), 400
+    
+    # Validate file type
+    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+    if ext not in allowed_extensions:
+        return jsonify({'success': False, 'error': 'Invalid file type. Use PNG, JPG, GIF, or WEBP'}), 400
+    
+    # Create puzzles directory if needed
+    upload_dir = os.path.join(app.static_folder, 'puzzles')
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # Generate unique filename
+    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    image_type = request.form.get('type', 'puzzle')  # 'puzzle' or 'answer'
+    filename = secure_filename(f"{image_type}_{timestamp}.{ext}")
+    filepath = os.path.join(upload_dir, filename)
+    
+    # Save file
+    file.save(filepath)
+    
+    # Return the URL path
+    url_path = f"/static/puzzles/{filename}"
+    
+    return jsonify({
+        'success': True,
+        'path': url_path,
+        'filename': filename
+    })
 
 
 if __name__ == '__main__':

@@ -2,8 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AgentMath.app - Welcome</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AgentMath">
+    <meta name="application-name" content="AgentMath">
+    <meta name="description" content="Interactive maths learning for Irish Junior Cycle students">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png">
+    
+    <!-- Splash screens for iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- AVATAR: CSS for avatar display -->
     {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/avatar.css') }}">
@@ -550,6 +573,229 @@
                 font-size: 18px;
             }
         }
+        
+        /* PWA Install Prompt Styles */
+        .pwa-install-section {
+            margin-top: 20px;
+        }
+        
+        .pwa-install-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            position: relative;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .pwa-install-icon {
+            font-size: 32px;
+        }
+        
+        .pwa-install-text {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .pwa-install-text strong {
+            font-size: 16px;
+        }
+        
+        .pwa-install-text span {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .pwa-install-btn {
+            background: white;
+            color: #059669;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .pwa-install-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .pwa-dismiss-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .pwa-dismiss-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* QR Code Section Styles */
+        .qr-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .qr-toggle-btn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .qr-toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+        
+        .qr-container {
+            margin-top: 16px;
+        }
+        
+        .qr-card {
+            background: white;
+            border: 2px solid #e0e7ff;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .qr-card h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+        
+        .qr-card > p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        
+        .qr-code-wrapper {
+            display: inline-block;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
+        }
+        
+        .qr-code-wrapper canvas,
+        .qr-code-wrapper img {
+            display: block;
+        }
+        
+        .qr-instructions {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+        
+        .qr-instructions p {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        
+        .qr-instructions p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .qr-close-btn {
+            background: #e5e7eb;
+            color: #374151;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .qr-close-btn:hover {
+            background: #d1d5db;
+        }
+        
+        /* iOS Install Banner (shown on Safari) */
+        .ios-install-banner {
+            display: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            text-align: center;
+        }
+        
+        .ios-install-banner.show {
+            display: block;
+        }
+        
+        .ios-install-banner p {
+            margin-bottom: 8px;
+        }
+        
+        .ios-install-banner .steps {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 600px) {
+            .pwa-install-card {
+                flex-wrap: wrap;
+                text-align: center;
+                justify-content: center;
+            }
+            
+            .pwa-install-text {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .qr-instructions p {
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -587,7 +833,8 @@
                     </div>
                 </div>
 
-                <!-- Full Account Option -->
+                {% if full_account_enabled %}
+                <!-- Full Account Option - Only shown when enabled -->
                 <div class="option-card" onclick="selectOption('full')">
                     <div class="option-icon">👤</div>
                     <div class="option-title">Full Account</div>
@@ -597,13 +844,61 @@
                         ✅ All features
                     </div>
                 </div>
+                {% endif %}
             </div>
 
             <div class="info-box">
                 <strong>💡 Which should I choose?</strong>
                 <strong>Quick Try:</strong> First look. No signup, progress disappears.<br>
-                <strong>Guest Code:</strong> Animal code (like "panda42") saves your progress.<br>
-                <strong>Full Account:</strong> Best for regular use. All features, any device.
+                <strong>Guest Code:</strong> Animal code (like "panda42") saves your progress.{% if full_account_enabled %}<br>
+                <strong>Full Account:</strong> Best for regular use. All features, any device.{% endif %}
+            </div>
+            
+            <!-- PWA Install Prompt -->
+            <div id="pwaInstallSection" class="pwa-install-section" style="display: none;">
+                <div class="pwa-install-card">
+                    <div class="pwa-install-icon">📲</div>
+                    <div class="pwa-install-text">
+                        <strong>Install AgentMath App</strong>
+                        <span>Add to your home screen for quick access!</span>
+                    </div>
+                    <button id="pwaInstallBtn" class="pwa-install-btn">
+                        Install
+                    </button>
+                    <button id="pwaInstallDismiss" class="pwa-dismiss-btn" onclick="dismissPwaPrompt()">
+                        ✕
+                    </button>
+                </div>
+            </div>
+            
+            <!-- QR Code Section -->
+            <div class="qr-section">
+                <button onclick="toggleQrCode()" class="qr-toggle-btn">
+                    <i class="fas fa-qrcode"></i> Get the App on Your Phone
+                </button>
+                <div id="qrCodeContainer" class="qr-container" style="display: none;">
+                    <div class="qr-card">
+                        <h3>📱 Scan to Install</h3>
+                        <p>Scan this QR code with your phone's camera</p>
+                        <div id="qrCode" class="qr-code-wrapper">
+                            <!-- QR code will be generated here -->
+                        </div>
+                        <div class="qr-instructions">
+                            <p><strong>iPhone:</strong> Open Camera → Scan → Tap banner → Share → Add to Home Screen</p>
+                            <p><strong>Android:</strong> Scan → Open link → Tap "Install" or menu → Add to Home Screen</p>
+                        </div>
+                        <button onclick="toggleQrCode()" class="qr-close-btn">Close</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin Login Link (always visible, small and subtle) -->
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e7ff;">
+                <button onclick="selectOption('full')" style="background: none; border: none; color: #9ca3af; font-size: 12px; cursor: pointer; padding: 8px 16px; border-radius: 6px; transition: all 0.2s;" 
+                        onmouseover="this.style.background='#f3f4f6'; this.style.color='#6b7280';" 
+                        onmouseout="this.style.background='none'; this.style.color='#9ca3af';">
+                    <i class="fas fa-lock" style="margin-right: 6px;"></i>Admin Login
+                </button>
             </div>
         </div>
 
@@ -1361,6 +1656,151 @@
                 btn.innerHTML = originalContent;
             }
         });
+        
+        // ==================== PWA INSTALLATION ====================
+        
+        let deferredPrompt = null;
+        
+        // Listen for the beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA: beforeinstallprompt fired');
+            // Prevent Chrome from showing its own prompt
+            e.preventDefault();
+            // Save the event for later
+            deferredPrompt = e;
+            // Show our custom install prompt
+            showPwaInstallPrompt();
+        });
+        
+        function showPwaInstallPrompt() {
+            const section = document.getElementById('pwaInstallSection');
+            if (section && !localStorage.getItem('pwaInstallDismissed')) {
+                section.style.display = 'block';
+            }
+        }
+        
+        function dismissPwaPrompt() {
+            const section = document.getElementById('pwaInstallSection');
+            if (section) {
+                section.style.display = 'none';
+            }
+            localStorage.setItem('pwaInstallDismissed', 'true');
+        }
+        
+        // Handle install button click
+        document.getElementById('pwaInstallBtn')?.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                console.log('PWA: No deferred prompt available');
+                // Show iOS instructions if on Safari
+                if (isIOS()) {
+                    alert('To install:\n\n1. Tap the Share button (box with arrow)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"');
+                }
+                return;
+            }
+            
+            // Show the browser's install prompt
+            deferredPrompt.prompt();
+            
+            // Wait for user response
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`PWA: User ${outcome} the install prompt`);
+            
+            // Clear the deferred prompt
+            deferredPrompt = null;
+            
+            // Hide our install section
+            document.getElementById('pwaInstallSection').style.display = 'none';
+        });
+        
+        // Detect if already installed
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA: App was installed');
+            document.getElementById('pwaInstallSection').style.display = 'none';
+            deferredPrompt = null;
+        });
+        
+        // Check if running as installed PWA
+        function isRunningAsPwa() {
+            return window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true;
+        }
+        
+        // Check if iOS
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+        
+        // Show iOS-specific instructions
+        if (isIOS() && !isRunningAsPwa()) {
+            // Add iOS banner after a delay
+            setTimeout(() => {
+                const section = document.getElementById('pwaInstallSection');
+                if (section && !localStorage.getItem('pwaInstallDismissed')) {
+                    section.innerHTML = `
+                        <div class="pwa-install-card">
+                            <div class="pwa-install-icon">📲</div>
+                            <div class="pwa-install-text">
+                                <strong>Add to Home Screen</strong>
+                                <span>Tap <strong>Share</strong> then <strong>"Add to Home Screen"</strong></span>
+                            </div>
+                            <button class="pwa-dismiss-btn" onclick="dismissPwaPrompt()">✕</button>
+                        </div>
+                    `;
+                    section.style.display = 'block';
+                }
+            }, 2000);
+        }
+        
+        // ==================== QR CODE ====================
+        
+        function toggleQrCode() {
+            const container = document.getElementById('qrCodeContainer');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                generateQrCode();
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        function generateQrCode() {
+            const qrContainer = document.getElementById('qrCode');
+            const currentUrl = window.location.origin;
+            
+            // Clear previous QR code
+            qrContainer.innerHTML = '';
+            
+            // Create QR code using a simple API
+            const qrImg = document.createElement('img');
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`;
+            qrImg.alt = 'QR Code for AgentMath.app';
+            qrImg.style.width = '200px';
+            qrImg.style.height = '200px';
+            qrContainer.appendChild(qrImg);
+            
+            // Add URL text below
+            const urlText = document.createElement('p');
+            urlText.textContent = currentUrl;
+            urlText.style.marginTop = '12px';
+            urlText.style.fontSize = '12px';
+            urlText.style.color = '#666';
+            urlText.style.wordBreak = 'break-all';
+            qrContainer.appendChild(urlText);
+        }
+        
+        // ==================== SERVICE WORKER REGISTRATION ====================
+        
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('ServiceWorker registered:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
     </script>
     
     <!-- AVATAR: JavaScript for avatar rendering -->
