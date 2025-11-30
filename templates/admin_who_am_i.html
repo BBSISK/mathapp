@@ -103,6 +103,24 @@
         .modal-backdrop.show {
             opacity: 0.5;
         }
+        /* Copy Topics Card Styles */
+        .copy-topics-card {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #2196f3;
+        }
+        .copy-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #2196f3;
+        }
+        @media (max-width: 768px) {
+            .copy-arrow {
+                transform: rotate(90deg);
+                margin: 10px 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -167,6 +185,65 @@
             <button class="btn btn-primary btn-lg" onclick="openUploadModal()">
                 <i class="fas fa-upload"></i> Upload New Image
             </button>
+        </div>
+    </div>
+
+    <!-- Copy Images Between Topics Section -->
+    <div class="card mb-4 copy-topics-card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-copy"></i> Copy Images Between Topics
+            </h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">
+                Copy all Who Am I images from one topic to another. This adds the images to the new topic without removing them from the original.
+            </p>
+            
+            <div class="row align-items-center">
+                <!-- Source Topic -->
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">From Topic:</label>
+                    <select id="copySourceTopic" class="form-select form-select-lg">
+                        <option value="">-- Select Source --</option>
+                        {% for topic in enabled_topics %}
+                        <option value="{{ topic }}">{{ topic | replace('_', ' ') | title }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Only topics with existing images shown</small>
+                </div>
+                
+                <!-- Arrow -->
+                <div class="col-md-1 copy-arrow d-none d-md-flex">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+                <div class="col-12 d-md-none text-center py-2">
+                    <i class="fas fa-arrow-down fa-2x text-primary"></i>
+                </div>
+                
+                <!-- Destination Topic -->
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">To Topic:</label>
+                    <select id="copyDestTopic" class="form-select form-select-lg">
+                        <option value="">-- Select Destination --</option>
+                        {% for topic in all_topics %}
+                        <option value="{{ topic }}">{{ topic | replace('_', ' ') | title }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">All available quiz topics</small>
+                </div>
+                
+                <!-- Copy Button -->
+                <div class="col-md-3 mt-3 mt-md-0">
+                    <label class="form-label d-none d-md-block">&nbsp;</label>
+                    <button onclick="copyImagesBetweenTopics()" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-copy"></i> Copy Images
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Status Message -->
+            <div id="copyStatus" class="mt-3"></div>
         </div>
     </div>
 
@@ -327,8 +404,9 @@
                                        placeholder="e.g., Famous physicist">
                             </div>
                         </div>
+                    </div>
                     
-                    <!-- NEW: Acceptable Answer Variants -->
+                    <!-- Acceptable Answer Variants -->
                     <div class="mb-3">
                         <label class="form-label">
                             Acceptable Answer Variants
@@ -344,28 +422,7 @@ sir isaac newton"></textarea>
                             💡 Leave blank to auto-generate common variants
                         </small>
                     </div>
-                    <div class="row">
-                        </div>
                     
-                    <!-- NEW: Acceptable Answer Variants -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            Acceptable Answer Variants
-                            <i class="fas fa-info-circle text-muted" data-bs-toggle="tooltip" 
-                               title="Enter all acceptable answers, one per line. Students can use any variant."></i>
-                        </label>
-                        <textarea class="form-control" name="accepted_answers" rows="4" 
-                                  placeholder="Enter variants (one per line, or leave blank to auto-generate):
-newton
-isaac newton
-sir isaac newton"></textarea>
-                        <small class="text-muted">
-                            💡 Leave blank to auto-generate common variants
-                        </small>
-                    </div>
-                    <div class="row">
-                        </div>
-                    </div>
                     <div class="mb-3">
                         <label class="form-label">Difficulty *</label>
                         <select class="form-select" name="difficulty" required>
@@ -418,13 +475,6 @@ sir isaac newton"></textarea>
             <form id="editForm" onsubmit="saveEdit(event)">
                 <div class="modal-body">
                     <input type="hidden" id="edit_image_id">
-                    <div class="mb-3">
-                        <label class="form-label">Answer *</label>
-                    <input type="hidden" id="edit_image_id">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Primary Answer *</label>
-                    <input type="hidden" id="edit_image_id">
                     
                     <div class="mb-3">
                         <label class="form-label">Primary Answer *</label>
@@ -432,7 +482,7 @@ sir isaac newton"></textarea>
                         <small class="text-muted">Main answer displayed to students</small>
                     </div>
                     
-                    <!-- NEW: Acceptable Answer Variants -->
+                    <!-- Acceptable Answer Variants -->
                     <div class="mb-3">
                         <label class="form-label">
                             Acceptable Answer Variants
@@ -550,99 +600,125 @@ function openUploadModal() {
     uploadModal.show();
 }
 
-function closeUploadModal() {
-    uploadModal.hide();
+// ==================== COPY IMAGES BETWEEN TOPICS ====================
+
+async function copyImagesBetweenTopics() {
+    const sourceSelect = document.getElementById('copySourceTopic');
+    const destSelect = document.getElementById('copyDestTopic');
+    const statusDiv = document.getElementById('copyStatus');
+    
+    const sourceTopic = sourceSelect.value;
+    const destTopic = destSelect.value;
+    
+    // Validation
+    if (!sourceTopic) {
+        statusDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please select a source topic</div>';
+        return;
+    }
+    if (!destTopic) {
+        statusDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please select a destination topic</div>';
+        return;
+    }
+    if (sourceTopic === destTopic) {
+        statusDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Source and destination must be different</div>';
+        return;
+    }
+    
+    // Get labels for confirmation
+    const sourceLabel = sourceSelect.options[sourceSelect.selectedIndex].text;
+    const destLabel = destSelect.options[destSelect.selectedIndex].text;
+    
+    if (!confirm(`Copy all Who Am I images from "${sourceLabel}" to "${destLabel}"?\n\nThis will make all images from the source topic also appear in the destination topic.`)) {
+        return;
+    }
+    
+    // Show loading
+    statusDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Copying images...</div>';
+    
+    try {
+        const response = await fetch('/admin/who-am-i/copy-topic', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                source_topic: sourceTopic,
+                destination_topic: destTopic
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            let detailText = '';
+            if (data.details) {
+                detailText = ` (${data.details.new_additions} new`;
+                if (data.details.already_existed > 0) {
+                    detailText += `, ${data.details.already_existed} already existed`;
+                }
+                detailText += ')';
+            }
+            
+            statusDiv.innerHTML = `<div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> ${data.message}${detailText}
+                <br><small>Reloading page...</small>
+            </div>`;
+            
+            // Reload page after 2 seconds to show updated topic counts
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            statusDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${data.error}</div>`;
+        }
+    } catch (error) {
+        console.error('Error copying images:', error);
+        statusDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> Error copying images. Please try again.</div>`;
+    }
 }
 
+// ==================== AUTO-GENERATE VARIANTS ====================
 
-// NEW: Auto-generate answer variants
 function autoGenerateVariants() {
     const answer = document.getElementById('edit_answer').value.trim();
     if (!answer) {
-        alert('Please enter a primary answer first');
+        alert('Please enter the primary answer first');
         return;
     }
-    const variants = generateAnswerVariants(answer);
+    
+    const variants = generateVariants(answer);
     document.getElementById('edit_accepted_answers').value = variants.join('\n');
 }
 
-function generateAnswerVariants(answer) {
+function generateVariants(answer) {
     const variants = new Set();
     const answerLower = answer.toLowerCase().trim();
+    
+    // Add original
     variants.add(answerLower);
     
-    // Remove titles
-    const titles = ['dr.', 'dr', 'sir', 'professor', 'prof.', 'prof', 'dame', 'lord', 'lady'];
+    // Add with "the" prefix removed/added
+    if (answerLower.startsWith('the ')) {
+        variants.add(answerLower.substring(4));
+    } else {
+        variants.add('the ' + answerLower);
+    }
+    
+    // Add with common titles removed
+    const titles = ['sir', 'dr', 'dr.', 'mr', 'mr.', 'mrs', 'mrs.', 'ms', 'ms.', 'prof', 'prof.', 'professor'];
     for (const title of titles) {
         if (answerLower.startsWith(title + ' ')) {
-            const withoutTitle = answerLower.replace(title + ' ', '').trim();
-            variants.add(withoutTitle);
+            variants.add(answerLower.substring(title.length + 1));
         }
     }
     
-    // Name parts
-    const parts = answerLower.split(/\s+/);
-    if (parts.length >= 2) {
-        variants.add(parts[0]);  // First name
-        variants.add(parts[parts.length - 1]);  // Last name
-        if (parts.length > 2) {
-            variants.add(`${parts[0]} ${parts[parts.length - 1]}`);
-        }
+    // If multiple words, add last word only (surname)
+    const words = answerLower.split(' ').filter(w => w.length > 0);
+    if (words.length > 1) {
+        variants.add(words[words.length - 1]); // Last name
+        variants.add(words[0]); // First name
         
-        // Remove middle initials
-        const filtered = parts.filter(p => p.length > 2 || !p.endsWith('.'));
-        if (filtered.length !== parts.length) {
-            variants.add(filtered.join(' '));
-        }
-    }
-    
-    // Remove punctuation
-    const noPunct = answerLower.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').trim();
-    if (noPunct !== answerLower) {
-        variants.add(noPunct);
-    }
-    
-    return Array.from(variants).sort();
-}
-
-
-// NEW: Auto-generate answer variants
-function autoGenerateVariants() {
-    const answer = document.getElementById('edit_answer').value.trim();
-    if (!answer) {
-        alert('Please enter a primary answer first');
-        return;
-    }
-    const variants = generateAnswerVariants(answer);
-    document.getElementById('edit_accepted_answers').value = variants.join('\n');
-}
-
-function generateAnswerVariants(answer) {
-    const variants = new Set();
-    const answerLower = answer.toLowerCase().trim();
-    variants.add(answerLower);
-    
-    // Remove titles
-    const titles = ['dr.', 'dr', 'sir', 'professor', 'prof.', 'prof', 'dame', 'lord', 'lady'];
-    for (const title of titles) {
-        if (answerLower.startsWith(title + ' ')) {
-            const withoutTitle = answerLower.replace(title + ' ', '').trim();
-            variants.add(withoutTitle);
-        }
-    }
-    
-    // Name parts
-    const parts = answerLower.split(/\s+/);
-    if (parts.length >= 2) {
-        variants.add(parts[0]);  // First name
-        variants.add(parts[parts.length - 1]);  // Last name
-        if (parts.length > 2) {
-            variants.add(`${parts[0]} ${parts[parts.length - 1]}`);
-        }
-        
-        // Remove middle initials
-        const filtered = parts.filter(p => p.length > 2 || !p.endsWith('.'));
-        if (filtered.length !== parts.length) {
+        // Filter out titles for cleaner variant
+        const filtered = words.filter(w => !titles.includes(w.replace('.', '')));
+        if (filtered.length > 0 && filtered.length !== words.length) {
             variants.add(filtered.join(' '));
         }
     }
@@ -706,7 +782,7 @@ function saveEdit(event) {
     formData.append('hint', document.getElementById('edit_hint').value);
     formData.append('difficulty', document.getElementById('edit_difficulty').value);
     
-    // NEW: Add accepted answers
+    // Add accepted answers
     const acceptedAnswersText = document.getElementById('edit_accepted_answers').value.trim();
     if (acceptedAnswersText) {
         const variants = acceptedAnswersText.split('\n')

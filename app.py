@@ -140,6 +140,12 @@ class Question(db.Model):
     option_d = db.Column(db.String(100), nullable=False)
     correct_answer = db.Column(db.Integer, nullable=False)
     explanation = db.Column(db.Text, nullable=False)
+    # Phase 1: Image support
+    image_url = db.Column(db.String(500), nullable=True)  # Path to image file
+    image_caption = db.Column(db.String(200), nullable=True)  # Optional caption
+    # Phase 1: Hints
+    hint_text = db.Column(db.String(500), nullable=True)  # Optional hint
+    hint_penalty = db.Column(db.Integer, default=50)  # Percentage of points lost for using hint
 
     def to_dict(self):
         return {
@@ -149,7 +155,13 @@ class Question(db.Model):
             'question': self.question_text,
             'options': [self.option_a, self.option_b, self.option_c, self.option_d],
             'correct': self.correct_answer,
-            'explanation': self.explanation
+            'explanation': self.explanation,
+            'image_url': self.image_url,
+            'image_caption': self.image_caption,
+            'hint_text': self.hint_text,
+            'hint_penalty': self.hint_penalty or 50,
+            'has_image': bool(self.image_url),
+            'has_hint': bool(self.hint_text)
         }
 
 class QuestionFlag(db.Model):
@@ -1115,6 +1127,83 @@ def get_user_puzzle_status(puzzle_id, user_id=None, guest_code=None, session_id=
         return None
     
     return status
+
+
+# ==================== BONUS QUESTION MODELS ====================
+
+class BonusQuestion(db.Model):
+    """Bonus questions for high-scoring students (dinosaurs, flags, etc.)"""
+    __tablename__ = 'bonus_questions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    category = db.Column(db.String(50), nullable=False)  # 'dinosaurs', 'flags', 'scientists', etc.
+    correct_answer = db.Column(db.String(100), nullable=False)
+    option_a = db.Column(db.String(100), nullable=False)
+    option_b = db.Column(db.String(100), nullable=False)
+    option_c = db.Column(db.String(100), nullable=False)
+    option_d = db.Column(db.String(100), nullable=False)
+    image_url = db.Column(db.String(500), nullable=False)
+    fun_fact = db.Column(db.Text)
+    difficulty = db.Column(db.String(20), default='medium')  # easy, medium, hard
+    era_or_region = db.Column(db.String(100))  # For dinos: "Late Cretaceous", for flags: "Europe"
+    is_active = db.Column(db.Boolean, default=True)
+    times_shown = db.Column(db.Integer, default=0)
+    times_correct = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        options = [self.option_a, self.option_b, self.option_c, self.option_d]
+        # Shuffle options but remember correct answer
+        random.shuffle(options)
+        return {
+            'id': self.id,
+            'category': self.category,
+            'correct_answer': self.correct_answer,
+            'options': options,
+            'image_url': self.image_url,
+            'fun_fact': self.fun_fact,
+            'era_or_region': self.era_or_region
+        }
+    
+    def to_admin_dict(self):
+        accuracy = 0
+        if self.times_shown > 0:
+            accuracy = round((self.times_correct / self.times_shown) * 100, 1)
+        return {
+            'id': self.id,
+            'category': self.category,
+            'correct_answer': self.correct_answer,
+            'option_a': self.option_a,
+            'option_b': self.option_b,
+            'option_c': self.option_c,
+            'option_d': self.option_d,
+            'image_url': self.image_url,
+            'fun_fact': self.fun_fact,
+            'difficulty': self.difficulty,
+            'era_or_region': self.era_or_region,
+            'is_active': self.is_active,
+            'times_shown': self.times_shown,
+            'times_correct': self.times_correct,
+            'accuracy': accuracy
+        }
+
+
+class BonusQuestionAttempt(db.Model):
+    """Track bonus question attempts"""
+    __tablename__ = 'bonus_question_attempts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('bonus_questions.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    guest_code = db.Column(db.String(20), nullable=True)
+    selected_answer = db.Column(db.String(100), nullable=False)
+    is_correct = db.Column(db.Boolean, nullable=False)
+    points_earned = db.Column(db.Integer, default=0)
+    quiz_topic = db.Column(db.String(50))  # What quiz they just completed
+    quiz_score = db.Column(db.Integer)  # Their quiz score that unlocked this
+    attempted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    question = db.relationship('BonusQuestion', backref='attempts')
 
 
 # ==================== DECORATORS ====================
@@ -3356,6 +3445,137 @@ def ensure_guest_badges_table():
         # Don't raise - just log the error
 
 
+# ==================== BONUS QUESTION ROUTES ====================
+
+@app.route('/api/bonus-question/random')
+@login_required
+def get_random_bonus_question():
+    """
+    Get a random bonus question for high-scoring students
+    Query params:
+        - category: optional category filter (e.g., 'dinosaurs', 'flags')
+        - exclude_id: optional ID to exclude (avoid repeats)
+    """
+    category = request.args.get('category', 'dinosaurs')  # Default to dinosaurs
+    exclude_id = request.args.get('exclude_id', type=int)
+    
+    # Build query
+    query = BonusQuestion.query.filter_by(category=category, is_active=True)
+    
+    if exclude_id:
+        query = query.filter(BonusQuestion.id != exclude_id)
+    
+    # Get all matching questions
+    questions = query.all()
+    
+    if not questions:
+        return jsonify({'error': 'No bonus questions available', 'category': category}), 404
+    
+    # Select random question
+    question = random.choice(questions)
+    
+    # Increment times shown
+    question.times_shown += 1
+    db.session.commit()
+    
+    return jsonify(question.to_dict())
+
+
+@app.route('/api/bonus-question/submit', methods=['POST'])
+@login_required
+def submit_bonus_answer():
+    """
+    Submit answer to bonus question
+    Awards +100 points if correct
+    """
+    from sqlalchemy import text
+    
+    data = request.get_json()
+    question_id = data.get('question_id')
+    selected_answer = data.get('selected_answer')
+    quiz_topic = data.get('quiz_topic')
+    quiz_score = data.get('quiz_score')
+    
+    if not question_id or not selected_answer:
+        return jsonify({'error': 'Missing question_id or selected_answer'}), 400
+    
+    # Get question
+    question = BonusQuestion.query.get(question_id)
+    if not question:
+        return jsonify({'error': 'Question not found'}), 404
+    
+    # Check if correct
+    is_correct = selected_answer.strip().lower() == question.correct_answer.strip().lower()
+    points_earned = 100 if is_correct else 0
+    
+    # Update question stats
+    if is_correct:
+        question.times_correct += 1
+    
+    # Get user info
+    user_id = session.get('user_id') if not session.get('is_guest') else None
+    guest_code = session.get('guest_code')
+    
+    # Record attempt
+    attempt = BonusQuestionAttempt(
+        question_id=question_id,
+        user_id=user_id,
+        guest_code=guest_code,
+        selected_answer=selected_answer,
+        is_correct=is_correct,
+        points_earned=points_earned,
+        quiz_topic=quiz_topic,
+        quiz_score=quiz_score
+    )
+    db.session.add(attempt)
+    
+    # Award points if correct
+    if is_correct and points_earned > 0:
+        if guest_code:
+            # Update guest user points
+            try:
+                db.session.execute(text("""
+                    UPDATE guest_users 
+                    SET total_score = total_score + :points
+                    WHERE guest_code = :code
+                """), {"points": points_earned, "code": guest_code})
+            except Exception as e:
+                print(f"Error updating guest points: {e}")
+        elif user_id:
+            # Update registered user points
+            stats = UserStats.query.filter_by(user_id=user_id).first()
+            if stats:
+                stats.total_points += points_earned
+    
+    db.session.commit()
+    
+    return jsonify({
+        'correct': is_correct,
+        'points_earned': points_earned,
+        'correct_answer': question.correct_answer,
+        'fun_fact': question.fun_fact,
+        'era_or_region': question.era_or_region
+    })
+
+
+@app.route('/api/bonus-question/categories')
+@login_required
+def get_bonus_categories():
+    """Get available bonus question categories with counts"""
+    from sqlalchemy import func
+    
+    categories = db.session.query(
+        BonusQuestion.category,
+        func.count(BonusQuestion.id).label('count')
+    ).filter_by(is_active=True).group_by(BonusQuestion.category).all()
+    
+    return jsonify([{
+        'category': cat,
+        'count': count,
+        'display_name': cat.replace('_', ' ').title()
+    } for cat, count in categories])
+
+
 @app.route('/student/badges')
 @login_required
 @approved_required
@@ -4543,6 +4763,23 @@ def admin_topics_list():
     return jsonify({'topics': topics})
 
 
+@app.route('/api/admin/question-counts/<topic>')
+@login_required
+@role_required('admin')
+def admin_question_counts(topic):
+    """Get question counts by difficulty for a specific topic"""
+    from sqlalchemy import text
+    
+    counts = {}
+    for difficulty in ['beginner', 'intermediate', 'advanced']:
+        result = db.session.execute(text(
+            "SELECT COUNT(*) FROM questions WHERE topic = :topic AND difficulty = :difficulty"
+        ), {'topic': topic, 'difficulty': difficulty}).fetchone()
+        counts[difficulty] = result[0] if result else 0
+    
+    return jsonify(counts)
+
+
 # ==================== REAL-TIME CLASS DASHBOARD ROUTES ====================
 
 @app.route('/teacher/class-dashboard/<int:class_id>')
@@ -4993,6 +5230,16 @@ def edit_question(question_id):
     else:
         edit_record.new_explanation = question.explanation
 
+    # Phase 1: Image and hint support
+    if 'image_url' in data:
+        question.image_url = data['image_url'] if data['image_url'] else None
+    if 'image_caption' in data:
+        question.image_caption = data['image_caption'] if data['image_caption'] else None
+    if 'hint_text' in data:
+        question.hint_text = data['hint_text'] if data['hint_text'] else None
+    if 'hint_penalty' in data:
+        question.hint_penalty = int(data['hint_penalty']) if data['hint_penalty'] else 50
+
     db.session.add(edit_record)
     db.session.commit()
 
@@ -5023,6 +5270,178 @@ def get_question_history(question_id):
     return jsonify({
         'question': question.to_dict(),
         'edit_history': [e.to_dict() for e in edits]
+    })
+
+@app.route('/api/admin/question/<int:question_id>/delete', methods=['DELETE'])
+@login_required
+@role_required('admin')
+def delete_question(question_id):
+    """Permanently delete a question"""
+    from sqlalchemy import text
+    
+    question = Question.query.get_or_404(question_id)
+    
+    # Store question info for logging
+    question_text = question.question_text[:100]
+    topic = question.topic
+    difficulty = question.difficulty
+    
+    try:
+        # Delete related records first (flags, edits, responses)
+        db.session.execute(text("DELETE FROM question_flags WHERE question_id = :qid"), {'qid': question_id})
+        db.session.execute(text("DELETE FROM question_edits WHERE question_id = :qid"), {'qid': question_id})
+        
+        # Try to delete responses if table exists
+        try:
+            db.session.execute(text("DELETE FROM quiz_responses WHERE question_id = :qid"), {'qid': question_id})
+        except:
+            pass  # Table may not exist
+        
+        # Delete the question itself
+        db.session.delete(question)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Question deleted successfully',
+            'deleted': {
+                'id': question_id,
+                'topic': topic,
+                'difficulty': difficulty,
+                'question_preview': question_text
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/admin/questions/bulk-delete', methods=['POST'])
+@login_required
+@role_required('admin')
+def bulk_delete_questions():
+    """Bulk delete multiple questions"""
+    from sqlalchemy import text
+    
+    data = request.json
+    question_ids = data.get('question_ids', [])
+    
+    if not question_ids:
+        return jsonify({'success': False, 'error': 'No question IDs provided'}), 400
+    
+    if len(question_ids) > 100:
+        return jsonify({'success': False, 'error': 'Maximum 100 questions can be deleted at once'}), 400
+    
+    deleted_count = 0
+    failed_count = 0
+    deleted_info = []
+    
+    for question_id in question_ids:
+        try:
+            question = Question.query.get(question_id)
+            if not question:
+                failed_count += 1
+                continue
+            
+            # Store info before deletion
+            question_text = question.question_text[:50]
+            topic = question.topic
+            
+            # Delete related records
+            db.session.execute(text("DELETE FROM question_flags WHERE question_id = :qid"), {'qid': question_id})
+            db.session.execute(text("DELETE FROM question_edits WHERE question_id = :qid"), {'qid': question_id})
+            
+            try:
+                db.session.execute(text("DELETE FROM quiz_responses WHERE question_id = :qid"), {'qid': question_id})
+            except:
+                pass
+            
+            # Delete the question
+            db.session.delete(question)
+            deleted_count += 1
+            deleted_info.append({'id': question_id, 'topic': topic, 'preview': question_text})
+            
+        except Exception as e:
+            failed_count += 1
+            continue
+    
+    # Commit all deletions
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Database error: {str(e)}'
+        }), 500
+    
+    return jsonify({
+        'success': True,
+        'message': f'Deleted {deleted_count} question(s)',
+        'deleted': deleted_count,
+        'failed': failed_count,
+        'deleted_questions': deleted_info
+    })
+
+@app.route('/api/admin/questions/find-duplicates')
+@login_required
+@role_required('admin')
+def find_duplicate_questions():
+    """Find duplicate questions based on question text"""
+    topic_filter = request.args.get('topic', '')
+    
+    # Build query
+    query = Question.query
+    if topic_filter:
+        query = query.filter_by(topic=topic_filter)
+    
+    # Get all questions
+    questions = query.order_by(Question.id.asc()).all()
+    total_scanned = len(questions)
+    
+    # Group by normalized question text (lowercase, stripped whitespace)
+    text_groups = {}
+    for q in questions:
+        # Normalize the question text for comparison
+        normalized = q.question_text.lower().strip()
+        # Remove extra whitespace
+        normalized = ' '.join(normalized.split())
+        
+        key = (q.topic, normalized)
+        if key not in text_groups:
+            text_groups[key] = []
+        text_groups[key].append(q)
+    
+    # Find groups with more than one question (duplicates)
+    duplicate_groups = []
+    for (topic, text), questions_list in text_groups.items():
+        if len(questions_list) > 1:
+            # Sort by ID to show oldest first
+            questions_list.sort(key=lambda x: x.id)
+            
+            duplicate_groups.append({
+                'topic': topic,
+                'question_text': questions_list[0].question_text,
+                'count': len(questions_list),
+                'questions': [{
+                    'id': q.id,
+                    'difficulty': q.difficulty,
+                    'image_url': q.image_url,
+                    'created_at': q.id  # Using ID as proxy for creation order
+                } for q in questions_list]
+            })
+    
+    # Sort by number of duplicates (most first)
+    duplicate_groups.sort(key=lambda x: x['count'], reverse=True)
+    
+    return jsonify({
+        'success': True,
+        'total_scanned': total_scanned,
+        'duplicate_groups': duplicate_groups,
+        'total_duplicate_groups': len(duplicate_groups),
+        'total_duplicate_questions': sum(g['count'] for g in duplicate_groups)
     })
 
 @app.route('/api/admin/questions/flagged')
@@ -7275,6 +7694,68 @@ def admin_who_am_i_bulk_delete():
     return jsonify({'success': True, 'message': f'{len(image_ids)} images deleted'})
 
 
+@app.route('/admin/who-am-i/copy-topic', methods=['POST'])
+@admin_required
+def admin_who_am_i_copy_topic():
+    """Copy all Who Am I images from one topic to another"""
+    from sqlalchemy import text
+
+    data = request.json
+    source_topic = data.get('source_topic')
+    destination_topic = data.get('destination_topic')
+
+    if not source_topic or not destination_topic:
+        return jsonify({'success': False, 'error': 'Source and destination topics required'}), 400
+
+    if source_topic == destination_topic:
+        return jsonify({'success': False, 'error': 'Source and destination must be different'}), 400
+
+    # Get all image IDs associated with the source topic
+    source_images = db.session.execute(text("""
+        SELECT image_id FROM who_am_i_image_topics WHERE topic = :topic
+    """), {'topic': source_topic}).fetchall()
+
+    if not source_images:
+        return jsonify({'success': False, 'error': f'No images found in topic: {source_topic}'}), 404
+
+    image_ids = [row.image_id for row in source_images]
+
+    # Count how many are already in destination (to avoid duplicates)
+    existing = db.session.execute(text("""
+        SELECT COUNT(*) as cnt FROM who_am_i_image_topics 
+        WHERE topic = :topic AND image_id IN ({})
+    """.format(','.join(str(id) for id in image_ids))), {'topic': destination_topic}).fetchone()
+    
+    already_exist = existing.cnt if existing else 0
+
+    # Add topic associations for the destination topic
+    added_count = 0
+    for image_id in image_ids:
+        try:
+            db.session.execute(text("""
+                INSERT OR IGNORE INTO who_am_i_image_topics (image_id, topic)
+                VALUES (:image_id, :topic)
+            """), {'image_id': image_id, 'topic': destination_topic})
+            added_count += 1
+        except Exception as e:
+            print(f"Error adding image {image_id} to {destination_topic}: {e}")
+
+    db.session.commit()
+
+    # Calculate actual new additions
+    new_additions = added_count - already_exist
+
+    return jsonify({
+        'success': True,
+        'message': f'Copied {len(image_ids)} images from "{source_topic}" to "{destination_topic}"',
+        'details': {
+            'total_images': len(image_ids),
+            'new_additions': new_additions,
+            'already_existed': already_exist
+        }
+    })
+
+
 # ==================== WHO AM I? API ENDPOINTS ====================
 
 @app.route('/api/who-am-i/start', methods=['POST'])
@@ -7955,6 +8436,131 @@ except ImportError:
     print("Warning: question_generator.py not found - question generator disabled")
 except Exception as e:
     print(f"Warning: Could not load question generator: {e}")
+
+# ==================== CHART QUESTION GENERATOR MODULE ====================
+# Import and register chart-based question generator routes
+try:
+    from chart_question_generator import register_chart_generator_routes
+    
+    # Create admin_required_api decorator for the chart generator
+    def admin_required_api_wrapper(f):
+        from functools import wraps
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                return jsonify({'error': 'Login required'}), 401
+            user = User.query.get(session['user_id'])
+            if not user or user.role != 'admin':
+                return jsonify({'error': 'Admin access required'}), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    register_chart_generator_routes(app, db, Question, admin_required_api_wrapper)
+    print("✓ Chart question generator loaded successfully")
+except ImportError:
+    print("Warning: chart_question_generator.py not found - chart generator disabled")
+except Exception as e:
+    print(f"Warning: Could not load chart generator: {e}")
+
+# ==================== GEOMETRY QUESTION GENERATOR MODULE ====================
+# Import and register geometry-based question generator routes
+try:
+    from geometry_question_generator import register_geometry_generator_routes
+    
+    # Create admin_required_api decorator for the geometry generator
+    def admin_required_api_geom(f):
+        from functools import wraps
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                return jsonify({'error': 'Login required'}), 401
+            user = User.query.get(session['user_id'])
+            if not user or user.role != 'admin':
+                return jsonify({'error': 'Admin access required'}), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    register_geometry_generator_routes(app, db, Question, admin_required_api_geom)
+    print("✓ Geometry question generator loaded successfully")
+except ImportError:
+    print("Warning: geometry_question_generator.py not found - geometry generator disabled")
+except Exception as e:
+    print(f"Warning: Could not load geometry generator: {e}")
+
+# ==================== PATTERN QUESTION GENERATOR MODULE ====================
+# Import and register pattern-based question generator routes
+try:
+    from pattern_question_generator import register_pattern_generator_routes
+    
+    # Create admin_required_api decorator for the pattern generator
+    def admin_required_api_pattern(f):
+        from functools import wraps
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                return jsonify({'error': 'Login required'}), 401
+            user = User.query.get(session['user_id'])
+            if not user or user.role != 'admin':
+                return jsonify({'error': 'Admin access required'}), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    register_pattern_generator_routes(app, db, Question, admin_required_api_pattern)
+    print("✓ Pattern question generator loaded successfully")
+except ImportError:
+    print("Warning: pattern_question_generator.py not found - pattern generator disabled")
+except Exception as e:
+    print(f"Warning: Could not load pattern generator: {e}")
+
+# ==================== PATTERNS QUESTION GENERATOR MODULE ====================
+# Import and register visual patterns question generator routes
+try:
+    from patterns_question_generator import register_patterns_generator_routes
+    
+    # Create admin_required_api decorator for the patterns generator
+    def admin_required_api_patterns(f):
+        from functools import wraps
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                return jsonify({'error': 'Login required'}), 401
+            user = User.query.get(session['user_id'])
+            if not user or user.role != 'admin':
+                return jsonify({'error': 'Admin access required'}), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    register_patterns_generator_routes(app, db, Question, admin_required_api_patterns)
+    print("✓ Patterns question generator loaded successfully")
+except ImportError:
+    print("Warning: patterns_question_generator.py not found - patterns generator disabled")
+except Exception as e:
+    print(f"Warning: Could not load patterns generator: {e}")
+
+# ==================== COORDINATE GEOMETRY QUESTION GENERATOR MODULE ====================
+# Import and register coordinate geometry question generator routes
+try:
+    from coordinate_question_generator import register_coordinate_generator_routes
+    
+    # Create admin_required_api decorator for the coordinate generator
+    def admin_required_api_coordinate(f):
+        from functools import wraps
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                return jsonify({'error': 'Login required'}), 401
+            user = User.query.get(session['user_id'])
+            if not user or user.role != 'admin':
+                return jsonify({'error': 'Admin access required'}), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    register_coordinate_generator_routes(app, db, Question, admin_required_api_coordinate)
+    print("✓ Coordinate geometry question generator loaded successfully")
+except ImportError:
+    print("Warning: coordinate_question_generator.py not found - coordinate generator disabled")
+except Exception as e:
+    print(f"Warning: Could not load coordinate generator: {e}")
 
 
 
@@ -9737,6 +10343,87 @@ def admin_upload_puzzle_image():
         'path': url_path,
         'filename': filename
     })
+
+
+# =============================================================================
+# QUESTION IMAGE UPLOAD API
+# =============================================================================
+
+@app.route('/api/admin/questions/upload-image', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_upload_question_image():
+    """Upload an image for a question"""
+    import os
+    from werkzeug.utils import secure_filename
+    
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'}), 400
+    
+    # Validate file type
+    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'}
+    ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+    if ext not in allowed_extensions:
+        return jsonify({'success': False, 'error': 'Invalid file type. Use PNG, JPG, GIF, WEBP, or SVG'}), 400
+    
+    # Check file size (max 2MB)
+    file.seek(0, 2)  # Seek to end
+    size = file.tell()
+    file.seek(0)  # Reset to beginning
+    if size > 2 * 1024 * 1024:
+        return jsonify({'success': False, 'error': 'File too large. Maximum 2MB'}), 400
+    
+    # Create question_images directory if needed
+    upload_dir = os.path.join(app.static_folder, 'question_images')
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # Generate unique filename
+    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    question_id = request.form.get('question_id', 'new')
+    topic = request.form.get('topic', 'general')
+    filename = secure_filename(f"q_{topic}_{question_id}_{timestamp}.{ext}")
+    filepath = os.path.join(upload_dir, filename)
+    
+    # Save file
+    file.save(filepath)
+    
+    # Return the URL path
+    url_path = f"/static/question_images/{filename}"
+    
+    return jsonify({
+        'success': True,
+        'path': url_path,
+        'filename': filename
+    })
+
+
+@app.route('/api/admin/questions/delete-image', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_delete_question_image():
+    """Delete a question image file"""
+    import os
+    
+    data = request.json or {}
+    image_path = data.get('image_path', '')
+    
+    if not image_path or not image_path.startswith('/static/question_images/'):
+        return jsonify({'success': False, 'error': 'Invalid image path'}), 400
+    
+    # Get filename from path
+    filename = image_path.replace('/static/question_images/', '')
+    filepath = os.path.join(app.static_folder, 'question_images', filename)
+    
+    # Delete file if it exists
+    if os.path.exists(filepath):
+        os.remove(filepath)
+        return jsonify({'success': True, 'message': 'Image deleted'})
+    else:
+        return jsonify({'success': False, 'error': 'Image not found'}), 404
 
 
 if __name__ == '__main__':

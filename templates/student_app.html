@@ -15,6 +15,867 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/avatar.css') }}">
     {% endif %}
     <style>
+        /* AgentMath Header Banner */
+        .agentmath-header-banner {
+            width: 100%;
+            overflow: hidden;
+            line-height: 0;
+        }
+        
+        .header-banner-img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            max-height: 120px;
+        }
+        
+        @media (max-width: 768px) {
+            .header-banner-img {
+                max-height: 80px;
+            }
+        }
+        
+        /* ==================== COMPACT QUIZ MODE ==================== */
+        
+        /* Hide main header during quiz */
+        body.quiz-active #mainHeader {
+            display: none !important;
+        }
+        
+        body.quiz-active #guestBanner {
+            display: none !important;
+        }
+        
+        body.quiz-active #badge-widget {
+            display: none !important;
+        }
+        
+        /* Compact Quiz Header Bar */
+        .compact-quiz-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .compact-quiz-header .quiz-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .compact-quiz-header .back-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+        }
+        
+        .compact-quiz-header .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .compact-quiz-header .topic-title {
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .compact-quiz-header .question-badge {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .compact-quiz-header .score-badge {
+            background: white;
+            color: #667eea;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .compact-quiz-header .streak-badge {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: none;
+            animation: pulse-badge 1s infinite;
+        }
+        
+        .compact-quiz-header .streak-badge.visible {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        @keyframes pulse-badge {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .compact-quiz-header .tools {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .compact-quiz-header .tool-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .compact-quiz-header .tool-btn:hover {
+            background: rgba(255,255,255,0.35);
+            transform: scale(1.1);
+        }
+        
+        .compact-quiz-header .tool-btn.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        .compact-quiz-header .tool-btn.hint-btn {
+            background: rgba(251, 191, 36, 0.3);
+        }
+        
+        .compact-quiz-header .tool-btn.hint-btn:hover {
+            background: rgba(251, 191, 36, 0.5);
+        }
+        
+        .compact-quiz-header .tool-btn.hint-used {
+            background: rgba(251, 191, 36, 0.8);
+            color: #92400e;
+        }
+        
+        /* Compact Progress Bar */
+        .compact-progress {
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            width: 100%;
+        }
+        
+        .compact-progress-fill {
+            height: 100%;
+            background: white;
+            transition: width 0.3s ease;
+        }
+        
+        /* Inline Feedback + Next Button */
+        .feedback-next-row {
+            display: flex;
+            align-items: stretch;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .feedback-inline {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .feedback-inline.correct {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border: 2px solid #10b981;
+        }
+        
+        .feedback-inline.incorrect {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border: 2px solid #3b82f6;
+        }
+        
+        .feedback-inline .feedback-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .feedback-inline .feedback-text {
+            flex: 1;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        
+        .feedback-inline .feedback-text.correct {
+            color: #065f46;
+        }
+        
+        .feedback-inline .feedback-text.incorrect {
+            color: #1e40af;
+        }
+        
+        .feedback-inline .streak-bonus {
+            font-size: 12px;
+            color: #ea580c;
+            font-weight: 600;
+        }
+        
+        .next-btn-inline {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .next-btn-inline:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+        }
+        
+        /* Explanation Section (collapsible) */
+        .explanation-section {
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .explanation-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .explanation-content {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        /* ==================== FLOATING CALCULATOR ==================== */
+        .calculator-toggle-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .calculator-toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .calculator-toggle-btn.active {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        /* Floating Calculator Overlay */
+        .calculator-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .calculator-overlay.visible {
+            display: flex;
+        }
+        
+        .calculator-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 2px solid #e0e7ff;
+            max-width: 320px;
+            width: 100%;
+            animation: calcSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes calcSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .calculator-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .calculator-header h4 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .calculator-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .calculator-close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .calculator-display {
+            background: #1e1e2e;
+            padding: 16px;
+            text-align: right;
+        }
+        
+        .calc-expression {
+            color: #888;
+            font-size: 14px;
+            min-height: 20px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        
+        .calc-result {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            min-height: 40px;
+            word-break: break-all;
+        }
+        
+        .calculator-body {
+            padding: 12px;
+            background: #f8fafc;
+        }
+        
+        .calc-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .calc-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .calc-btn {
+            padding: 14px 8px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .calc-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .calc-btn-number {
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .calc-btn-number:hover {
+            background: #f0f0f0;
+        }
+        
+        .calc-btn-operator {
+            background: #667eea;
+            color: white;
+        }
+        
+        .calc-btn-operator:hover {
+            background: #5a6fd6;
+        }
+        
+        .calc-btn-function {
+            background: #e0e7ff;
+            color: #667eea;
+        }
+        
+        .calc-btn-function:hover {
+            background: #c7d2fe;
+        }
+        
+        .calc-btn-clear {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .calc-btn-clear:hover {
+            background: #dc2626;
+        }
+        
+        .calc-btn-equals {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .calc-btn-equals:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+        
+        .calculator-footer {
+            padding: 12px 16px;
+            background: #f0f4ff;
+            border-top: 1px solid #e0e7ff;
+        }
+        
+        .calc-session-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+        }
+        
+        .calc-session-toggle input {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+        
+        /* Remove old calculator wrapper styles for desktop side-panel */
+        .calculator-wrapper {
+            display: none;
+        }
+        
+        .quiz-content-wrapper {
+            display: block;
+        }
+        
+        .quiz-main-content {
+            width: 100%;
+        }
+        
+        /* Mobile adjustments */
+        @media (max-width: 768px) {
+            .compact-quiz-header {
+                padding: 8px 12px;
+            }
+            
+            .compact-quiz-header .topic-title {
+                font-size: 14px;
+            }
+            
+            .compact-quiz-header .question-badge,
+            .compact-quiz-header .score-badge {
+                font-size: 12px;
+                padding: 3px 8px;
+            }
+            
+            .compact-quiz-header .tool-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            
+            .feedback-next-row {
+                flex-direction: column;
+            }
+            
+            .next-btn-inline {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .calc-btn {
+                padding: 12px 6px;
+                font-size: 16px;
+            }
+            
+            .calc-result {
+                font-size: 28px;
+            }
+        }
+        
+        /* ==================== BONUS QUESTION STYLES ==================== */
+        .bonus-question-unlock {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 3px solid #f59e0b;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: bonus-pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes bonus-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            50% { box-shadow: 0 0 20px 10px rgba(245, 158, 11, 0.2); }
+        }
+        
+        .bonus-question-unlock h3 {
+            color: #92400e;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .bonus-question-unlock p {
+            color: #78350f;
+            margin-bottom: 16px;
+        }
+        
+        .bonus-question-unlock .bonus-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .bonus-question-unlock .try-btn {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .bonus-question-unlock .try-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+        }
+        
+        .bonus-question-unlock .skip-btn {
+            background: #e5e7eb;
+            color: #4b5563;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .bonus-question-unlock .skip-btn:hover {
+            background: #d1d5db;
+        }
+        
+        /* Bonus Question Modal */
+        .bonus-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .bonus-modal-overlay.visible {
+            display: flex;
+        }
+        
+        .bonus-modal {
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .bonus-modal-header {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .bonus-modal-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .bonus-modal-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .bonus-modal-body {
+            padding: 24px;
+        }
+        
+        .bonus-image-container {
+            width: 100%;
+            aspect-ratio: 16/10;
+            background: #1f2937;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .bonus-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .bonus-image-container .loading {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        
+        .bonus-question-text {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+        
+        .bonus-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        @media (max-width: 500px) {
+            .bonus-options {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .bonus-option-btn {
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        
+        .bonus-option-btn:hover:not(:disabled) {
+            background: #e0f2fe;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+        
+        .bonus-option-btn.correct {
+            background: #dcfce7;
+            border-color: #16a34a;
+            color: #166534;
+        }
+        
+        .bonus-option-btn.incorrect {
+            background: #fee2e2;
+            border-color: #dc2626;
+            color: #991b1b;
+        }
+        
+        .bonus-option-btn.reveal-correct {
+            background: #dcfce7;
+            border-color: #16a34a;
+            color: #166534;
+        }
+        
+        .bonus-option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        
+        /* Bonus Result */
+        .bonus-result {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .bonus-result.correct {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border: 2px solid #16a34a;
+        }
+        
+        .bonus-result.incorrect {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 2px solid #3b82f6;
+        }
+        
+        .bonus-result h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .bonus-result.correct h3 {
+            color: #166534;
+        }
+        
+        .bonus-result.incorrect h3 {
+            color: #1e40af;
+        }
+        
+        .bonus-result .points-earned {
+            font-size: 32px;
+            font-weight: 800;
+            color: #16a34a;
+            margin: 10px 0;
+        }
+        
+        .bonus-result .fun-fact {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            text-align: left;
+        }
+        
+        .bonus-result .fun-fact-label {
+            font-weight: 600;
+            color: #f59e0b;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        
+        .bonus-result .fun-fact-text {
+            color: #4b5563;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .bonus-modal-footer {
+            padding: 16px 24px 24px;
+            text-align: center;
+        }
+        
+        .bonus-close-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .bonus-close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
         /* WHO AM I: Ensure container fits nicely in side-by-side layout */
         @media (min-width: 1024px) {
             #who-am-i-container {
@@ -966,9 +1827,13 @@
     </div>
 
     <!-- Header with User Info -->
-    <div class="bg-white shadow-md">
+    <div id="mainHeader" class="bg-white shadow-md">
+        <!-- AgentMath Header Banner -->
+        <div class="agentmath-header-banner">
+            <img src="/static/images/branding/agentmath_header.jpg" alt="AgentMath.app" class="header-banner-img">
+        </div>
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800">🎓 AgentMath.app</h1>
+            <h1 class="text-xl font-bold text-gray-800">🔍 Agent Dashboard</h1>
             <div class="flex items-center gap-4">
                 <!-- AVATAR: Display in header -->
                 {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
@@ -1082,30 +1947,39 @@
 
         <!-- Quiz Screen -->
         <div id="quizScreen" class="hidden mx-auto" style="max-width: 1400px;">
-            <!-- AVATAR: Quiz Header Bar -->
-            {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
-            <div class="quiz-avatar-header mb-4 mx-4 bg-white/20 backdrop-blur rounded-xl p-3 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <div id="quiz-header-avatar" class="avatar-container avatar-small cursor-pointer hover:scale-110 transition-transform" onclick="window.location.href='/avatar/shop'" title="Customize your avatar"></div>
-                    <div>
-                        <p id="quizAvatarTopicTitle" class="text-white font-semibold text-lg m-0"></p>
-                    </div>
+            <!-- Compact Quiz Header Bar -->
+            <div class="compact-quiz-header">
+                <div class="quiz-info">
+                    <button onclick="backToDifficulty()" class="back-btn">
+                        <i class="fas fa-arrow-left"></i> Exit
+                    </button>
+                    <span id="compactTopicTitle" class="topic-title"></span>
+                    <span id="compactQuestionBadge" class="question-badge">Q1/20</span>
+                    <span id="compactScoreBadge" class="score-badge">Score: 0/20</span>
+                    <span id="compactStreakBadge" class="streak-badge">🔥 3x</span>
                 </div>
-                <span id="quizDifficultyBadge" class="bg-white/30 text-white px-4 py-1 rounded-full text-sm font-medium"></span>
+                <div class="tools">
+                    <!-- Hint Button (icon only) -->
+                    <button id="compactHintBtn" onclick="showHint()" class="tool-btn hint-btn" title="Show Hint (-50% points)" style="display: none;">
+                        <i class="fas fa-lightbulb"></i>
+                    </button>
+                    <!-- Calculator Button (icon only) -->
+                    <button onclick="toggleCalculator()" class="tool-btn" title="Calculator" id="compactCalcBtn">
+                        <i class="fas fa-calculator"></i>
+                    </button>
+                    <!-- Avatar (if enabled) -->
+                    {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
+                    <div id="quiz-header-avatar" class="avatar-container avatar-small cursor-pointer" onclick="window.location.href='/avatar/shop'" title="Customize your avatar" style="width: 36px; height: 36px;"></div>
+                    {% endif %}
+                </div>
             </div>
-            {% endif %}
-            
-            <div class="mb-6 flex justify-between items-center px-4">
-                <button onclick="backToDifficulty()" class="bg-white text-gray-700 px-6 py-2 rounded-lg shadow hover:shadow-md transition-all">
-                    ← Back
-                </button>
-                <div class="bg-white px-6 py-2 rounded-lg shadow">
-                    <span class="font-semibold text-gray-700">Score: <span id="score">0</span>/<span id="total">20</span></span>
-                </div>
+            <!-- Compact Progress Bar -->
+            <div class="compact-progress">
+                <div id="compactProgressBar" class="compact-progress-fill" style="width: 0%"></div>
             </div>
 
             <!-- Flex container for side-by-side layout -->
-            <div class="flex flex-col lg:flex-row gap-6 px-4">
+            <div class="flex flex-col lg:flex-row gap-6 px-4 py-4">
                 
                 <!-- WHO AM I: Reveal Grid - Left side on desktop, top on mobile -->
                 <div id="who-am-i-container" class="who-am-i-container w-full lg:w-5/12 flex-shrink-0" style="display: none;">
@@ -1116,29 +1990,76 @@
                 </div>
 
                 <!-- Question Card - Right side on desktop, bottom on mobile -->
-                <div class="bg-white rounded-2xl p-8 shadow-2xl flex-1">
-                    <div class="mb-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 id="quizTopicTitle" class="text-2xl font-bold text-gray-800"></h2>
-                            <span class="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-semibold">
-                                Question <span id="currentQuestion">1</span>/<span id="totalQuestions">20</span>
-                            </span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
-                            <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
+                <div id="questionCard" class="bg-white rounded-2xl p-6 shadow-2xl flex-1">
+                    <!-- Hidden elements for compatibility -->
+                    <div class="hidden">
+                        <h2 id="quizTopicTitle"></h2>
+                        <span id="currentQuestion">1</span>
+                        <span id="totalQuestions">20</span>
+                        <div id="progressBar"></div>
+                        <span id="score">0</span>
+                        <span id="total">20</span>
+                    </div>
+                    
+                    <!-- Streak Display (now shown in header, but keep for JS compatibility) -->
+                    <div id="streakDisplay" class="hidden">
+                        <span id="streakEmoji">🔥</span>
+                        <span id="streakText"></span>
+                        <span id="streakMultiplier"></span>
                     </div>
 
-                    <div class="mb-8">
-                        <h3 id="questionText" class="text-3xl font-semibold text-gray-800 mb-6" style="white-space: pre-wrap; line-height: 1.8;"></h3>
-                        <div id="optionsContainer" class="space-y-3"></div>
+                    <!-- Question Content -->
+                    <div class="quiz-content-wrapper">
+                        <div class="quiz-main-content">
+                            <!-- Question Image (if present) - SIZE UNCHANGED -->
+                            <div id="questionImageContainer" class="hidden mb-4">
+                                <img id="questionImage" src="" alt="Question image" class="max-w-full max-h-64 mx-auto rounded-lg shadow-lg border-2 border-gray-200">
+                                <p id="questionImageCaption" class="text-sm text-gray-500 text-center mt-2 italic"></p>
+                            </div>
+                            
+                            <!-- Question Text - SIZE UNCHANGED -->
+                            <h3 id="questionText" class="text-3xl font-semibold text-gray-800 mb-6" style="white-space: pre-wrap; line-height: 1.8;"></h3>
+                            
+                            <!-- Hint Container (for compatibility) -->
+                            <div id="hintContainer" class="hidden"></div>
+                            
+                            <!-- Hint Text (shown when hint is revealed) -->
+                            <div id="hintText" class="hidden mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+                                <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                                <span id="hintContent"></span>
+                            </div>
+                            
+                            <!-- Answer Options -->
+                            <div id="optionsContainer" class="space-y-3"></div>
+                            
+                            <!-- Inline Feedback + Next Button Row -->
+                            <div id="feedbackNextRow" class="feedback-next-row hidden">
+                                <div id="feedbackInline" class="feedback-inline correct">
+                                    <span class="feedback-icon">✅</span>
+                                    <div>
+                                        <span id="feedbackText" class="feedback-text correct">Correct!</span>
+                                        <span id="feedbackStreak" class="streak-bonus"></span>
+                                    </div>
+                                </div>
+                                <button id="nextBtnInline" onclick="nextQuestion()" class="next-btn-inline">
+                                    Next →
+                                </button>
+                            </div>
+                            
+                            <!-- Explanation Section (collapsible) -->
+                            <div id="explanationSection" class="explanation-section hidden">
+                                <div class="explanation-toggle" onclick="toggleExplanation()">
+                                    <span><i class="fas fa-book-open mr-2"></i>View Explanation</span>
+                                    <i id="explanationArrow" class="fas fa-chevron-down"></i>
+                                </div>
+                                <div id="explanationContent" class="explanation-content hidden"></div>
+                            </div>
+                            
+                            <!-- Hidden elements for backwards compatibility -->
+                            <div id="feedbackContainer" class="hidden"></div>
+                            <button id="nextButton" class="hidden"></button>
+                        </div>
                     </div>
-
-                    <div id="feedbackContainer" class="hidden mb-6"></div>
-
-                    <button id="nextButton" onclick="nextQuestion()" class="hidden w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg">
-                        Next Question →
-                    </button>
                 </div>
                 
             </div>
@@ -1180,6 +2101,21 @@
                             <p class="font-bold text-lg text-yellow-800">Who Am I? Bonus!</p>
                             <p class="text-yellow-700">+<span id="bonus-points-display">0</span> points</p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- DINO BONUS: Unlock for 85%+ scores -->
+                <div id="dino-bonus-unlock" class="bonus-question-unlock" style="display: none;">
+                    <h3>🦕 Bonus Challenge Unlocked!</h3>
+                    <p>Your excellent score (85%+) has unlocked a Dinosaur Challenge!</p>
+                    <p class="text-sm mb-3">Identify the dinosaur correctly for <strong>+100 bonus points!</strong></p>
+                    <div class="bonus-buttons">
+                        <button onclick="startBonusQuestion()" class="try-btn">
+                            <i class="fas fa-dragon"></i> Try Bonus Question
+                        </button>
+                        <button onclick="skipBonusQuestion()" class="skip-btn">
+                            Skip
+                        </button>
                     </div>
                 </div>
 
@@ -1773,7 +2709,12 @@
             questionsAnsweredInQuiz = 0;
             shownMilestones.clear();
             totalMilestonePoints = 0;  // Reset milestone points
-            console.log('✅ Milestone tracking reset for new quiz');
+            
+            // Reset streak tracking
+            currentStreak = 0;
+            hintUsedThisQuestion = false;
+            
+            console.log('✅ Milestone and streak tracking reset for new quiz');
             
             // AVATAR: Store points before quiz for unlock detection (if function exists)
             if (typeof getPointsBeforeQuiz === 'function') {
@@ -1789,21 +2730,27 @@
 
                 document.getElementById('loadingScreen').classList.add('hidden');
                 document.getElementById('quizScreen').classList.remove('hidden');
+                
+                // ===== ACTIVATE COMPACT QUIZ MODE =====
+                document.body.classList.add('quiz-active');
+                
+                // Update compact header
+                const topicDisplay = currentTopic.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                document.getElementById('compactTopicTitle').textContent = topicDisplay;
+                document.getElementById('compactQuestionBadge').textContent = `Q1/${questions.length}`;
+                document.getElementById('compactScoreBadge').textContent = `Score: 0/${questions.length}`;
+                document.getElementById('compactProgressBar').style.width = '0%';
+
+                // Initialize calculator for quiz
+                if (typeof initCalculator === 'function') {
+                    initCalculator();
+                }
 
                 document.getElementById('quizTopicTitle').textContent = currentTopic.charAt(0).toUpperCase() + currentTopic.slice(1);
                 document.getElementById('total').textContent = questions.length;
                 document.getElementById('totalQuestions').textContent = questions.length;
                 
-                // AVATAR: Populate quiz header bar
-                const quizAvatarTitle = document.getElementById('quizAvatarTopicTitle');
-                if (quizAvatarTitle) {
-                    quizAvatarTitle.textContent = currentTopic.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                }
-                const quizDiffBadge = document.getElementById('quizDifficultyBadge');
-                if (quizDiffBadge) {
-                    quizDiffBadge.textContent = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
-                }
-                // Render avatar in quiz header
+                // Render avatar in quiz header (compact)
                 const quizHeaderAvatar = document.getElementById('quiz-header-avatar');
                 if (quizHeaderAvatar && typeof AvatarRenderer !== 'undefined' && window.currentAvatarConfig) {
                     AvatarRenderer.render(quizHeaderAvatar, window.currentAvatarConfig, 'small');
@@ -1866,16 +2813,85 @@
             }
         }
 
+        // Streak tracking for bonus points
+        let currentStreak = 0;
+        let hintUsedThisQuestion = false;
+        let currentHintPenalty = 50;
+
         function showQuestion() {
             const question = questions[currentQuestionIndex];
             answered = false;
+            hintUsedThisQuestion = false;
+            
+            // ===== AUTO-SCROLL TO TOP =====
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // ===== UPDATE COMPACT HEADER =====
+            document.getElementById('compactQuestionBadge').textContent = `Q${currentQuestionIndex + 1}/${questions.length}`;
+            document.getElementById('compactScoreBadge').textContent = `Score: ${score}/${questions.length}`;
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            document.getElementById('compactProgressBar').style.width = progress + '%';
+            
+            // Update streak badge in header
+            const streakBadge = document.getElementById('compactStreakBadge');
+            if (currentStreak >= 3) {
+                const multiplier = getStreakMultiplier();
+                streakBadge.innerHTML = `🔥 ${multiplier}x`;
+                streakBadge.classList.add('visible');
+            } else {
+                streakBadge.classList.remove('visible');
+            }
 
             document.getElementById('questionText').innerHTML = question.question;
             document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
             document.getElementById('score').textContent = score;
 
-            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
             document.getElementById('progressBar').style.width = progress + '%';
+
+            // Handle question image
+            const imageContainer = document.getElementById('questionImageContainer');
+            const imageEl = document.getElementById('questionImage');
+            const captionEl = document.getElementById('questionImageCaption');
+            
+            if (question.image_url) {
+                imageEl.src = question.image_url;
+                imageContainer.classList.remove('hidden');
+                if (question.image_caption) {
+                    captionEl.textContent = question.image_caption;
+                    captionEl.classList.remove('hidden');
+                } else {
+                    captionEl.classList.add('hidden');
+                }
+            } else {
+                imageContainer.classList.add('hidden');
+            }
+
+            // Handle hint - update compact header hint button
+            const hintContainer = document.getElementById('hintContainer');
+            const hintTextEl = document.getElementById('hintText');
+            const compactHintBtn = document.getElementById('compactHintBtn');
+            
+            if (question.hint_text) {
+                hintContainer.classList.remove('hidden');
+                hintTextEl.classList.add('hidden');
+                currentHintPenalty = question.hint_penalty || 50;
+                document.getElementById('hintContent').textContent = question.hint_text;
+                // Show hint button in compact header
+                if (compactHintBtn) {
+                    compactHintBtn.style.display = 'flex';
+                    compactHintBtn.classList.remove('hint-used');
+                    compactHintBtn.title = `Show Hint (-${currentHintPenalty}% points)`;
+                }
+            } else {
+                hintContainer.classList.add('hidden');
+                // Hide hint button in compact header
+                if (compactHintBtn) {
+                    compactHintBtn.style.display = 'none';
+                }
+            }
+
+            // Update streak display (for compatibility)
+            updateStreakDisplay();
 
             const optionsContainer = document.getElementById('optionsContainer');
             optionsContainer.innerHTML = '';
@@ -1907,8 +2923,82 @@
             flagButton.onclick = () => showFlagQuestionModal(question.id);
             optionsContainer.appendChild(flagButton);
 
+            // ===== HIDE FEEDBACK ROW =====
+            document.getElementById('feedbackNextRow').classList.add('hidden');
+            document.getElementById('explanationSection').classList.add('hidden');
             document.getElementById('feedbackContainer').classList.add('hidden');
             document.getElementById('nextButton').classList.add('hidden');
+        }
+
+        // ==================== HINT SYSTEM ====================
+        function showHint() {
+            if (hintUsedThisQuestion) return;
+            hintUsedThisQuestion = true;
+            
+            document.getElementById('hintText').classList.remove('hidden');
+            
+            // Update compact header hint button
+            const compactHintBtn = document.getElementById('compactHintBtn');
+            if (compactHintBtn) {
+                compactHintBtn.classList.add('hint-used');
+                compactHintBtn.title = 'Hint shown';
+            }
+        }
+
+        // ==================== STREAK DISPLAY ====================
+        function updateStreakDisplay() {
+            const streakDisplay = document.getElementById('streakDisplay');
+            const streakEmoji = document.getElementById('streakEmoji');
+            const streakText = document.getElementById('streakText');
+            const streakMultiplier = document.getElementById('streakMultiplier');
+            
+            if (currentStreak >= 3) {
+                streakDisplay.classList.remove('hidden');
+                
+                // Set emoji based on streak length
+                if (currentStreak >= 10) {
+                    streakEmoji.textContent = '🌟';
+                } else if (currentStreak >= 7) {
+                    streakEmoji.textContent = '💥';
+                } else if (currentStreak >= 5) {
+                    streakEmoji.textContent = '🔥🔥';
+                } else {
+                    streakEmoji.textContent = '🔥';
+                }
+                
+                streakText.textContent = `${currentStreak} in a row!`;
+                
+                // Calculate and display multiplier
+                const multiplier = getStreakMultiplier();
+                streakMultiplier.textContent = `${multiplier}x`;
+            } else {
+                streakDisplay.classList.add('hidden');
+            }
+        }
+
+        function getStreakMultiplier() {
+            if (currentStreak >= 10) return 2.5;
+            if (currentStreak >= 7) return 2.0;
+            if (currentStreak >= 5) return 1.75;
+            if (currentStreak >= 3) return 1.5;
+            return 1.0;
+        }
+
+        function calculateQuestionPoints(isCorrect) {
+            if (!isCorrect) return 0;
+            
+            let basePoints = 10; // Base points per correct answer
+            
+            // Apply hint penalty
+            if (hintUsedThisQuestion) {
+                basePoints = Math.floor(basePoints * (1 - currentHintPenalty / 100));
+            }
+            
+            // Apply streak multiplier
+            const multiplier = getStreakMultiplier();
+            const totalPoints = Math.floor(basePoints * multiplier);
+            
+            return totalPoints;
         }
 
         function handleAnswer(selectedIndex) {
@@ -1920,10 +3010,13 @@
 
             // Track answer for milestone detection
             questionsAnsweredInQuiz++;
+            
+            // Update streak tracking
             if (correct) {
+                currentStreak++;
                 consecutiveCorrect++;
                 maxConsecutiveCorrect = Math.max(maxConsecutiveCorrect, consecutiveCorrect);
-                console.log(`✅ Correct! Streak: ${consecutiveCorrect}`);
+                console.log(`✅ Correct! Streak: ${currentStreak}, Multiplier: ${getStreakMultiplier()}x`);
                 
                 // Check for "10 in a Row" milestone
                 if (consecutiveCorrect === 10 && !shownMilestones.has('ten_streak')) {
@@ -1938,7 +3031,8 @@
                     }, 800);
                 }
             } else {
-                consecutiveCorrect = 0; // Reset streak on wrong answer
+                currentStreak = 0; // Reset streak on wrong answer
+                consecutiveCorrect = 0;
                 console.log(`❌ Incorrect. Streak reset.`);
             }
 
@@ -2006,23 +3100,95 @@
                 solutionNumberLine = generateSolutionNumberLine(question.question) || '';
             }
 
-            const feedback = document.getElementById('feedbackContainer');
-            feedback.className = correct ? 'mb-6 p-6 rounded-xl bg-green-50 border-2 border-green-200' : 'mb-6 p-6 rounded-xl bg-blue-50 border-2 border-blue-200';
-            feedback.innerHTML = `
-                <div class="flex items-start">
-                    <i class="fas ${correct ? 'fa-check' : 'fa-book'} ${correct ? 'text-green-600' : 'text-blue-600'} text-2xl mr-3 mt-1"></i>
-                    <div>
-                        <p class="font-bold text-lg mb-2 ${correct ? 'text-green-800' : 'text-blue-800'}">
-                            ${correct ? '🎉 Correct!' : '📖 Let\'s learn from this!'}
-                        </p>
-                        <p class="text-gray-700">${question.explanation}</p>
-                        ${solutionNumberLine}
-                    </div>
-                </div>
-            `;
-            feedback.classList.remove('hidden');
+            // Calculate bonus text for streak
+            let streakBonus = '';
+            if (correct && currentStreak >= 3) {
+                const multiplier = getStreakMultiplier();
+                streakBonus = `🔥 ${multiplier}x streak!`;
+            }
+            
+            // Show hint penalty if used
+            let hintPenalty = '';
+            if (correct && hintUsedThisQuestion) {
+                hintPenalty = `💡 -${currentHintPenalty}%`;
+            }
 
-            document.getElementById('nextButton').classList.remove('hidden');
+            // ===== SHOW INLINE FEEDBACK ROW =====
+            const feedbackRow = document.getElementById('feedbackNextRow');
+            const feedbackInline = document.getElementById('feedbackInline');
+            const feedbackIcon = feedbackInline.querySelector('.feedback-icon');
+            const feedbackText = document.getElementById('feedbackText');
+            const feedbackStreak = document.getElementById('feedbackStreak');
+            
+            // Update inline feedback
+            if (correct) {
+                feedbackInline.className = 'feedback-inline correct';
+                feedbackIcon.textContent = '✅';
+                feedbackText.className = 'feedback-text correct';
+                feedbackText.textContent = 'Correct!';
+            } else {
+                feedbackInline.className = 'feedback-inline incorrect';
+                feedbackIcon.textContent = '📖';
+                feedbackText.className = 'feedback-text incorrect';
+                feedbackText.textContent = 'Let\'s learn!';
+            }
+            
+            // Show streak/hint info
+            let bonusInfo = [streakBonus, hintPenalty].filter(x => x).join(' ');
+            feedbackStreak.textContent = bonusInfo;
+            
+            feedbackRow.classList.remove('hidden');
+            
+            // ===== SHOW EXPLANATION SECTION =====
+            const explanationSection = document.getElementById('explanationSection');
+            const explanationContent = document.getElementById('explanationContent');
+            
+            if (question.explanation || solutionNumberLine) {
+                explanationContent.innerHTML = `
+                    <p>${question.explanation || ''}</p>
+                    ${solutionNumberLine}
+                `;
+                explanationSection.classList.remove('hidden');
+                // Auto-expand if incorrect
+                if (!correct) {
+                    explanationContent.classList.remove('hidden');
+                    document.getElementById('explanationArrow').classList.add('fa-chevron-up');
+                    document.getElementById('explanationArrow').classList.remove('fa-chevron-down');
+                } else {
+                    explanationContent.classList.add('hidden');
+                    document.getElementById('explanationArrow').classList.remove('fa-chevron-up');
+                    document.getElementById('explanationArrow').classList.add('fa-chevron-down');
+                }
+            } else {
+                explanationSection.classList.add('hidden');
+            }
+            
+            // Update compact header with new score
+            document.getElementById('compactScoreBadge').textContent = `Score: ${score}/${questions.length}`;
+            
+            // Update streak badge
+            const streakBadge = document.getElementById('compactStreakBadge');
+            if (currentStreak >= 3) {
+                const multiplier = getStreakMultiplier();
+                streakBadge.innerHTML = `🔥 ${multiplier}x`;
+                streakBadge.classList.add('visible');
+            } else {
+                streakBadge.classList.remove('visible');
+            }
+
+            // Legacy feedback (hidden but kept for compatibility)
+            const feedback = document.getElementById('feedbackContainer');
+            feedback.innerHTML = '';
+            document.getElementById('nextButton').classList.add('hidden');
+        }
+        
+        // Toggle explanation visibility
+        function toggleExplanation() {
+            const content = document.getElementById('explanationContent');
+            const arrow = document.getElementById('explanationArrow');
+            content.classList.toggle('hidden');
+            arrow.classList.toggle('fa-chevron-down');
+            arrow.classList.toggle('fa-chevron-up');
         }
 
         function nextQuestion() {
@@ -2224,6 +3390,9 @@
         }
 
         function showResults(percentage) {
+            // ===== DEACTIVATE QUIZ MODE =====
+            document.body.classList.remove('quiz-active');
+            
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('resultsScreen').classList.remove('hidden');
 
@@ -2278,6 +3447,181 @@
             if (unlockBanner) {
                 unlockBanner.classList.add('hidden');
             }
+            
+            // DINO BONUS: Show unlock for 85%+ scores
+            const dinoBonusUnlock = document.getElementById('dino-bonus-unlock');
+            if (dinoBonusUnlock) {
+                if (percentage >= 85) {
+                    dinoBonusUnlock.style.display = 'block';
+                    // Store quiz info for bonus submission
+                    window.bonusQuizInfo = {
+                        topic: currentTopic,
+                        score: percentage
+                    };
+                } else {
+                    dinoBonusUnlock.style.display = 'none';
+                }
+            }
+        }
+        
+        // ==================== DINO BONUS QUESTION FUNCTIONS ====================
+        
+        let currentBonusQuestion = null;
+        let bonusAnswered = false;
+        
+        function skipBonusQuestion() {
+            const dinoBonusUnlock = document.getElementById('dino-bonus-unlock');
+            if (dinoBonusUnlock) {
+                dinoBonusUnlock.style.display = 'none';
+            }
+        }
+        
+        async function startBonusQuestion() {
+            // Hide the unlock card
+            const dinoBonusUnlock = document.getElementById('dino-bonus-unlock');
+            if (dinoBonusUnlock) {
+                dinoBonusUnlock.style.display = 'none';
+            }
+            
+            // Show modal
+            const modal = document.getElementById('bonusQuestionModal');
+            modal.classList.add('visible');
+            
+            // Reset state
+            bonusAnswered = false;
+            document.getElementById('bonusResult').style.display = 'none';
+            document.getElementById('bonusFooter').style.display = 'none';
+            document.getElementById('bonusImage').style.display = 'none';
+            document.getElementById('bonusImageLoading').style.display = 'block';
+            document.getElementById('bonusOptions').innerHTML = '<p class="text-center text-gray-500">Loading options...</p>';
+            
+            // Fetch random bonus question
+            try {
+                const response = await fetch('/api/bonus-question/random?category=dinosaurs');
+                if (!response.ok) {
+                    throw new Error('No bonus questions available');
+                }
+                
+                currentBonusQuestion = await response.json();
+                
+                // Load image
+                const img = document.getElementById('bonusImage');
+                img.onload = function() {
+                    document.getElementById('bonusImageLoading').style.display = 'none';
+                    img.style.display = 'block';
+                };
+                img.onerror = function() {
+                    document.getElementById('bonusImageLoading').innerHTML = '<p class="text-red-400">Image failed to load</p>';
+                };
+                img.src = currentBonusQuestion.image_url;
+                
+                // Render options
+                const optionsContainer = document.getElementById('bonusOptions');
+                optionsContainer.innerHTML = '';
+                
+                currentBonusQuestion.options.forEach((option, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'bonus-option-btn';
+                    btn.textContent = option;
+                    btn.onclick = () => selectBonusAnswer(option, btn);
+                    optionsContainer.appendChild(btn);
+                });
+                
+            } catch (error) {
+                console.error('Error loading bonus question:', error);
+                document.getElementById('bonusOptions').innerHTML = `
+                    <p class="text-center text-red-500">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        Could not load bonus question. Please try again later.
+                    </p>
+                `;
+            }
+        }
+        
+        async function selectBonusAnswer(selectedAnswer, btnElement) {
+            if (bonusAnswered) return;
+            bonusAnswered = true;
+            
+            // Disable all buttons
+            document.querySelectorAll('.bonus-option-btn').forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            // Submit answer
+            try {
+                const response = await fetch('/api/bonus-question/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question_id: currentBonusQuestion.id,
+                        selected_answer: selectedAnswer,
+                        quiz_topic: window.bonusQuizInfo?.topic || currentTopic,
+                        quiz_score: window.bonusQuizInfo?.score || 0
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Highlight correct/incorrect
+                document.querySelectorAll('.bonus-option-btn').forEach(btn => {
+                    if (btn.textContent === result.correct_answer) {
+                        btn.classList.add('reveal-correct');
+                    }
+                    if (btn.textContent === selectedAnswer) {
+                        if (result.correct) {
+                            btn.classList.add('correct');
+                        } else {
+                            btn.classList.add('incorrect');
+                        }
+                    }
+                });
+                
+                // Show result
+                const resultDiv = document.getElementById('bonusResult');
+                resultDiv.className = 'bonus-result ' + (result.correct ? 'correct' : 'incorrect');
+                
+                if (result.correct) {
+                    resultDiv.innerHTML = `
+                        <h3>🎉 Correct!</h3>
+                        <div class="points-earned">+${result.points_earned} points!</div>
+                        <div class="fun-fact">
+                            <div class="fun-fact-label">🦕 Did You Know?</div>
+                            <div class="fun-fact-text">${result.fun_fact || 'Amazing work!'}</div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3>Not quite!</h3>
+                        <p style="color: #4b5563; margin-bottom: 8px;">The correct answer was <strong>${result.correct_answer}</strong></p>
+                        <div class="fun-fact">
+                            <div class="fun-fact-label">🦕 Did You Know?</div>
+                            <div class="fun-fact-text">${result.fun_fact || 'Better luck next time!'}</div>
+                        </div>
+                    `;
+                }
+                
+                resultDiv.style.display = 'block';
+                document.getElementById('bonusFooter').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error submitting bonus answer:', error);
+                alert('Error submitting answer. Please try again.');
+                bonusAnswered = false;
+                document.querySelectorAll('.bonus-option-btn').forEach(btn => {
+                    btn.disabled = false;
+                });
+            }
+        }
+        
+        function closeBonusOnOverlay(event) {
+            if (event.target.id === 'bonusQuestionModal' && bonusAnswered) {
+                closeBonusModal();
+            }
+        }
+        
+        function closeBonusModal() {
+            document.getElementById('bonusQuestionModal').classList.remove('visible');
+            currentBonusQuestion = null;
         }
 
         function retryQuiz() {
@@ -2303,6 +3647,9 @@
         }
         
         async function refreshAndShowDifficulty() {
+            // ===== DEACTIVATE QUIZ MODE =====
+            document.body.classList.remove('quiz-active');
+            
             await loadMasteryData(); // Get updated mastery after quiz
             document.getElementById('quizScreen').classList.add('hidden');
             document.getElementById('resultsScreen').classList.add('hidden');
@@ -2380,6 +3727,244 @@
                 });
             }
         });
+        
+        // ==================== CALCULATOR FUNCTIONS ====================
+        
+        let calcExpression = '';
+        let calcCurrentValue = '0';
+        let calcLastResult = null;
+        let calcIsOpen = false;
+        
+        // Initialize calculator state from session preference
+        function initCalculator() {
+            const keepOpen = localStorage.getItem('calcKeepOpen') === 'true';
+            const checkbox = document.getElementById('calcKeepOpen');
+            if (checkbox) {
+                checkbox.checked = keepOpen;
+            }
+        }
+        
+        function toggleCalculator() {
+            const overlay = document.getElementById('calculatorOverlay');
+            const calcBtn = document.getElementById('compactCalcBtn');
+            
+            if (overlay.classList.contains('visible')) {
+                hideCalculator();
+            } else {
+                showCalculator();
+            }
+        }
+        
+        function showCalculator() {
+            const overlay = document.getElementById('calculatorOverlay');
+            const calcBtn = document.getElementById('compactCalcBtn');
+            
+            overlay.classList.add('visible');
+            if (calcBtn) calcBtn.classList.add('active');
+            calcIsOpen = true;
+        }
+        
+        function hideCalculator() {
+            const overlay = document.getElementById('calculatorOverlay');
+            const calcBtn = document.getElementById('compactCalcBtn');
+            const keepOpen = document.getElementById('calcKeepOpen');
+            
+            // Don't hide if "keep open" is checked (unless forced)
+            if (keepOpen && keepOpen.checked) return;
+            
+            overlay.classList.remove('visible');
+            if (calcBtn) calcBtn.classList.remove('active');
+            calcIsOpen = false;
+        }
+        
+        function closeCalculatorOnOverlay(event) {
+            // Only close if clicking on the overlay background
+            if (event.target.id === 'calculatorOverlay') {
+                const keepOpen = document.getElementById('calcKeepOpen');
+                if (!keepOpen || !keepOpen.checked) {
+                    hideCalculator();
+                }
+            }
+        }
+        
+        function saveCalcPreference() {
+            const keepOpen = document.getElementById('calcKeepOpen').checked;
+            localStorage.setItem('calcKeepOpen', keepOpen);
+            
+            if (keepOpen && !calcIsOpen) {
+                showCalculator();
+            }
+        }
+        
+        function updateCalcDisplay() {
+            document.getElementById('calcExpression').textContent = calcExpression;
+            document.getElementById('calcResult').textContent = calcCurrentValue;
+        }
+        
+        function calcInput(value) {
+            if (calcCurrentValue === '0' && value !== '.') {
+                calcCurrentValue = value;
+            } else if (calcCurrentValue === 'Error') {
+                calcCurrentValue = value;
+                calcExpression = '';
+            } else {
+                calcCurrentValue += value;
+            }
+            updateCalcDisplay();
+        }
+        
+        function calcClear() {
+            calcExpression = '';
+            calcCurrentValue = '0';
+            calcLastResult = null;
+            updateCalcDisplay();
+        }
+        
+        function calcBackspace() {
+            if (calcCurrentValue.length > 1) {
+                calcCurrentValue = calcCurrentValue.slice(0, -1);
+            } else {
+                calcCurrentValue = '0';
+            }
+            updateCalcDisplay();
+        }
+        
+        function calcEquals() {
+            try {
+                // Store expression for display
+                calcExpression = calcCurrentValue;
+                
+                // Convert display operators to JavaScript operators
+                let expression = calcCurrentValue
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/')
+                    .replace(/−/g, '-')
+                    .replace(/π/g, Math.PI.toString());
+                
+                // Evaluate safely
+                let result = Function('"use strict"; return (' + expression + ')')();
+                
+                // Format result
+                if (isNaN(result) || !isFinite(result)) {
+                    calcCurrentValue = 'Error';
+                } else {
+                    // Round to reasonable precision
+                    if (Number.isInteger(result)) {
+                        calcCurrentValue = result.toString();
+                    } else {
+                        calcCurrentValue = parseFloat(result.toPrecision(10)).toString();
+                    }
+                    calcLastResult = result;
+                }
+            } catch (e) {
+                calcCurrentValue = 'Error';
+            }
+            updateCalcDisplay();
+        }
+        
+        function calcSquare() {
+            try {
+                let val = parseFloat(calcCurrentValue.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-'));
+                if (!isNaN(val)) {
+                    calcExpression = `(${calcCurrentValue})²`;
+                    calcCurrentValue = (val * val).toString();
+                    updateCalcDisplay();
+                }
+            } catch (e) {
+                calcCurrentValue = 'Error';
+                updateCalcDisplay();
+            }
+        }
+        
+        function calcSquareRoot() {
+            try {
+                let val = parseFloat(calcCurrentValue);
+                if (!isNaN(val) && val >= 0) {
+                    calcExpression = `√(${calcCurrentValue})`;
+                    let result = Math.sqrt(val);
+                    calcCurrentValue = Number.isInteger(result) ? result.toString() : parseFloat(result.toPrecision(10)).toString();
+                    updateCalcDisplay();
+                } else {
+                    calcCurrentValue = 'Error';
+                    updateCalcDisplay();
+                }
+            } catch (e) {
+                calcCurrentValue = 'Error';
+                updateCalcDisplay();
+            }
+        }
+        
+        function calcPi() {
+            if (calcCurrentValue === '0' || calcCurrentValue === 'Error') {
+                calcCurrentValue = 'π';
+            } else {
+                calcCurrentValue += 'π';
+            }
+            updateCalcDisplay();
+        }
+        
+        function calcNegate() {
+            if (calcCurrentValue !== '0' && calcCurrentValue !== 'Error') {
+                if (calcCurrentValue.startsWith('-')) {
+                    calcCurrentValue = calcCurrentValue.slice(1);
+                } else {
+                    calcCurrentValue = '-' + calcCurrentValue;
+                }
+                updateCalcDisplay();
+            }
+        }
+        
+        // Keyboard support for calculator
+        document.addEventListener('keydown', function(e) {
+            // Only handle if calculator is open
+            if (!calcIsOpen) return;
+            
+            // Prevent interference with other inputs
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            const key = e.key;
+            
+            if (/[0-9]/.test(key)) {
+                calcInput(key);
+            } else if (key === '.') {
+                calcInput('.');
+            } else if (key === '+') {
+                calcInput('+');
+            } else if (key === '-') {
+                calcInput('-');
+            } else if (key === '*') {
+                calcInput('×');
+            } else if (key === '/') {
+                e.preventDefault(); // Prevent browser search
+                calcInput('÷');
+            } else if (key === 'Enter' || key === '=') {
+                e.preventDefault();
+                calcEquals();
+            } else if (key === 'Escape') {
+                hideCalculator();
+            } else if (key === 'Backspace') {
+                e.preventDefault();
+                calcBackspace();
+            } else if (key === 'c' || key === 'C') {
+                calcClear();
+            } else if (key === '(') {
+                calcInput('(');
+            } else if (key === ')') {
+                calcInput(')');
+            }
+        });
+        
+        // Initialize calculator when quiz starts
+        const originalStartQuiz = window.startQuiz;
+        if (typeof originalStartQuiz === 'function') {
+            window.startQuiz = function(...args) {
+                initCalculator();
+                return originalStartQuiz.apply(this, args);
+            };
+        } else {
+            // If startQuiz not defined yet, init on DOM ready
+            document.addEventListener('DOMContentLoaded', initCalculator);
+        }
     </script>
 
     <!-- Flag Question Modal -->
@@ -5433,6 +7018,111 @@ console.log('Tutorial Manager initialized');
         checkPrizePinStatus();
     });
 </script>
+
+<!-- Floating Calculator Overlay -->
+<div id="calculatorOverlay" class="calculator-overlay" onclick="closeCalculatorOnOverlay(event)">
+    <div class="calculator-container" onclick="event.stopPropagation()">
+        <div class="calculator-header">
+            <h4><i class="fas fa-calculator"></i> Calculator</h4>
+            <button class="calculator-close" onclick="toggleCalculator()" title="Close calculator">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="calculator-display">
+            <div id="calcExpression" class="calc-expression"></div>
+            <div id="calcResult" class="calc-result">0</div>
+        </div>
+        
+        <div class="calculator-body">
+            <!-- Row 1: Clear, Brackets, Scientific -->
+            <div class="calc-row">
+                <button class="calc-btn calc-btn-clear" onclick="calcClear()">C</button>
+                <button class="calc-btn calc-btn-function" onclick="calcBackspace()">⌫</button>
+                <button class="calc-btn calc-btn-function" onclick="calcInput('(')">(</button>
+                <button class="calc-btn calc-btn-function" onclick="calcInput(')')">)</button>
+            </div>
+            
+            <!-- Row 2: Scientific functions -->
+            <div class="calc-row">
+                <button class="calc-btn calc-btn-function" onclick="calcSquare()">x²</button>
+                <button class="calc-btn calc-btn-function" onclick="calcSquareRoot()">√</button>
+                <button class="calc-btn calc-btn-function" onclick="calcPi()">π</button>
+                <button class="calc-btn calc-btn-operator" onclick="calcInput('÷')">÷</button>
+            </div>
+            
+            <!-- Row 3: 7, 8, 9, × -->
+            <div class="calc-row">
+                <button class="calc-btn calc-btn-number" onclick="calcInput('7')">7</button>
+                <button class="calc-btn calc-btn-number" onclick="calcInput('8')">8</button>
+                <button class="calc-btn calc-btn-number" onclick="calcInput('9')">9</button>
+                <button class="calc-btn calc-btn-operator" onclick="calcInput('×')">×</button>
+            </div>
+            
+            <!-- Row 4: 4, 5, 6, - -->
+            <div class="calc-row">
+                <button class="calc-btn calc-btn-number" onclick="calcInput('4')">4</button>
+                <button class="calc-btn calc-btn-number" onclick="calcInput('5')">5</button>
+                <button class="calc-btn calc-btn-number" onclick="calcInput('6')">6</button>
+                <button class="calc-btn calc-btn-operator" onclick="calcInput('-')">−</button>
+            </div>
+            
+            <!-- Row 5: 1, 2, 3, + -->
+            <div class="calc-row">
+                <button class="calc-btn calc-btn-number" onclick="calcInput('1')">1</button>
+                <button class="calc-btn calc-btn-number" onclick="calcInput('2')">2</button>
+                <button class="calc-btn calc-btn-number" onclick="calcInput('3')">3</button>
+                <button class="calc-btn calc-btn-operator" onclick="calcInput('+')">+</button>
+            </div>
+            
+            <!-- Row 6: ±, 0, ., = -->
+            <div class="calc-row">
+                <button class="calc-btn calc-btn-function" onclick="calcNegate()">±</button>
+                <button class="calc-btn calc-btn-number" onclick="calcInput('0')">0</button>
+                <button class="calc-btn calc-btn-number" onclick="calcInput('.')">.</button>
+                <button class="calc-btn calc-btn-equals" onclick="calcEquals()">=</button>
+            </div>
+        </div>
+        
+        <div class="calculator-footer">
+            <label class="calc-session-toggle">
+                <input type="checkbox" id="calcKeepOpen" onchange="saveCalcPreference()">
+                <span>Keep open for entire quiz</span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<!-- Bonus Question Modal -->
+<div id="bonusQuestionModal" class="bonus-modal-overlay" onclick="closeBonusOnOverlay(event)">
+    <div class="bonus-modal" onclick="event.stopPropagation()">
+        <div class="bonus-modal-header">
+            <h2>🦕 Dino Challenge</h2>
+            <p>Identify this dinosaur for +100 points!</p>
+        </div>
+        <div class="bonus-modal-body">
+            <div class="bonus-image-container">
+                <img id="bonusImage" src="" alt="Mystery Dinosaur" style="display: none;">
+                <div id="bonusImageLoading" class="loading">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p class="mt-2">Loading dinosaur...</p>
+                </div>
+            </div>
+            <p class="bonus-question-text">Which dinosaur is this?</p>
+            <div id="bonusOptions" class="bonus-options">
+                <!-- Options populated by JS -->
+            </div>
+            <div id="bonusResult" class="bonus-result" style="display: none;">
+                <!-- Result populated by JS -->
+            </div>
+        </div>
+        <div class="bonus-modal-footer" id="bonusFooter" style="display: none;">
+            <button onclick="closeBonusModal()" class="bonus-close-btn">
+                Continue <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

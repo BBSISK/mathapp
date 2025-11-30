@@ -78,9 +78,21 @@
             }
         }
 
+        .hero-banner {
+            margin: -40px -40px 30px -40px;
+            border-radius: 20px 20px 0 0;
+            overflow: hidden;
+        }
+        
+        .hero-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .header h1 {
@@ -94,8 +106,9 @@
         }
 
         .header p {
-            color: #666;
-            font-size: 16px;
+            color: #555;
+            font-size: 18px;
+            font-weight: 500;
         }
 
         .options-grid {
@@ -465,9 +478,14 @@
             .container {
                 padding: 25px 15px;
             }
+            
+            .hero-banner {
+                margin: -25px -15px 20px -15px;
+                border-radius: 20px 20px 0 0;
+            }
 
             .header {
-                margin-bottom: 25px;
+                margin-bottom: 20px;
             }
 
             .header h1 {
@@ -475,7 +493,7 @@
             }
 
             .header p {
-                font-size: 14px;
+                font-size: 15px;
             }
 
             .options-grid {
@@ -800,9 +818,13 @@
 </head>
 <body>
     <div class="container">
+        <!-- AgentMath Hero Banner -->
+        <div class="hero-banner">
+            <img src="/static/images/branding/agentmath_banner.jpg" alt="AgentMath.app - Math Detective" class="hero-image">
+        </div>
+        
         <div class="header">
-            <h1><span class="emoji">🎓</span> AgentMath.app</h1>
-            <p>Choose how you'd like to get started</p>
+            <p>Become a Math Detective - Solve the Mystery of Numbers!</p>
         </div>
 
         <div id="errorMessage" class="error-message"></div>
