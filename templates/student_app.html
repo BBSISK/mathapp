@@ -318,34 +318,32 @@
             background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
         }
         
-        /* Floating Calculator Overlay */
+        /* Floating Calculator Overlay - Now transparent to allow interaction */
         .calculator-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.3);
             z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            pointer-events: none; /* Allow clicks through to content behind */
         }
         
         .calculator-overlay.visible {
-            display: flex;
+            display: block;
         }
         
         .calculator-container {
+            position: fixed;
+            top: 100px;
+            right: 20px;
             background: white;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             border: 2px solid #e0e7ff;
             max-width: 320px;
-            width: 100%;
+            width: 320px;
             animation: calcSlideIn 0.3s ease-out;
+            pointer-events: auto; /* Calculator itself is clickable */
+            cursor: default;
         }
         
         @keyframes calcSlideIn {
@@ -366,6 +364,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: move; /* Show drag cursor */
+            user-select: none; /* Prevent text selection while dragging */
         }
         
         .calculator-header h4 {
@@ -375,6 +375,14 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            pointer-events: none; /* Let drag events pass through to header */
+        }
+        
+        .calculator-header .drag-hint {
+            font-size: 10px;
+            opacity: 0.7;
+            font-weight: normal;
+            margin-left: 8px;
         }
         
         .calculator-close {
@@ -874,6 +882,205 @@
         .bonus-close-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* ==================== DINO ARCHIVE MODAL ==================== */
+        .dino-archive-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .dino-archive-overlay.visible {
+            display: flex;
+        }
+        
+        .dino-archive-modal {
+            background: white;
+            border-radius: 20px;
+            max-width: 900px;
+            width: 100%;
+            margin: 20px auto;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        .dino-archive-header {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+        }
+        
+        .dino-archive-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .dino-archive-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .dino-archive-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .dino-archive-close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .dino-archive-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 15px;
+            border-radius: 10px;
+        }
+        
+        .dino-archive-stat {
+            text-align: center;
+        }
+        
+        .dino-archive-stat-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .dino-archive-stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .dino-archive-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .dino-archive-empty {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .dino-archive-empty i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .dino-archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .dino-archive-card {
+            background: #f9fafb;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+        
+        .dino-archive-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .dino-archive-card.correct {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+        
+        .dino-archive-card.incorrect {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .dino-archive-card-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            background: #e5e7eb;
+        }
+        
+        .dino-archive-card-body {
+            padding: 12px;
+        }
+        
+        .dino-archive-card-answer {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dino-archive-card.correct .dino-archive-card-answer {
+            color: #16a34a;
+        }
+        
+        .dino-archive-card.incorrect .dino-archive-card-answer {
+            color: #dc2626;
+        }
+        
+        .dino-archive-card-meta {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        
+        .dino-archive-card-fact {
+            font-size: 13px;
+            color: #4b5563;
+            line-height: 1.4;
+            background: white;
+            padding: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #f59e0b;
+        }
+        
+        .dino-archive-card-your-answer {
+            font-size: 12px;
+            color: #dc2626;
+            margin-top: 6px;
+            font-style: italic;
+        }
+        
+        .dino-archive-footer {
+            padding: 15px 20px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
         }
         
         /* WHO AM I: Ensure container fits nicely in side-by-side layout */
@@ -1861,6 +2068,8 @@
                     {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
                     <a href="/avatar/shop" class="view-badges-btn" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">🎨 Avatar Shop</a>
                     {% endif %}
+                    <a href="/racing-car" class="view-badges-btn" style="background: linear-gradient(135deg, #e10600, #ff4444); color: white;">🏎️ My Race Car</a>
+                    <button onclick="openDinoArchive()" class="view-badges-btn" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">🦕 Dino Archive</button>
                     {% if feature_flags.PRIZE_SYSTEM_ENABLED %}
                     <a href="/prizes" class="view-badges-btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #333;">🎁 Prize Shop</a>
                     {% endif %}
@@ -3690,6 +3899,118 @@
             currentBonusQuestion = null;
         }
 
+        // ==================== DINO ARCHIVE FUNCTIONS ====================
+        
+        async function openDinoArchive() {
+            const modal = document.getElementById('dinoArchiveModal');
+            const body = document.getElementById('dinoArchiveBody');
+            
+            modal.classList.add('visible');
+            body.innerHTML = `
+                <div class="dino-archive-empty">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading your archive...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/api/bonus-question/archive');
+                const data = await response.json();
+                
+                // Update stats
+                document.getElementById('archiveTotalCount').textContent = data.total || 0;
+                document.getElementById('archiveCorrectCount').textContent = data.correct || 0;
+                const accuracy = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+                document.getElementById('archiveAccuracy').textContent = accuracy + '%';
+                
+                if (!data.attempts || data.attempts.length === 0) {
+                    body.innerHTML = `
+                        <div class="dino-archive-empty">
+                            <i class="fas fa-egg"></i>
+                            <h3 style="margin-bottom: 10px; color: #374151;">No Dinosaurs Yet!</h3>
+                            <p>Complete quizzes with 80%+ score to unlock Dino Challenges.</p>
+                            <p style="margin-top: 10px;">Your discovered dinosaurs will appear here.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Render archive cards
+                body.innerHTML = `
+                    <div class="dino-archive-grid">
+                        ${data.attempts.map(attempt => `
+                            <div class="dino-archive-card ${attempt.is_correct ? 'correct' : 'incorrect'}">
+                                <img src="${attempt.image_url}" alt="${attempt.correct_answer}" class="dino-archive-card-image" 
+                                     onerror="this.src='/static/images/placeholder-dino.png'">
+                                <div class="dino-archive-card-body">
+                                    <div class="dino-archive-card-answer">
+                                        ${attempt.is_correct ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>'}
+                                        ${attempt.correct_answer}
+                                    </div>
+                                    <div class="dino-archive-card-meta">
+                                        ${attempt.era_or_region ? `<span>${attempt.era_or_region}</span> • ` : ''}
+                                        <span>${formatArchiveDate(attempt.attempted_at)}</span>
+                                        ${attempt.quiz_topic ? ` • <span>${formatTopicName(attempt.quiz_topic)}</span>` : ''}
+                                    </div>
+                                    ${attempt.fun_fact ? `
+                                        <div class="dino-archive-card-fact">
+                                            <strong>🦴 Fun Fact:</strong> ${attempt.fun_fact}
+                                        </div>
+                                    ` : ''}
+                                    ${!attempt.is_correct ? `
+                                        <div class="dino-archive-card-your-answer">
+                                            Your answer: ${attempt.selected_answer}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading archive:', error);
+                body.innerHTML = `
+                    <div class="dino-archive-empty">
+                        <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
+                        <p>Error loading archive. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function closeDinoArchive() {
+            document.getElementById('dinoArchiveModal').classList.remove('visible');
+        }
+        
+        function closeDinoArchiveOnOverlay(event) {
+            if (event.target.id === 'dinoArchiveModal') {
+                closeDinoArchive();
+            }
+        }
+        
+        function formatArchiveDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+            
+            return date.toLocaleDateString('en-IE', { day: 'numeric', month: 'short' });
+        }
+        
+        function formatTopicName(topic) {
+            if (!topic) return '';
+            return topic.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+        
+        // ==================== END DINO ARCHIVE ====================
+
         function retryQuiz() {
             document.getElementById('resultsScreen').classList.add('hidden');
             startQuiz(currentDifficulty);
@@ -3852,6 +4173,122 @@
                 }
             }
         }
+        
+        // ========== CALCULATOR DRAG FUNCTIONALITY ==========
+        let calcDragActive = false;
+        let calcDragStartX = 0;
+        let calcDragStartY = 0;
+        let calcInitialLeft = 0;
+        let calcInitialTop = 0;
+        
+        function initCalculatorDrag() {
+            const header = document.getElementById('calculatorHeader');
+            const container = document.getElementById('calculatorContainer');
+            
+            if (!header || !container) return;
+            
+            // Mouse events
+            header.addEventListener('mousedown', startCalcDrag);
+            document.addEventListener('mousemove', doCalcDrag);
+            document.addEventListener('mouseup', stopCalcDrag);
+            
+            // Touch events for mobile
+            header.addEventListener('touchstart', startCalcDragTouch, { passive: false });
+            document.addEventListener('touchmove', doCalcDragTouch, { passive: false });
+            document.addEventListener('touchend', stopCalcDrag);
+        }
+        
+        function startCalcDrag(e) {
+            // Don't drag if clicking the close button
+            if (e.target.closest('.calculator-close')) return;
+            
+            const container = document.getElementById('calculatorContainer');
+            calcDragActive = true;
+            calcDragStartX = e.clientX;
+            calcDragStartY = e.clientY;
+            
+            const rect = container.getBoundingClientRect();
+            calcInitialLeft = rect.left;
+            calcInitialTop = rect.top;
+            
+            container.style.transition = 'none';
+        }
+        
+        function startCalcDragTouch(e) {
+            if (e.target.closest('.calculator-close')) return;
+            
+            const touch = e.touches[0];
+            const container = document.getElementById('calculatorContainer');
+            calcDragActive = true;
+            calcDragStartX = touch.clientX;
+            calcDragStartY = touch.clientY;
+            
+            const rect = container.getBoundingClientRect();
+            calcInitialLeft = rect.left;
+            calcInitialTop = rect.top;
+            
+            container.style.transition = 'none';
+            e.preventDefault();
+        }
+        
+        function doCalcDrag(e) {
+            if (!calcDragActive) return;
+            
+            const container = document.getElementById('calculatorContainer');
+            const deltaX = e.clientX - calcDragStartX;
+            const deltaY = e.clientY - calcDragStartY;
+            
+            let newLeft = calcInitialLeft + deltaX;
+            let newTop = calcInitialTop + deltaY;
+            
+            // Keep calculator within viewport bounds
+            const maxLeft = window.innerWidth - container.offsetWidth - 10;
+            const maxTop = window.innerHeight - container.offsetHeight - 10;
+            
+            newLeft = Math.max(10, Math.min(newLeft, maxLeft));
+            newTop = Math.max(10, Math.min(newTop, maxTop));
+            
+            container.style.left = newLeft + 'px';
+            container.style.top = newTop + 'px';
+            container.style.right = 'auto';
+        }
+        
+        function doCalcDragTouch(e) {
+            if (!calcDragActive) return;
+            
+            const touch = e.touches[0];
+            const container = document.getElementById('calculatorContainer');
+            const deltaX = touch.clientX - calcDragStartX;
+            const deltaY = touch.clientY - calcDragStartY;
+            
+            let newLeft = calcInitialLeft + deltaX;
+            let newTop = calcInitialTop + deltaY;
+            
+            // Keep calculator within viewport bounds
+            const maxLeft = window.innerWidth - container.offsetWidth - 10;
+            const maxTop = window.innerHeight - container.offsetHeight - 10;
+            
+            newLeft = Math.max(10, Math.min(newLeft, maxLeft));
+            newTop = Math.max(10, Math.min(newTop, maxTop));
+            
+            container.style.left = newLeft + 'px';
+            container.style.top = newTop + 'px';
+            container.style.right = 'auto';
+            
+            e.preventDefault();
+        }
+        
+        function stopCalcDrag() {
+            if (calcDragActive) {
+                const container = document.getElementById('calculatorContainer');
+                container.style.transition = '';
+            }
+            calcDragActive = false;
+        }
+        
+        // Initialize drag on page load
+        document.addEventListener('DOMContentLoaded', initCalculatorDrag);
+        // ========== END CALCULATOR DRAG ==========
         
         function saveCalcPreference() {
             const keepOpen = document.getElementById('calcKeepOpen').checked;
@@ -7148,10 +7585,10 @@ console.log('Tutorial Manager initialized');
 </script>
 
 <!-- Floating Calculator Overlay -->
-<div id="calculatorOverlay" class="calculator-overlay" onclick="closeCalculatorOnOverlay(event)">
-    <div class="calculator-container" onclick="event.stopPropagation()">
-        <div class="calculator-header">
-            <h4><i class="fas fa-calculator"></i> Calculator</h4>
+<div id="calculatorOverlay" class="calculator-overlay">
+    <div id="calculatorContainer" class="calculator-container" onclick="event.stopPropagation()">
+        <div class="calculator-header" id="calculatorHeader">
+            <h4><i class="fas fa-calculator"></i> Calculator <span class="drag-hint">⋮⋮ drag to move</span></h4>
             <button class="calculator-close" onclick="toggleCalculator()" title="Close calculator">
                 <i class="fas fa-times"></i>
             </button>
@@ -7247,6 +7684,44 @@ console.log('Tutorial Manager initialized');
         <div class="bonus-modal-footer" id="bonusFooter" style="display: none;">
             <button onclick="closeBonusModal()" class="bonus-close-btn">
                 Continue <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Dino Archive Modal -->
+<div id="dinoArchiveModal" class="dino-archive-overlay" onclick="closeDinoArchiveOnOverlay(event)">
+    <div class="dino-archive-modal" onclick="event.stopPropagation()">
+        <div class="dino-archive-header">
+            <button onclick="closeDinoArchive()" class="dino-archive-close">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2>🦕 Your Dino Archive</h2>
+            <p>All the dinosaurs you've discovered!</p>
+            <div class="dino-archive-stats">
+                <div class="dino-archive-stat">
+                    <div class="dino-archive-stat-value" id="archiveTotalCount">0</div>
+                    <div class="dino-archive-stat-label">Total Attempted</div>
+                </div>
+                <div class="dino-archive-stat">
+                    <div class="dino-archive-stat-value" id="archiveCorrectCount">0</div>
+                    <div class="dino-archive-stat-label">Correct ✓</div>
+                </div>
+                <div class="dino-archive-stat">
+                    <div class="dino-archive-stat-value" id="archiveAccuracy">0%</div>
+                    <div class="dino-archive-stat-label">Accuracy</div>
+                </div>
+            </div>
+        </div>
+        <div class="dino-archive-body" id="dinoArchiveBody">
+            <div class="dino-archive-empty">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading your archive...</p>
+            </div>
+        </div>
+        <div class="dino-archive-footer">
+            <button onclick="closeDinoArchive()" class="bonus-close-btn">
+                Close Archive
             </button>
         </div>
     </div>

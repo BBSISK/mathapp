@@ -1,0 +1,4096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏎️ My Race Car - Math Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #1a4971 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .racing-header {
+            background: linear-gradient(90deg, #e10600 0%, #ff4444 100%);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(225, 6, 0, 0.4);
+        }
+
+        .racing-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateX(-5px);
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 3D Viewer Section */
+        .viewer-section {
+            background: linear-gradient(145deg, #ffffff 0%, #f0f4f8 100%);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .viewer-header {
+            background: linear-gradient(90deg, #2d5a87 0%, #1e3a5f 100%);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .viewer-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2em;
+            color: #00d4ff;
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .view-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85em;
+        }
+
+        .view-btn:hover {
+            background: rgba(0, 212, 255, 0.4);
+            border-color: #00d4ff;
+        }
+
+        .view-btn.active {
+            background: #00d4ff;
+            color: #000;
+        }
+
+        #car-canvas-container {
+            width: 100%;
+            height: 500px;
+            position: relative;
+            background: linear-gradient(180deg, #87ceeb 0%, #e0f0ff 50%, #c0c0c0 100%);
+        }
+
+        #car-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0,0,0,0.1);
+            border-top-color: #e10600;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-family: 'Orbitron', sans-serif;
+            color: #e10600;
+        }
+
+        .viewer-footer {
+            background: linear-gradient(90deg, #2d5a87 0%, #1e3a5f 100%);
+            padding: 15px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .interaction-hint {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.85em;
+        }
+
+        .interaction-hint i {
+            margin: 0 10px;
+            color: #00d4ff;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stats-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f0f4f8 100%);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stats-card h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+            color: #e10600;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .big-stat {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3em;
+            font-weight: 900;
+            color: #1e3a5f;
+            line-height: 1;
+        }
+
+        .big-stat span {
+            font-size: 0.4em;
+            color: rgba(0,0,0,0.4);
+        }
+
+        .progress-bar-container {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e10600 0%, #ff6b6b 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: rgba(0,0,0,0.6);
+        }
+
+        .next-part-card {
+            background: linear-gradient(145deg, #fff5f5 0%, #ffe5e5 100%);
+            border: 2px solid #e10600;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .next-part-card h3 {
+            color: #e10600;
+        }
+
+        .next-part-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1em;
+            color: #1e3a5f;
+            margin: 10px 0;
+        }
+
+        .next-part-points {
+            color: #e10600;
+            font-size: 0.9em;
+        }
+
+        .parts-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .part-dot {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 5px;
+            background: #e0e5eb;
+            border: 1px solid #c0c5cb;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .part-dot.unlocked {
+            background: linear-gradient(135deg, #e10600 0%, #ff4444 100%);
+            border-color: #e10600;
+            box-shadow: 0 0 10px rgba(225, 6, 0, 0.5);
+        }
+
+        .part-dot.next {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+            border-color: #ffa500;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .part-dot:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+
+        .part-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 58, 95, 0.95);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.75em;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        .part-dot:hover .part-tooltip {
+            opacity: 1;
+        }
+
+        /* Category breakdown */
+        .category-list {
+            margin-top: 15px;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .category-item:last-child {
+            border-bottom: none;
+        }
+
+        .category-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1e3a5f;
+        }
+
+        .category-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            color: white;
+        }
+
+        .category-icon.chassis { background: #3b82f6; }
+        .category-icon.aero_front { background: #10b981; }
+        .category-icon.engine { background: #f59e0b; }
+        .category-icon.aero_rear { background: #8b5cf6; }
+        .category-icon.suspension { background: #ec4899; }
+        .category-icon.wheels { background: #6366f1; }
+        .category-icon.cockpit { background: #14b8a6; }
+        .category-icon.finishing { background: #e10600; }
+
+        .category-progress {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+            color: #1e3a5f;
+        }
+
+        /* Celebration Modal */
+        .celebration-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .celebration-modal.show {
+            display: flex;
+        }
+
+        .celebration-content {
+            background: linear-gradient(145deg, #ffffff 0%, #f0f4f8 100%);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            border: 3px solid #e10600;
+            box-shadow: 0 0 50px rgba(225, 6, 0, 0.5);
+            animation: celebration-pop 0.5s ease;
+        }
+
+        @keyframes celebration-pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .celebration-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .celebration-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8em;
+            color: #e10600;
+            margin-bottom: 10px;
+        }
+
+        .celebration-part {
+            font-size: 1.2em;
+            color: #1e3a5f;
+            margin-bottom: 20px;
+        }
+
+        .celebration-btn {
+            background: linear-gradient(90deg, #e10600 0%, #ff4444 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .celebration-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(225, 6, 0, 0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .racing-header h1 {
+                font-size: 1.2em;
+            }
+
+            #car-canvas-container {
+                height: 350px;
+            }
+
+            .parts-grid {
+                grid-template-columns: repeat(10, 1fr);
+            }
+
+            .big-stat {
+                font-size: 2.5em;
+            }
+        }
+
+        /* ============================================
+           PHASE 2: UPGRADE SHOP STYLES
+           ============================================ */
+        
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tab-btn.race {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .tab-btn.assembly {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .tab-btn.upgrades {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .tab-btn:not(.active) {
+            opacity: 0.6;
+        }
+
+        .tab-btn.active {
+            opacity: 1;
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .tab-btn.locked {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Upgrade Shop Styles */
+        .upgrade-shop {
+            padding: 20px;
+        }
+
+        .budget-display {
+            background: linear-gradient(145deg, #1e3a5f 0%, #2d5a87 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .budget-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1em;
+            color: #ffd700;
+        }
+
+        .budget-amount {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8em;
+            font-weight: 900;
+        }
+
+        .budget-bar {
+            background: rgba(255,255,255,0.2);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .budget-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #ffd700 50%, #ef4444 100%);
+            border-radius: 6px;
+            transition: width 0.5s;
+        }
+
+        .budget-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+
+        .performance-summary {
+            background: linear-gradient(145deg, #10b981 0%, #059669 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+            text-align: center;
+        }
+
+        .performance-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .performance-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5em;
+            font-weight: 900;
+        }
+
+        .category-section {
+            margin-bottom: 25px;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+        }
+
+        .category-icon-large {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            color: white;
+        }
+
+        .category-icon-large.driver { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+        .category-icon-large.aero { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .category-icon-large.engine { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .category-icon-large.tyres { background: linear-gradient(135deg, #1f2937, #374151); }
+        .category-icon-large.team { background: linear-gradient(135deg, #10b981, #059669); }
+
+        .category-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1em;
+            color: #1e3a5f;
+        }
+
+        .category-subtitle {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .upgrades-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .upgrade-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .upgrade-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .upgrade-card.owned {
+            background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+            border-color: #10b981;
+        }
+
+        .upgrade-card.owned::after {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #10b981;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .upgrade-card.cant-afford {
+            opacity: 0.6;
+        }
+
+        .upgrade-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .upgrade-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e3a5f;
+        }
+
+        .upgrade-name {
+            font-weight: 600;
+            color: #1e3a5f;
+            font-size: 0.95em;
+        }
+
+        .upgrade-desc {
+            font-size: 0.8em;
+            color: #666;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .upgrade-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .upgrade-cost {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+            color: #e10600;
+        }
+
+        .upgrade-boost {
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .upgrade-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upgrade-btn.buy {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+
+        .upgrade-btn.buy:hover {
+            transform: scale(1.02);
+        }
+
+        .upgrade-btn.sell {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .upgrade-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .reset-section {
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 20px;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .reset-btn:hover {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .car-complete-banner {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+            color: #1e3a5f;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .car-complete-banner h2 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 10px;
+        }
+
+        .locked-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .locked-overlay i {
+            font-size: 3em;
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+
+        .locked-overlay h3 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 10px;
+        }
+
+        /* ============================================
+           ONBOARDING MODAL STYLES
+           ============================================ */
+        .onboarding-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .onboarding-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .onboarding-container {
+            width: 95%;
+            max-width: 800px;
+            max-height: 90vh;
+            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 80px rgba(225, 6, 0, 0.3), 0 0 0 3px #e10600;
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .onboarding-header {
+            background: linear-gradient(90deg, #e10600 0%, #ff4444 100%);
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .onboarding-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .onboarding-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.3em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .onboarding-close:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        .onboarding-content {
+            padding: 25px;
+            overflow-y: auto;
+            max-height: calc(90vh - 180px);
+        }
+
+        /* Quick Overview (Level 1) */
+        .quick-overview {
+            text-align: center;
+        }
+
+        .overview-hero {
+            font-size: 4em;
+            margin-bottom: 10px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .overview-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8em;
+            background: linear-gradient(90deg, #ffd700, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .overview-subtitle {
+            color: #aaa;
+            margin-bottom: 25px;
+            font-size: 1.1em;
+        }
+
+        .phase-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 600px) {
+            .phase-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .phase-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .phase-card:hover {
+            transform: translateY(-5px);
+            border-color: #e10600;
+            background: rgba(225, 6, 0, 0.1);
+        }
+
+        .phase-card.phase-build { border-top: 4px solid #3b82f6; }
+        .phase-card.phase-tune { border-top: 4px solid #f59e0b; }
+        .phase-card.phase-race { border-top: 4px solid #10b981; }
+
+        .phase-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .phase-card h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .phase-card p {
+            font-size: 0.85em;
+            color: #aaa;
+            line-height: 1.4;
+        }
+
+        .phase-card .phase-status {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+
+        .phase-status.unlocked { background: #10b981; color: white; }
+        .phase-status.locked { background: #666; color: #ccc; }
+
+        .cta-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .cta-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cta-btn.primary {
+            background: linear-gradient(135deg, #e10600 0%, #ff4444 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(225, 6, 0, 0.4);
+        }
+
+        .cta-btn.primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(225, 6, 0, 0.5);
+        }
+
+        .cta-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .cta-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .dont-show-again {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .dont-show-again input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Deep Dive (Level 2) */
+        .deep-dive {
+            display: none;
+        }
+
+        .deep-dive.show {
+            display: block;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .step-dot.active {
+            background: #e10600;
+            transform: scale(1.3);
+        }
+
+        .step-dot.completed {
+            background: #10b981;
+        }
+
+        .step-content {
+            display: none;
+            animation: fadeSlide 0.4s ease;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .step-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .step-header .step-emoji {
+            font-size: 4em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .step-header h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.6em;
+            margin-bottom: 5px;
+        }
+
+        .step-header .step-tagline {
+            color: #aaa;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 500px) {
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .feature-item .feature-icon {
+            font-size: 1.8em;
+            flex-shrink: 0;
+        }
+
+        .feature-item h4 {
+            font-size: 0.95em;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .feature-item p {
+            font-size: 0.8em;
+            color: #aaa;
+            line-height: 1.3;
+        }
+
+        .visual-demo {
+            background: linear-gradient(145deg, #0f3460, #16213e);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .visual-demo img {
+            max-width: 100%;
+            border-radius: 10px;
+        }
+
+        .points-equation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2em;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 12px;
+            border: 2px solid #ffd700;
+        }
+
+        .points-equation .eq-part {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .points-equation .eq-icon {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .points-equation .eq-label {
+            font-size: 0.6em;
+            color: #aaa;
+        }
+
+        .step-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .step-nav-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-nav-btn.prev {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .step-nav-btn.next {
+            background: linear-gradient(135deg, #e10600 0%, #ff4444 100%);
+            color: white;
+        }
+
+        .step-nav-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .step-nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Reward showcase */
+        .reward-showcase {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .reward-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            min-width: 100px;
+        }
+
+        .reward-item .reward-pos {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .reward-item.gold .reward-pos { color: #ffd700; }
+        .reward-item.silver .reward-pos { color: #c0c0c0; }
+        .reward-item.bronze .reward-pos { color: #cd7f32; }
+
+        .reward-item .reward-pts {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        /* Track showcase */
+        .track-showcase {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0;
+            margin: 15px 0;
+        }
+
+        .track-item {
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px 15px;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .track-item .track-flag {
+            font-size: 1.8em;
+        }
+
+        .track-item .track-name {
+            font-size: 0.75em;
+            color: #aaa;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ONBOARDING MODAL -->
+    <div class="onboarding-overlay" id="onboarding-modal">
+        <div class="onboarding-container">
+            <div class="onboarding-header">
+                <h2><i class="fas fa-flag-checkered"></i> Welcome to Race Car Challenge!</h2>
+                <button class="onboarding-close" onclick="closeOnboarding()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="onboarding-content">
+                <!-- LEVEL 1: Quick Overview -->
+                <div class="quick-overview" id="quick-overview">
+                    <div class="overview-hero">🏎️</div>
+                    <h2 class="overview-title">BUILD • TUNE • RACE</h2>
+                    <p class="overview-subtitle">Turn your math points into the ultimate racing machine!</p>
+                    
+                    <div class="phase-cards">
+                        <div class="phase-card phase-build" onclick="showDeepDive(0)">
+                            <div class="phase-icon">🔧</div>
+                            <h3>PHASE 1: BUILD</h3>
+                            <p>Earn points → Unlock 50 car parts → Watch your F1 car come to life!</p>
+                            <span class="phase-status unlocked">UNLOCKED</span>
+                        </div>
+                        
+                        <div class="phase-card phase-tune" onclick="showDeepDive(1)">
+                            <div class="phase-icon">⚡</div>
+                            <h3>PHASE 2: TUNE</h3>
+                            <p>Complete your car → Spend 20,000 pts on 25 performance upgrades!</p>
+                            <span class="phase-status locked">@ 50 PARTS</span>
+                        </div>
+                        
+                        <div class="phase-card phase-race" onclick="showDeepDive(2)">
+                            <div class="phase-icon">🏁</div>
+                            <h3>PHASE 3: RACE</h3>
+                            <p>Race weekly against AI drivers → Win points → Climb the championship!</p>
+                            <span class="phase-status locked">@ 50 PARTS</span>
+                        </div>
+                    </div>
+                    
+                    <div class="points-equation">
+                        <div class="eq-part">
+                            <span class="eq-icon">📚</span>
+                            <span>Maths</span>
+                            <span class="eq-label">Answer Questions</span>
+                        </div>
+                        <span style="font-size: 1.5em;">→</span>
+                        <div class="eq-part">
+                            <span class="eq-icon">⭐</span>
+                            <span>Points</span>
+                            <span class="eq-label">Earn Rewards</span>
+                        </div>
+                        <span style="font-size: 1.5em;">→</span>
+                        <div class="eq-part">
+                            <span class="eq-icon">🏎️</span>
+                            <span>Car</span>
+                            <span class="eq-label">Build & Race</span>
+                        </div>
+                        <span style="font-size: 1.5em;">→</span>
+                        <div class="eq-part">
+                            <span class="eq-icon">🏆</span>
+                            <span>Glory!</span>
+                            <span class="eq-label">Win Championships</span>
+                        </div>
+                    </div>
+                    
+                    <div class="cta-buttons">
+                        <button class="cta-btn primary" onclick="closeOnboarding()">
+                            <i class="fas fa-rocket"></i> LET'S GO!
+                        </button>
+                        <button class="cta-btn secondary" onclick="showDeepDive(0)">
+                            <i class="fas fa-info-circle"></i> Learn More
+                        </button>
+                    </div>
+                    
+                    <div class="dont-show-again">
+                        <input type="checkbox" id="dont-show-checkbox">
+                        <label for="dont-show-checkbox">Don't show this again for a week</label>
+                    </div>
+                </div>
+                
+                <!-- LEVEL 2: Deep Dive -->
+                <div class="deep-dive" id="deep-dive">
+                    <div class="step-indicator">
+                        <div class="step-dot" id="step-dot-0"></div>
+                        <div class="step-dot" id="step-dot-1"></div>
+                        <div class="step-dot" id="step-dot-2"></div>
+                    </div>
+                    
+                    <!-- Step 1: Build -->
+                    <div class="step-content" id="step-0">
+                        <div class="step-header">
+                            <span class="step-emoji">🔧</span>
+                            <h3>PHASE 1: BUILD YOUR CAR</h3>
+                            <p class="step-tagline">From chassis to championship contender</p>
+                        </div>
+                        
+                        <div class="visual-demo">
+                            <div style="font-size: 3em; margin-bottom: 15px;">
+                                🚗 → 🏎️
+                            </div>
+                            <div style="display: flex; justify-content: space-around; text-align: center;">
+                                <div>
+                                    <div style="font-size: 2em;">📦</div>
+                                    <div style="font-size: 0.8em; color: #aaa;">50 Parts</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 2em;">⭐</div>
+                                    <div style="font-size: 0.8em; color: #aaa;">1,000 pts each</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 2em;">🎯</div>
+                                    <div style="font-size: 0.8em; color: #aaa;">50,000 total</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <span class="feature-icon">🎨</span>
+                                <div>
+                                    <h4>3D Car Viewer</h4>
+                                    <p>Watch your car build part by part in stunning 3D!</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🎉</span>
+                                <div>
+                                    <h4>Unlock Celebrations</h4>
+                                    <p>Every new part triggers a satisfying animation!</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">📊</span>
+                                <div>
+                                    <h4>Progress Tracking</h4>
+                                    <p>See exactly how close you are to completion</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🔄</span>
+                                <div>
+                                    <h4>Auto Updates</h4>
+                                    <p>Your car grows as you earn more points!</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 15px; background: rgba(59, 130, 246, 0.2); border-radius: 12px; border: 2px solid #3b82f6;">
+                            <div style="font-size: 1.5em; margin-bottom: 5px;">🎯 Your Goal</div>
+                            <div style="font-size: 1.1em;">Earn <strong>50,000 points</strong> to complete your car and unlock Phase 2!</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Tune -->
+                    <div class="step-content" id="step-1">
+                        <div class="step-header">
+                            <span class="step-emoji">⚡</span>
+                            <h3>PHASE 2: PERFORMANCE UPGRADES</h3>
+                            <p class="step-tagline">Make strategic choices to maximize speed</p>
+                        </div>
+                        
+                        <div class="visual-demo">
+                            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; text-align: center;">
+                                <div style="background: rgba(139, 92, 246, 0.3); padding: 10px; border-radius: 10px;">
+                                    <div style="font-size: 1.5em;">👤</div>
+                                    <div style="font-size: 0.7em;">Driver</div>
+                                </div>
+                                <div style="background: rgba(59, 130, 246, 0.3); padding: 10px; border-radius: 10px;">
+                                    <div style="font-size: 1.5em;">🌬️</div>
+                                    <div style="font-size: 0.7em;">Aero</div>
+                                </div>
+                                <div style="background: rgba(245, 158, 11, 0.3); padding: 10px; border-radius: 10px;">
+                                    <div style="font-size: 1.5em;">🔧</div>
+                                    <div style="font-size: 0.7em;">Engine</div>
+                                </div>
+                                <div style="background: rgba(55, 65, 81, 0.5); padding: 10px; border-radius: 10px;">
+                                    <div style="font-size: 1.5em;">🛞</div>
+                                    <div style="font-size: 0.7em;">Tyres</div>
+                                </div>
+                                <div style="background: rgba(16, 185, 129, 0.3); padding: 10px; border-radius: 10px;">
+                                    <div style="font-size: 1.5em;">👥</div>
+                                    <div style="font-size: 0.7em;">Team</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <span class="feature-icon">💰</span>
+                                <div>
+                                    <h4>20,000 Point Budget</h4>
+                                    <p>You can't buy everything - choose wisely!</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🎯</span>
+                                <div>
+                                    <h4>25 Upgrades Available</h4>
+                                    <p>34,000+ pts worth - budget forces strategy!</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🔄</span>
+                                <div>
+                                    <h4>Sell & Rebuy</h4>
+                                    <p>Change your mind? Get full refunds!</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">📈</span>
+                                <div>
+                                    <h4>Track-Specific Builds</h4>
+                                    <p>Different tracks need different setups!</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 15px; background: rgba(245, 158, 11, 0.2); border-radius: 12px; border: 2px solid #f59e0b;">
+                            <div style="font-size: 1.5em; margin-bottom: 5px;">💡 Pro Tip</div>
+                            <div style="font-size: 1.1em;">Focus on <strong>Engine</strong> for high-speed tracks, <strong>Aero</strong> for twisty circuits!</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Race -->
+                    <div class="step-content" id="step-2">
+                        <div class="step-header">
+                            <span class="step-emoji">🏁</span>
+                            <h3>PHASE 3: WEEKLY RACES</h3>
+                            <p class="step-tagline">Compete against 9 AI drivers every week!</p>
+                        </div>
+                        
+                        <div class="track-showcase">
+                            <div class="track-item">
+                                <div class="track-flag">🇧🇭</div>
+                                <div class="track-name">Bahrain</div>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-flag">🇲🇨</div>
+                                <div class="track-name">Monaco</div>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-flag">🇬🇧</div>
+                                <div class="track-name">Silverstone</div>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-flag">🇮🇹</div>
+                                <div class="track-name">Monza</div>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-flag">🇯🇵</div>
+                                <div class="track-name">Suzuka</div>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-flag">🇧🇪</div>
+                                <div class="track-name">Spa</div>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-flag">🇧🇷</div>
+                                <div class="track-name">São Paulo</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <span class="feature-icon">📺</span>
+                                <div>
+                                    <h4>Live Race Animation</h4>
+                                    <p>60-second races with real-time position changes!</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🎙️</span>
+                                <div>
+                                    <h4>Race Commentary</h4>
+                                    <p>"LIGHTS OUT AND AWAY WE GO!"</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🌧️</span>
+                                <div>
+                                    <h4>Dynamic Weather</h4>
+                                    <p>Rain changes everything!</p>
+                                </div>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🛞</span>
+                                <div>
+                                    <h4>Tyre Strategy</h4>
+                                    <p>Soft, Medium or Hard? Your choice!</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="reward-showcase">
+                            <div class="reward-item gold">
+                                <div class="reward-pos">🥇 1st</div>
+                                <div class="reward-pts">+500 pts</div>
+                            </div>
+                            <div class="reward-item silver">
+                                <div class="reward-pos">🥈 2nd</div>
+                                <div class="reward-pts">+350 pts</div>
+                            </div>
+                            <div class="reward-item bronze">
+                                <div class="reward-pos">🥉 3rd</div>
+                                <div class="reward-pts">+250 pts</div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 15px; background: rgba(16, 185, 129, 0.2); border-radius: 12px; border: 2px solid #10b981;">
+                            <div style="font-size: 1.5em; margin-bottom: 5px;">🏆 Championship Glory</div>
+                            <div style="font-size: 1.1em;">Race points add to your total - fuel more upgrades!</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation -->
+                    <div class="step-nav">
+                        <button class="step-nav-btn prev" onclick="prevStep()" id="btn-prev">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <button class="step-nav-btn next" onclick="nextStep()" id="btn-next">
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="dont-show-again" style="margin-top: 20px;">
+                        <input type="checkbox" id="dont-show-checkbox-deep">
+                        <label for="dont-show-checkbox-deep">Don't show this again for a week</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="racing-header">
+        <h1><i class="fas fa-flag-checkered"></i> My Race Car</h1>
+        <a href="/" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- 3D Viewer -->
+        <div class="viewer-section">
+            <div class="viewer-header">
+                <div class="viewer-title">
+                    <i class="fas fa-car-side"></i> 
+                    <span id="car-name">Loading...</span>
+                </div>
+                <div class="view-controls">
+                    <button class="view-btn active" onclick="setView('front')">
+                        <i class="fas fa-eye"></i> Front
+                    </button>
+                    <button class="view-btn" onclick="setView('side')">
+                        <i class="fas fa-arrows-alt-h"></i> Side
+                    </button>
+                    <button class="view-btn" onclick="setView('top')">
+                        <i class="fas fa-arrows-alt"></i> Top
+                    </button>
+                    <button class="view-btn" onclick="setView('rear')">
+                        <i class="fas fa-car-rear"></i> Rear
+                    </button>
+                </div>
+            </div>
+            
+            <div id="car-canvas-container">
+                <div class="loading-overlay" id="loading-overlay">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Building your car...</div>
+                </div>
+                <canvas id="car-canvas"></canvas>
+            </div>
+            
+            <div class="viewer-footer">
+                <div class="interaction-hint">
+                    <i class="fas fa-mouse"></i> Drag to rotate
+                    <i class="fas fa-search-plus"></i> Scroll to zoom
+                    <i class="fas fa-hand-paper"></i> Right-click to pan
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Panel -->
+        <div class="progress-section">
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn assembly active" onclick="switchTab('assembly')" id="tab-assembly">
+                    <i class="fas fa-puzzle-piece"></i> Build
+                </button>
+                <button class="tab-btn upgrades" onclick="switchTab('upgrades')" id="tab-upgrades">
+                    <i class="fas fa-wrench"></i> Tune
+                    <span id="upgrade-lock-icon"><i class="fas fa-lock"></i></span>
+                </button>
+                <button class="tab-btn race" onclick="switchTab('race')" id="tab-race">
+                    <i class="fas fa-flag-checkered"></i> Race
+                    <span id="race-lock-icon"><i class="fas fa-lock"></i></span>
+                </button>
+            </div>
+
+            <!-- TAB 1: Assembly (Phase 1) -->
+            <div class="tab-content active" id="content-assembly">
+                <!-- Main Stats -->
+                <div class="stats-card">
+                    <h3><i class="fas fa-puzzle-piece"></i> Parts Unlocked</h3>
+                    <div class="big-stat">
+                        <span id="parts-unlocked">0</span><span>/50</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="current-points">0 pts</span>
+                        <span id="target-points">50,000 pts</span>
+                    </div>
+                </div>
+
+                <!-- Next Part -->
+                <div class="stats-card next-part-card" id="next-part-card">
+                    <h3><i class="fas fa-gift"></i> Next Part</h3>
+                    <div class="next-part-name" id="next-part-name">Loading...</div>
+                <div class="next-part-points" id="next-part-points">Unlocks at 0 points</div>
+                <div class="progress-bar-container" style="height: 10px;">
+                    <div class="progress-bar-fill" id="next-part-progress" style="width: 0%; background: linear-gradient(90deg, #9333ea 0%, #c084fc 100%);"></div>
+                </div>
+            </div>
+
+            <!-- Parts Grid -->
+            <div class="stats-card">
+                <h3><i class="fas fa-th"></i> All Parts</h3>
+                <div class="parts-grid" id="parts-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Category Breakdown -->
+            <div class="stats-card">
+                <h3><i class="fas fa-layer-group"></i> By Category</h3>
+                <div class="category-list" id="category-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            </div> <!-- End of content-assembly -->
+
+            <!-- TAB 2: Upgrades (Phase 2) - Only visible when car complete -->
+            <div class="tab-content" id="content-upgrades">
+                <div id="upgrades-locked" class="stats-card" style="position: relative; min-height: 400px;">
+                    <div class="locked-overlay">
+                        <i class="fas fa-lock"></i>
+                        <h3>Upgrade Shop Locked</h3>
+                        <p>Complete your car (50/50 parts) to unlock the Performance Upgrade Shop!</p>
+                        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
+                            <span id="parts-remaining-lock">50</span> parts remaining
+                        </p>
+                    </div>
+                </div>
+
+                <div id="upgrades-unlocked" style="display: none;">
+                    <!-- Car Complete Banner -->
+                    <div class="car-complete-banner">
+                        <h2>🏆 Car Assembly Complete!</h2>
+                        <p>Now customize your car's performance with upgrades</p>
+                    </div>
+
+                    <!-- Budget Display -->
+                    <div class="budget-display">
+                        <div class="budget-header">
+                            <span class="budget-title">💰 Upgrade Budget</span>
+                            <span class="budget-amount"><span id="budget-remaining">20,000</span> pts</span>
+                        </div>
+                        <div class="budget-bar">
+                            <div class="budget-bar-fill" id="budget-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="budget-labels">
+                            <span>0 spent</span>
+                            <span id="budget-spent-label">0 / 20,000</span>
+                            <span>20,000 max</span>
+                        </div>
+                    </div>
+
+                    <!-- Performance Summary -->
+                    <div class="performance-summary">
+                        <div class="performance-label">Total Car Performance</div>
+                        <div class="performance-value">+<span id="total-performance">50</span></div>
+                    </div>
+
+                    <!-- Upgrades by Category -->
+                    <div id="upgrades-container">
+                        <!-- Driver -->
+                        <div class="category-section">
+                            <div class="category-header">
+                                <div class="category-icon-large driver">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div>
+                                    <div class="category-title">Driver Experience</div>
+                                    <div class="category-subtitle">Improve reaction, focus & consistency</div>
+                                </div>
+                            </div>
+                            <div class="upgrades-grid" id="upgrades-driver"></div>
+                        </div>
+
+                        <!-- Aero -->
+                        <div class="category-section">
+                            <div class="category-header">
+                                <div class="category-icon-large aero">
+                                    <i class="fas fa-wind"></i>
+                                </div>
+                                <div>
+                                    <div class="category-title">Aerodynamics</div>
+                                    <div class="category-subtitle">Downforce, drag & cooling balance</div>
+                                </div>
+                            </div>
+                            <div class="upgrades-grid" id="upgrades-aero"></div>
+                        </div>
+
+                        <!-- Engine -->
+                        <div class="category-section">
+                            <div class="category-header">
+                                <div class="category-icon-large engine">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                                <div>
+                                    <div class="category-title">Power Unit</div>
+                                    <div class="category-subtitle">Engine power, efficiency & reliability</div>
+                                </div>
+                            </div>
+                            <div class="upgrades-grid" id="upgrades-engine"></div>
+                        </div>
+
+                        <!-- Tyres -->
+                        <div class="category-section">
+                            <div class="category-header">
+                                <div class="category-icon-large tyres">
+                                    <i class="fas fa-circle"></i>
+                                </div>
+                                <div>
+                                    <div class="category-title">Tyres & Strategy</div>
+                                    <div class="category-subtitle">Grip, degradation & pit stops</div>
+                                </div>
+                            </div>
+                            <div class="upgrades-grid" id="upgrades-tyres"></div>
+                        </div>
+
+                        <!-- Team (NEW!) -->
+                        <div class="category-section">
+                            <div class="category-header">
+                                <div class="category-icon-large team">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div>
+                                    <div class="category-title">Pit Crew & Team</div>
+                                    <div class="category-subtitle">Race operations, data & strategy calls</div>
+                                </div>
+                            </div>
+                            <div class="upgrades-grid" id="upgrades-team"></div>
+                        </div>
+                    </div>
+
+                    <!-- Reset Button -->
+                    <div class="reset-section">
+                        <button class="reset-btn" onclick="resetUpgrades()">
+                            <i class="fas fa-undo"></i> Reset All Upgrades
+                        </button>
+                        <p style="font-size: 0.8em; color: #666; margin-top: 10px;">
+                            Refunds all spent points so you can try a different strategy
+                        </p>
+                    </div>
+                </div>
+            </div> <!-- End of content-upgrades -->
+
+            <!-- TAB 3: Race (Phase 3) -->
+            <div class="tab-content" id="content-race">
+                <div id="race-locked" class="stats-card" style="position: relative; min-height: 400px;">
+                    <div class="locked-overlay">
+                        <i class="fas fa-flag-checkered"></i>
+                        <h3>Race Mode Locked</h3>
+                        <p>Complete your car (50/50 parts) to enter races!</p>
+                        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
+                            <span id="parts-remaining-race">50</span> parts remaining
+                        </p>
+                    </div>
+                </div>
+
+                <div id="race-unlocked" style="display: none;">
+                    <!-- Current Race Info -->
+                    <div id="race-info" class="stats-card" style="background: linear-gradient(145deg, #1e3a5f 0%, #2d5a87 100%); color: white;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span class="race-round" style="background: #e10600; padding: 5px 12px; border-radius: 20px; font-size: 0.8em;">
+                                ROUND <span id="race-number">1</span>/24
+                            </span>
+                            <span id="race-weather" style="font-size: 1.2em;">☀️</span>
+                        </div>
+                        <h2 id="race-name" style="font-family: 'Orbitron', sans-serif; font-size: 1.4em; margin-bottom: 5px;">
+                            Loading...
+                        </h2>
+                        <p id="race-country" style="opacity: 0.8; margin-bottom: 15px;">
+                            <span id="race-flag">🏁</span> <span id="race-country-name">Country</span>
+                        </p>
+                        <p id="race-description" style="font-size: 0.85em; opacity: 0.9; font-style: italic;"></p>
+                        
+                        <!-- Track Factors -->
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                            <div style="font-size: 0.8em; opacity: 0.7; margin-bottom: 8px;">TRACK DEMANDS</div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <span class="factor-badge" id="factor-aero" style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 15px; font-size: 0.75em;">
+                                    🌬️ Aero: --
+                                </span>
+                                <span class="factor-badge" id="factor-engine" style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 15px; font-size: 0.75em;">
+                                    🔧 Engine: --
+                                </span>
+                                <span class="factor-badge" id="factor-driver" style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 15px; font-size: 0.75em;">
+                                    👤 Driver: --
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Already Raced Message -->
+                    <div id="already-raced" style="display: none;" class="stats-card">
+                        <div style="text-align: center;">
+                            <div style="font-size: 3em; margin-bottom: 10px;">✅</div>
+                            <h3 style="color: #10b981; margin-bottom: 10px;">Official Race Complete!</h3>
+                            <p>You finished <strong>P<span id="previous-position">-</span></strong> and earned <strong><span id="previous-points">0</span> points</strong></p>
+                            <p style="font-size: 0.85em; color: #666; margin-top: 10px;">Next official race opens soon!</p>
+                        </div>
+                        
+                        <!-- Practice Mode Section -->
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 2px dashed #ddd;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                <span style="font-size: 1.8em;">🎮</span>
+                                <div>
+                                    <h4 style="color: #1e3a5f; margin: 0;">Practice Mode</h4>
+                                    <p style="font-size: 0.8em; color: #666; margin: 0;">Test your upgrades - no points awarded</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Practice Track Selector -->
+                            <div style="margin-bottom: 15px;">
+                                <div style="font-size: 0.8em; color: #666; margin-bottom: 8px;">SELECT PRACTICE TRACK</div>
+                                <select id="practice-track-select" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; font-size: 1em; background: white; cursor: pointer;">
+                                    <option value="random">🎲 Random Track</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Practice Tyre Selection -->
+                            <div style="margin-bottom: 15px;">
+                                <div style="font-size: 0.8em; color: #666; margin-bottom: 8px;">SELECT TYRES</div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="practice-tyre-btn" onclick="selectPracticeTyre('soft')" id="practice-tyre-soft" style="flex: 1; padding: 10px 8px; border: 2px solid #ef4444; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                                        <div style="font-size: 1.2em;">🔴</div>
+                                        <div style="font-size: 0.75em; font-weight: 600; color: #ef4444;">Soft</div>
+                                    </button>
+                                    <button class="practice-tyre-btn selected" onclick="selectPracticeTyre('medium')" id="practice-tyre-medium" style="flex: 1; padding: 10px 8px; border: 2px solid #f59e0b; background: #fef3c7; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                                        <div style="font-size: 1.2em;">🟡</div>
+                                        <div style="font-size: 0.75em; font-weight: 600; color: #f59e0b;">Medium</div>
+                                    </button>
+                                    <button class="practice-tyre-btn" onclick="selectPracticeTyre('hard')" id="practice-tyre-hard" style="flex: 1; padding: 10px 8px; border: 2px solid #374151; background: white; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                                        <div style="font-size: 1.2em;">⚪</div>
+                                        <div style="font-size: 0.75em; font-weight: 600; color: #374151;">Hard</div>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button id="start-practice-btn" onclick="startPracticeRace()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: none; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-size: 1em; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                <i class="fas fa-play"></i> START PRACTICE
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pre-Race Setup -->
+                    <div id="pre-race" class="stats-card">
+                        <!-- Race Mode Toggle -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <button id="mode-official" onclick="setRaceMode('official')" style="flex: 1; padding: 10px; border: 2px solid #10b981; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                                🏆 Official Race
+                            </button>
+                            <button id="mode-practice" onclick="setRaceMode('practice')" style="flex: 1; padding: 10px; border: 2px solid #6366f1; background: white; color: #6366f1; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                                🎮 Practice
+                            </button>
+                        </div>
+                        
+                        <!-- Practice Track Selector (hidden by default) -->
+                        <div id="practice-track-container" style="display: none; margin-bottom: 15px;">
+                            <div style="font-size: 0.8em; color: #666; margin-bottom: 8px;">SELECT PRACTICE TRACK</div>
+                            <select id="practice-track-select-main" style="width: 100%; padding: 12px; border: 2px solid #6366f1; border-radius: 10px; font-size: 1em; background: white; cursor: pointer;">
+                                <option value="random">🎲 Random Track</option>
+                            </select>
+                        </div>
+                        
+                        <h3 style="color: #1e3a5f; margin-bottom: 15px;">
+                            <i class="fas fa-cog"></i> <span id="race-setup-title">Race Setup</span>
+                        </h3>
+                        
+                        <!-- Your Car Stats -->
+                        <div style="background: #f0f4f8; border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                            <div style="font-size: 0.8em; color: #666; margin-bottom: 8px;">YOUR CAR PERFORMANCE</div>
+                            <div style="font-family: 'Orbitron', sans-serif; font-size: 2em; color: #1e3a5f;">
+                                +<span id="your-performance">50</span>
+                            </div>
+                            <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                                <span class="perf-stat" style="background: #8b5cf6; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7em;">
+                                    Driver: +<span id="stat-driver">0</span>
+                                </span>
+                                <span class="perf-stat" style="background: #3b82f6; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7em;">
+                                    Aero: +<span id="stat-aero">0</span>
+                                </span>
+                                <span class="perf-stat" style="background: #f59e0b; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7em;">
+                                    Engine: +<span id="stat-engine">0</span>
+                                </span>
+                                <span class="perf-stat" style="background: #374151; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7em;">
+                                    Tyres: +<span id="stat-tyres">0</span>
+                                </span>
+                                <span class="perf-stat" style="background: #10b981; color: white; padding: 3px 8px; border-radius: 10px; font-size: 0.7em;">
+                                    Team: +<span id="stat-team">0</span>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Tyre Selection -->
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 10px;">SELECT TYRES</div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="tyre-btn" onclick="selectTyre('soft')" id="tyre-soft" style="flex: 1; padding: 12px; border: 2px solid #ef4444; background: white; border-radius: 10px; cursor: pointer; transition: all 0.3s;">
+                                    <div style="font-size: 1.5em;">🔴</div>
+                                    <div style="font-weight: 600; color: #ef4444;">Soft</div>
+                                    <div style="font-size: 0.7em; color: #666;">+15 grip</div>
+                                </button>
+                                <button class="tyre-btn selected" onclick="selectTyre('medium')" id="tyre-medium" style="flex: 1; padding: 12px; border: 2px solid #f59e0b; background: #fef3c7; border-radius: 10px; cursor: pointer; transition: all 0.3s;">
+                                    <div style="font-size: 1.5em;">🟡</div>
+                                    <div style="font-weight: 600; color: #f59e0b;">Medium</div>
+                                    <div style="font-size: 0.7em; color: #666;">+8 grip</div>
+                                </button>
+                                <button class="tyre-btn" onclick="selectTyre('hard')" id="tyre-hard" style="flex: 1; padding: 12px; border: 2px solid #374151; background: white; border-radius: 10px; cursor: pointer; transition: all 0.3s;">
+                                    <div style="font-size: 1.5em;">⚪</div>
+                                    <div style="font-weight: 600; color: #374151;">Hard</div>
+                                    <div style="font-size: 0.7em; color: #666;">+0 grip</div>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Start Race Button -->
+                        <button id="start-race-btn" onclick="startRace()" style="width: 100%; padding: 18px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 12px; font-family: 'Orbitron', sans-serif; font-size: 1.2em; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <i class="fas fa-flag-checkered"></i> START RACE
+                        </button>
+                    </div>
+
+                    <!-- Championship Stats -->
+                    <div class="stats-card" style="margin-top: 15px;">
+                        <h3 style="color: #1e3a5f; margin-bottom: 15px;">
+                            <i class="fas fa-trophy"></i> Championship
+                        </h3>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center;">
+                            <div>
+                                <div style="font-family: 'Orbitron', sans-serif; font-size: 1.5em; color: #ffd700;" id="champ-points">0</div>
+                                <div style="font-size: 0.75em; color: #666;">Points</div>
+                            </div>
+                            <div>
+                                <div style="font-family: 'Orbitron', sans-serif; font-size: 1.5em; color: #10b981;" id="champ-wins">0</div>
+                                <div style="font-size: 0.75em; color: #666;">Wins</div>
+                            </div>
+                            <div>
+                                <div style="font-family: 'Orbitron', sans-serif; font-size: 1.5em; color: #3b82f6;" id="champ-races">0</div>
+                                <div style="font-size: 0.75em; color: #666;">Races</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End of content-race -->
+        </div>
+    </div>
+
+    <!-- LIVE RACE ANIMATION MODAL -->
+    <div class="celebration-modal" id="race-animation-modal">
+        <div style="width: 95%; max-width: 900px; background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+            
+            <!-- Race Header -->
+            <div style="background: linear-gradient(90deg, #e10600 0%, #ff4444 100%); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-family: 'Orbitron', sans-serif; font-size: 0.8em; opacity: 0.9;">ROUND <span id="anim-race-round">1</span></div>
+                    <div style="font-family: 'Orbitron', sans-serif; font-size: 1.3em; font-weight: bold;" id="anim-race-name">Grand Prix</div>
+                </div>
+                <div style="text-align: right;">
+                    <div id="anim-weather-icon" style="font-size: 2em;">☀️</div>
+                    <div style="font-size: 0.8em;" id="anim-weather-text">DRY</div>
+                </div>
+            </div>
+            
+            <!-- Race Track Visualization -->
+            <div style="position: relative; height: 200px; background: linear-gradient(180deg, #0f3460 0%, #16213e 100%); overflow: hidden;" id="track-container">
+                <!-- Track SVG -->
+                <svg viewBox="0 0 400 150" style="width: 100%; height: 100%;" id="track-svg">
+                    <!-- Track outline -->
+                    <ellipse cx="200" cy="75" rx="170" ry="55" fill="none" stroke="#333" stroke-width="25"/>
+                    <ellipse cx="200" cy="75" rx="170" ry="55" fill="none" stroke="#444" stroke-width="20"/>
+                    <ellipse cx="200" cy="75" rx="170" ry="55" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="10,5"/>
+                    
+                    <!-- Start/Finish line -->
+                    <line x1="200" y1="18" x2="200" y2="28" stroke="white" stroke-width="3"/>
+                    <text x="200" y="15" fill="white" font-size="8" text-anchor="middle">START</text>
+                    
+                    <!-- Car markers will be added dynamically -->
+                    <g id="car-markers"></g>
+                </svg>
+                
+                <!-- Lap Counter Overlay -->
+                <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 10px;">
+                    <div style="font-size: 0.7em; color: #888;">LAP</div>
+                    <div style="font-family: 'Orbitron', sans-serif; font-size: 1.8em; color: white;">
+                        <span id="current-lap">0</span>/<span id="total-laps">50</span>
+                    </div>
+                </div>
+                
+                <!-- Race Status -->
+                <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 10px;">
+                    <div id="race-status" style="font-family: 'Orbitron', sans-serif; color: #10b981; font-size: 0.9em;">
+                        🟢 RACE IN PROGRESS
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Live Standings -->
+            <div style="padding: 15px 20px; background: rgba(0,0,0,0.3);">
+                <div style="font-size: 0.8em; color: #888; margin-bottom: 10px;">LIVE STANDINGS</div>
+                <div id="live-standings" style="display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+            
+            <!-- Commentary Box -->
+            <div style="padding: 15px 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 0.8em; color: #888; margin-bottom: 8px;">📢 RACE COMMENTARY</div>
+                <div id="commentary-box" style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; min-height: 80px; max-height: 120px; overflow-y: auto;">
+                    <div id="commentary-text" style="color: #fff; font-size: 0.95em; line-height: 1.5;">
+                        Waiting for lights out...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div style="padding: 0 20px 20px 20px;">
+                <div style="background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden;">
+                    <div id="race-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #e10600 0%, #ff6b6b 100%); transition: width 0.5s; border-radius: 4px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Race Results Modal (shown after animation) -->
+    <div class="celebration-modal" id="race-results-modal">
+        <div class="celebration-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <div id="results-weather" style="font-size: 1.5em; margin-bottom: 10px;">☀️</div>
+            <div class="celebration-title" id="results-title">RACE COMPLETE!</div>
+            <div id="results-position" style="font-family: 'Orbitron', sans-serif; font-size: 3em; margin: 15px 0;"></div>
+            <div id="results-highlight" style="font-size: 1.1em; margin-bottom: 15px; color: #666;"></div>
+            <div id="results-points" style="background: #fef3c7; padding: 10px 20px; border-radius: 10px; display: inline-block; margin-bottom: 20px;">
+                <span style="font-size: 1.5em; font-weight: bold; color: #f59e0b;">+<span id="points-earned">0</span> pts</span>
+            </div>
+            
+            <!-- Results Table -->
+            <div style="text-align: left; margin: 20px 0;">
+                <div style="font-size: 0.85em; color: #666; margin-bottom: 10px;">FINAL CLASSIFICATION</div>
+                <div id="results-table" style="max-height: 200px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 10px;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <button class="celebration-btn" onclick="closeRaceResults()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <i class="fas fa-check"></i> Continue
+            </button>
+        </div>
+    </div>
+    <div class="celebration-modal" id="celebration-modal">
+        <div class="celebration-content">
+            <div class="celebration-icon">🏎️</div>
+            <div class="celebration-title">NEW PART UNLOCKED!</div>
+            <div class="celebration-part" id="celebration-part-name">Front Wing</div>
+            <button class="celebration-btn" onclick="closeCelebration()">
+                <i class="fas fa-check"></i> Awesome!
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // RACING CAR 3D VIEWER
+        // =============================================
+        
+        let scene, camera, renderer, controls;
+        let carGroup;
+        let carData = null;
+        let allParts = [];
+        
+        const CATEGORY_ICONS = {
+            'chassis': 'fa-car',
+            'aero_front': 'fa-wind',
+            'engine': 'fa-cogs',
+            'aero_rear': 'fa-feather',
+            'suspension': 'fa-compress-alt',
+            'wheels': 'fa-circle',
+            'cockpit': 'fa-user',
+            'finishing': 'fa-paint-brush'
+        };
+        
+        const CATEGORY_COLORS = {
+            'chassis': '#3b82f6',
+            'aero_front': '#10b981',
+            'engine': '#f59e0b',
+            'aero_rear': '#8b5cf6',
+            'suspension': '#ec4899',
+            'wheels': '#6366f1',
+            'cockpit': '#14b8a6',
+            'finishing': '#e10600'
+        };
+
+        // Initialize Three.js scene
+        function initScene() {
+            const container = document.getElementById('car-canvas-container');
+            const canvas = document.getElementById('car-canvas');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb);  // Sky blue background
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(
+                45,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(5, 3, 5);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas,
+                antialias: true 
+            });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Orbit Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 3;
+            controls.maxDistance = 15;
+            controls.maxPolarAngle = Math.PI / 2;
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+            
+            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            mainLight.position.set(5, 10, 5);
+            mainLight.castShadow = true;
+            scene.add(mainLight);
+            
+            const fillLight = new THREE.DirectionalLight(0x00d4ff, 0.3);
+            fillLight.position.set(-5, 5, -5);
+            scene.add(fillLight);
+            
+            const rimLight = new THREE.DirectionalLight(0xe10600, 0.2);
+            rimLight.position.set(0, -5, 5);
+            scene.add(rimLight);
+            
+            // Ground plane (grid)
+            const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0xcccccc);
+            scene.add(gridHelper);
+            
+            // Add ground plane for shadows
+            const groundGeo = new THREE.PlaneGeometry(20, 20);
+            const groundMat = new THREE.MeshPhongMaterial({ color: 0xa0a0a0, side: THREE.DoubleSide });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -0.01;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Create car group
+            carGroup = new THREE.Group();
+            scene.add(carGroup);
+            
+            // Handle resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start animation loop
+            animate();
+        }
+        
+        function onWindowResize() {
+            const container = document.getElementById('car-canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // Build procedural F1 car
+        function buildProceduralCar(partsUnlocked) {
+            // Clear existing car
+            while(carGroup.children.length > 0) {
+                carGroup.remove(carGroup.children[0]);
+            }
+            
+            const materials = {
+                body: new THREE.MeshPhongMaterial({ color: 0xe10600, shininess: 100 }),
+                bodyDark: new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 80 }),
+                carbon: new THREE.MeshPhongMaterial({ color: 0x2a2a2a, shininess: 50 }),
+                metal: new THREE.MeshPhongMaterial({ color: 0x888888, shininess: 100 }),
+                tire: new THREE.MeshPhongMaterial({ color: 0x111111, shininess: 20 }),
+                locked: new THREE.MeshPhongMaterial({ 
+                    color: 0x333333, 
+                    transparent: true, 
+                    opacity: 0.3,
+                    wireframe: true
+                })
+            };
+            
+            // Part definitions with geometry
+            const partGeometries = [
+                // 1-10: Chassis
+                () => createBox(2.5, 0.1, 1.2, 0, 0.05, 0, materials.carbon), // Floor Pan
+                () => createBox(0.8, 0.5, 0.7, 0.3, 0.3, 0, materials.carbon), // Survival Cell
+                () => createBox(0.3, 0.4, 0.6, 1, 0.25, 0, materials.carbon), // Front Bulkhead
+                () => createBox(0.3, 0.4, 0.8, -0.9, 0.25, 0, materials.carbon), // Rear Bulkhead
+                () => { // Side Impact Structures
+                    const g = new THREE.Group();
+                    g.add(createBox(1.5, 0.3, 0.1, 0, 0.2, 0.55, materials.carbon));
+                    g.add(createBox(1.5, 0.3, 0.1, 0, 0.2, -0.55, materials.carbon));
+                    return g;
+                },
+                () => createBox(0.6, 0.1, 0.5, 0.5, 0.55, 0, materials.carbon), // Cockpit Opening
+                () => createBox(0.5, 0.25, 0.6, -0.3, 0.2, 0, materials.bodyDark), // Fuel Cell
+                () => createCylinder(0.08, 0.5, 0.6, 0.65, 0, materials.carbon), // Roll Hoop Base
+                () => createBox(0.8, 0.3, 0.7, -0.7, 0.2, 0, materials.carbon), // Engine Bay Frame
+                () => createBox(0.1, 0.4, 0.6, 0, 0.25, 0, materials.carbon), // Chassis Reinforcements
+                
+                // 11-20: Aero Front
+                () => createNoseCone(materials.body), // Nose Cone
+                () => createFrontWingMain(materials.body), // Front Wing Main
+                () => createFrontWingFlaps(materials.body), // Front Wing Flaps
+                () => createFrontWingEndplates(materials.bodyDark), // Endplates
+                () => { // Front Suspension Fairings
+                    const g = new THREE.Group();
+                    g.add(createBox(0.4, 0.05, 0.08, 0.8, 0.15, 0.4, materials.carbon));
+                    g.add(createBox(0.4, 0.05, 0.08, 0.8, 0.15, -0.4, materials.carbon));
+                    return g;
+                },
+                () => { // Brake Ducts
+                    const g = new THREE.Group();
+                    g.add(createBox(0.15, 0.12, 0.08, 1.1, 0.12, 0.5, materials.bodyDark));
+                    g.add(createBox(0.15, 0.12, 0.08, 1.1, 0.12, -0.5, materials.bodyDark));
+                    return g;
+                },
+                () => createBargeboards(materials.carbon), // Bargeboards
+                () => { // Side Deflectors
+                    const g = new THREE.Group();
+                    g.add(createBox(0.3, 0.2, 0.02, 0.5, 0.15, 0.45, materials.carbon));
+                    g.add(createBox(0.3, 0.2, 0.02, 0.5, 0.15, -0.45, materials.carbon));
+                    return g;
+                },
+                () => createVortexGenerators(materials.carbon), // Vortex Generators
+                () => { // Front Wing Pylons
+                    const g = new THREE.Group();
+                    g.add(createBox(0.05, 0.1, 0.4, 1.3, 0.1, 0, materials.carbon));
+                    return g;
+                },
+                
+                // 21-30: Engine
+                () => createBox(0.6, 0.35, 0.5, -0.6, 0.3, 0, materials.metal), // Power Unit
+                () => createCylinder(0.1, 0.15, -0.4, 0.45, 0, materials.metal), // Turbo
+                () => createCylinder(0.08, 0.1, -0.5, 0.5, 0.15, materials.metal), // MGU-H
+                () => createCylinder(0.08, 0.1, -0.5, 0.5, -0.15, materials.metal), // MGU-K
+                () => createBox(0.25, 0.15, 0.35, -0.3, 0.15, 0, materials.bodyDark), // Energy Store
+                () => createBox(0.35, 0.25, 0.4, -1, 0.2, 0, materials.metal), // Gearbox
+                () => createExhaust(materials.metal), // Exhaust
+                () => createRadiators(materials.bodyDark), // Radiators
+                () => createCylinder(0.05, 0.2, -0.7, 0.35, 0.25, materials.metal), // Oil System
+                () => createBox(0.15, 0.1, 0.2, -0.8, 0.1, 0.3, materials.metal), // Hydraulics
+                
+                // 31-40: Aero Rear
+                () => createEngineCover(materials.body), // Engine Cover
+                () => createSidepod(0.5, materials.body), // Left Sidepod
+                () => createSidepod(-0.5, materials.body), // Right Sidepod
+                () => createRearWingMain(materials.body), // Rear Wing Main
+                () => createDRSFlap(materials.body), // DRS Flap
+                () => createRearWingEndplates(materials.bodyDark), // Rear Wing Endplates
+                () => createDiffuser(materials.carbon), // Diffuser
+                () => createBox(0.4, 0.05, 0.5, -1.15, 0.3, 0, materials.body), // Beam Wing
+                () => createBox(0.2, 0.15, 0.2, -1.35, 0.15, 0, materials.carbon), // Crash Structure
+                () => createCylinder(0.03, 0.05, -1.4, 0.25, 0, materials.body), // Rain Light
+                
+                // 41-50: Wheels & Finishing
+                () => createSuspensionArms('front', materials.carbon), // Front Suspension
+                () => createSuspensionArms('rear', materials.carbon), // Rear Suspension
+                () => createWheel(1.1, 0.55, materials.metal), // Front Left Wheel
+                () => createWheel(1.1, -0.55, materials.metal), // Front Right Wheel  
+                () => createTire(1.1, 0.55, materials.tire), // Front Left Tire
+                () => createTire(1.1, -0.55, materials.tire), // Front Right Tire
+                () => createSteeringWheel(materials.carbon), // Steering Wheel
+                () => createHalo(materials.carbon), // Halo
+                () => createSeat(materials.body), // Driver Seat
+                () => createLiveryDetails(materials.body), // Team Livery
+            ];
+            
+            // Add rear wheels (always show structure for context)
+            const rearWheelL = createWheel(-0.9, 0.6, partsUnlocked >= 43 ? materials.metal : materials.locked);
+            const rearWheelR = createWheel(-0.9, -0.6, partsUnlocked >= 44 ? materials.metal : materials.locked);
+            carGroup.add(rearWheelL);
+            carGroup.add(rearWheelR);
+            
+            const rearTireL = createTire(-0.9, 0.6, partsUnlocked >= 45 ? materials.tire : materials.locked);
+            const rearTireR = createTire(-0.9, -0.6, partsUnlocked >= 46 ? materials.tire : materials.locked);
+            carGroup.add(rearTireL);
+            carGroup.add(rearTireR);
+            
+            // Add each part based on unlock status
+            for (let i = 0; i < partGeometries.length; i++) {
+                const partNum = i + 1;
+                if (partNum <= partsUnlocked) {
+                    const part = partGeometries[i]();
+                    if (part) carGroup.add(part);
+                } else if (partNum <= partsUnlocked + 3) {
+                    // Show next few parts as wireframe hints
+                    // (optional preview of upcoming parts)
+                }
+            }
+        }
+        
+        // Helper geometry functions
+        function createBox(w, h, d, x, y, z, material) {
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+        
+        function createCylinder(r, h, x, y, z, material) {
+            const geo = new THREE.CylinderGeometry(r, r, h, 16);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            return mesh;
+        }
+        
+        function createNoseCone(material) {
+            const shape = new THREE.Shape();
+            shape.moveTo(0, 0);
+            shape.lineTo(0.6, 0);
+            shape.lineTo(0.3, 0.2);
+            shape.lineTo(0, 0.15);
+            shape.lineTo(0, 0);
+            
+            const extrudeSettings = { depth: 0.4, bevelEnabled: false };
+            const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(1, 0.05, -0.2);
+            mesh.castShadow = true;
+            return mesh;
+        }
+        
+        function createFrontWingMain(material) {
+            const geo = new THREE.BoxGeometry(0.15, 0.03, 1.6);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(1.45, 0.08, 0);
+            mesh.castShadow = true;
+            return mesh;
+        }
+        
+        function createFrontWingFlaps(material) {
+            const g = new THREE.Group();
+            for (let i = 0; i < 3; i++) {
+                const geo = new THREE.BoxGeometry(0.08, 0.02, 1.4);
+                const mesh = new THREE.Mesh(geo, material);
+                mesh.position.set(1.35 - i * 0.1, 0.12 + i * 0.03, 0);
+                mesh.rotation.z = -0.1 * i;
+                g.add(mesh);
+            }
+            return g;
+        }
+        
+        function createFrontWingEndplates(material) {
+            const g = new THREE.Group();
+            const geo = new THREE.BoxGeometry(0.25, 0.15, 0.02);
+            const left = new THREE.Mesh(geo, material);
+            left.position.set(1.35, 0.1, 0.8);
+            const right = new THREE.Mesh(geo, material);
+            right.position.set(1.35, 0.1, -0.8);
+            g.add(left, right);
+            return g;
+        }
+        
+        function createBargeboards(material) {
+            const g = new THREE.Group();
+            const geo = new THREE.BoxGeometry(0.4, 0.25, 0.02);
+            const left = new THREE.Mesh(geo, material);
+            left.position.set(0.6, 0.2, 0.4);
+            left.rotation.y = 0.3;
+            const right = new THREE.Mesh(geo, material);
+            right.position.set(0.6, 0.2, -0.4);
+            right.rotation.y = -0.3;
+            g.add(left, right);
+            return g;
+        }
+        
+        function createVortexGenerators(material) {
+            const g = new THREE.Group();
+            for (let i = 0; i < 4; i++) {
+                const geo = new THREE.BoxGeometry(0.05, 0.08, 0.02);
+                const left = new THREE.Mesh(geo, material);
+                left.position.set(0.3 + i * 0.15, 0.12, 0.5);
+                const right = new THREE.Mesh(geo, material);
+                right.position.set(0.3 + i * 0.15, 0.12, -0.5);
+                g.add(left, right);
+            }
+            return g;
+        }
+        
+        function createExhaust(material) {
+            const geo = new THREE.CylinderGeometry(0.04, 0.06, 0.2, 8);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(-1.1, 0.35, 0);
+            mesh.rotation.z = Math.PI / 2;
+            return mesh;
+        }
+        
+        function createRadiators(material) {
+            const g = new THREE.Group();
+            const geo = new THREE.BoxGeometry(0.3, 0.2, 0.05);
+            const left = new THREE.Mesh(geo, material);
+            left.position.set(-0.1, 0.2, 0.45);
+            const right = new THREE.Mesh(geo, material);
+            right.position.set(-0.1, 0.2, -0.45);
+            g.add(left, right);
+            return g;
+        }
+        
+        function createEngineCover(material) {
+            const shape = new THREE.Shape();
+            shape.moveTo(0, 0);
+            shape.lineTo(0.8, 0);
+            shape.lineTo(0.6, 0.4);
+            shape.lineTo(0.2, 0.5);
+            shape.lineTo(0, 0.3);
+            shape.lineTo(0, 0);
+            
+            const extrudeSettings = { depth: 0.6, bevelEnabled: true, bevelSize: 0.02 };
+            const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(-0.3, 0.15, -0.3);
+            mesh.castShadow = true;
+            return mesh;
+        }
+        
+        function createSidepod(zOffset, material) {
+            const shape = new THREE.Shape();
+            shape.moveTo(0, 0);
+            shape.lineTo(1, 0);
+            shape.lineTo(0.8, 0.25);
+            shape.lineTo(0.2, 0.3);
+            shape.lineTo(0, 0.2);
+            shape.lineTo(0, 0);
+            
+            const extrudeSettings = { depth: 0.25, bevelEnabled: true, bevelSize: 0.02 };
+            const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(0.2, 0.1, zOffset > 0 ? 0.35 : -0.6);
+            mesh.castShadow = true;
+            return mesh;
+        }
+        
+        function createRearWingMain(material) {
+            const geo = new THREE.BoxGeometry(0.08, 0.3, 0.8);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(-1.25, 0.55, 0);
+            mesh.rotation.z = 0.15;
+            return mesh;
+        }
+        
+        function createDRSFlap(material) {
+            const geo = new THREE.BoxGeometry(0.06, 0.08, 0.75);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(-1.2, 0.72, 0);
+            return mesh;
+        }
+        
+        function createRearWingEndplates(material) {
+            const g = new THREE.Group();
+            const geo = new THREE.BoxGeometry(0.25, 0.4, 0.02);
+            const left = new THREE.Mesh(geo, material);
+            left.position.set(-1.2, 0.5, 0.42);
+            const right = new THREE.Mesh(geo, material);
+            right.position.set(-1.2, 0.5, -0.42);
+            g.add(left, right);
+            return g;
+        }
+        
+        function createDiffuser(material) {
+            const g = new THREE.Group();
+            for (let i = 0; i < 5; i++) {
+                const geo = new THREE.BoxGeometry(0.3, 0.15, 0.02);
+                const mesh = new THREE.Mesh(geo, material);
+                mesh.position.set(-1.2, 0.08, -0.3 + i * 0.15);
+                mesh.rotation.x = -0.3;
+                g.add(mesh);
+            }
+            return g;
+        }
+        
+        function createSuspensionArms(position, material) {
+            const g = new THREE.Group();
+            const xBase = position === 'front' ? 0.9 : -0.8;
+            
+            // Upper wishbone
+            const upper = new THREE.CylinderGeometry(0.015, 0.015, 0.4, 8);
+            const upperL = new THREE.Mesh(upper, material);
+            upperL.position.set(xBase, 0.25, 0.35);
+            upperL.rotation.x = Math.PI / 2;
+            const upperR = new THREE.Mesh(upper, material);
+            upperR.position.set(xBase, 0.25, -0.35);
+            upperR.rotation.x = Math.PI / 2;
+            
+            // Lower wishbone  
+            const lower = new THREE.CylinderGeometry(0.015, 0.015, 0.45, 8);
+            const lowerL = new THREE.Mesh(lower, material);
+            lowerL.position.set(xBase, 0.1, 0.38);
+            lowerL.rotation.x = Math.PI / 2;
+            const lowerR = new THREE.Mesh(lower, material);
+            lowerR.position.set(xBase, 0.1, -0.38);
+            lowerR.rotation.x = Math.PI / 2;
+            
+            g.add(upperL, upperR, lowerL, lowerR);
+            return g;
+        }
+        
+        function createWheel(x, z, material) {
+            const geo = new THREE.CylinderGeometry(0.18, 0.18, 0.12, 16);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(x, 0.18, z);
+            mesh.rotation.x = Math.PI / 2;
+            return mesh;
+        }
+        
+        function createTire(x, z, material) {
+            const geo = new THREE.TorusGeometry(0.18, 0.08, 8, 24);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(x, 0.18, z);
+            return mesh;
+        }
+        
+        function createSteeringWheel(material) {
+            const geo = new THREE.TorusGeometry(0.06, 0.015, 8, 16);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(0.55, 0.4, 0);
+            mesh.rotation.x = Math.PI / 2 + 0.5;
+            return mesh;
+        }
+        
+        function createHalo(material) {
+            const curve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0.2, 0.5, 0.25),
+                new THREE.Vector3(0.5, 0.65, 0.15),
+                new THREE.Vector3(0.6, 0.7, 0),
+                new THREE.Vector3(0.5, 0.65, -0.15),
+                new THREE.Vector3(0.2, 0.5, -0.25)
+            ]);
+            const geo = new THREE.TubeGeometry(curve, 20, 0.025, 8, false);
+            const mesh = new THREE.Mesh(geo, material);
+            return mesh;
+        }
+        
+        function createSeat(material) {
+            const geo = new THREE.BoxGeometry(0.3, 0.35, 0.25);
+            const mesh = new THREE.Mesh(geo, material);
+            mesh.position.set(0.35, 0.3, 0);
+            return mesh;
+        }
+        
+        function createLiveryDetails(material) {
+            // Add some sponsor-like details
+            const g = new THREE.Group();
+            
+            // Number circle
+            const numGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.01, 16);
+            const numMesh = new THREE.Mesh(numGeo, new THREE.MeshPhongMaterial({ color: 0xffffff }));
+            numMesh.position.set(0, 0.45, 0.35);
+            numMesh.rotation.x = Math.PI / 2;
+            g.add(numMesh);
+            
+            // Side stripe
+            const stripeGeo = new THREE.BoxGeometry(1.5, 0.02, 0.05);
+            const stripeMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            const stripeL = new THREE.Mesh(stripeGeo, stripeMat);
+            stripeL.position.set(0, 0.25, 0.52);
+            const stripeR = new THREE.Mesh(stripeGeo, stripeMat);
+            stripeR.position.set(0, 0.25, -0.52);
+            g.add(stripeL, stripeR);
+            
+            return g;
+        }
+        
+        // Camera view presets
+        function setView(view) {
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const duration = 500;
+            const target = { x: 0, y: 0.3, z: 0 };
+            
+            let newPos;
+            switch(view) {
+                case 'front':
+                    newPos = { x: 5, y: 2, z: 0 };
+                    break;
+                case 'side':
+                    newPos = { x: 0, y: 2, z: 6 };
+                    break;
+                case 'top':
+                    newPos = { x: 0, y: 7, z: 0.1 };
+                    break;
+                case 'rear':
+                    newPos = { x: -5, y: 2, z: 0 };
+                    break;
+            }
+            
+            // Animate camera
+            const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+            const startTime = Date.now();
+            
+            function animateCamera() {
+                const elapsed = Date.now() - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                
+                camera.position.x = startPos.x + (newPos.x - startPos.x) * ease;
+                camera.position.y = startPos.y + (newPos.y - startPos.y) * ease;
+                camera.position.z = startPos.z + (newPos.z - startPos.z) * ease;
+                camera.lookAt(target.x, target.y, target.z);
+                
+                if (t < 1) requestAnimationFrame(animateCamera);
+            }
+            animateCamera();
+        }
+        
+        // Load car data from API
+        async function loadCarData() {
+            try {
+                const response = await fetch('/api/racing-car/status');
+                carData = await response.json();
+                
+                if (carData.error) {
+                    console.error('Error loading car:', carData.error);
+                    return;
+                }
+                
+                allParts = carData.all_parts || [];
+                
+                updateUI();
+                buildProceduralCar(carData.parts_unlocked || 0);
+                
+                // Hide loading
+                document.getElementById('loading-overlay').style.display = 'none';
+                
+                // Check for new unlocks to celebrate
+                if (carData.new_unlocks && carData.new_unlocks.length > 0) {
+                    celebrateUnlock(carData.new_unlocks[0]);
+                }
+                
+            } catch (error) {
+                console.error('Failed to load car data:', error);
+                document.getElementById('loading-overlay').innerHTML = `
+                    <div style="color: #e10600; text-align: center;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 2em; margin-bottom: 10px;"></i>
+                        <div>Failed to load car data</div>
+                        <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; cursor: pointer;">Retry</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Update UI with car data
+        function updateUI() {
+            const parts = carData.parts_unlocked || 0;
+            const points = carData.current_points || 0;
+            const nextPart = carData.next_part;
+            
+            // Update car name
+            document.getElementById('car-name').textContent = carData.car_name || 'Your F1 Car';
+            
+            // Update stats
+            document.getElementById('parts-unlocked').textContent = parts;
+            document.getElementById('progress-bar').style.width = `${(parts / 50) * 100}%`;
+            document.getElementById('current-points').textContent = `${points.toLocaleString()} pts`;
+            
+            // Update next part
+            if (nextPart && parts < 50) {
+                document.getElementById('next-part-name').textContent = nextPart.part_name;
+                document.getElementById('next-part-points').textContent = `Unlocks at ${nextPart.points_required.toLocaleString()} points`;
+                
+                // Progress to next part
+                const prevThreshold = parts > 0 ? (parts * 1000) : 0;
+                const nextThreshold = nextPart.points_required;
+                const progress = ((points - prevThreshold) / (nextThreshold - prevThreshold)) * 100;
+                document.getElementById('next-part-progress').style.width = `${Math.max(0, Math.min(100, progress))}%`;
+            } else {
+                document.getElementById('next-part-card').innerHTML = `
+                    <h3><i class="fas fa-trophy"></i> Complete!</h3>
+                    <div class="next-part-name">🏆 All Parts Unlocked!</div>
+                    <div class="next-part-points">Your car is ready to race!</div>
+                `;
+            }
+            
+            // Build parts grid
+            const partsGrid = document.getElementById('parts-grid');
+            partsGrid.innerHTML = '';
+            
+            for (let i = 1; i <= 50; i++) {
+                const part = allParts.find(p => p.part_number === i);
+                const isUnlocked = i <= parts;
+                const isNext = i === parts + 1;
+                
+                const dot = document.createElement('div');
+                dot.className = `part-dot ${isUnlocked ? 'unlocked' : ''} ${isNext ? 'next' : ''}`;
+                
+                if (part) {
+                    dot.innerHTML = `<div class="part-tooltip">${part.part_name}<br>${part.points_required.toLocaleString()} pts</div>`;
+                }
+                
+                partsGrid.appendChild(dot);
+            }
+            
+            // Build category list
+            const categoryList = document.getElementById('category-list');
+            const categories = {};
+            
+            allParts.forEach(part => {
+                if (!categories[part.category]) {
+                    categories[part.category] = { total: 0, unlocked: 0 };
+                }
+                categories[part.category].total++;
+                if (part.part_number <= parts) {
+                    categories[part.category].unlocked++;
+                }
+            });
+            
+            categoryList.innerHTML = Object.entries(categories).map(([cat, data]) => `
+                <div class="category-item">
+                    <div class="category-name">
+                        <div class="category-icon ${cat}">
+                            <i class="fas ${CATEGORY_ICONS[cat] || 'fa-cube'}"></i>
+                        </div>
+                        <span>${cat.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                    </div>
+                    <div class="category-progress" style="color: ${data.unlocked === data.total ? '#10b981' : 'inherit'}">
+                        ${data.unlocked}/${data.total}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Celebration modal
+        function celebrateUnlock(part) {
+            document.getElementById('celebration-part-name').textContent = part.part_name;
+            document.getElementById('celebration-modal').classList.add('show');
+        }
+        
+        function closeCelebration() {
+            document.getElementById('celebration-modal').classList.remove('show');
+        }
+        
+        // =============================================
+        // PHASE 2: UPGRADE SHOP FUNCTIONS
+        // =============================================
+        
+        let upgradeData = null;
+        const UPGRADE_BUDGET = 20000;
+        
+        // Switch between Assembly and Upgrades tabs
+        function switchTab(tab) {
+            // Check if upgrades tab is locked (unless test mode)
+            const urlParams = new URLSearchParams(window.location.search);
+            const testMode = urlParams.get('test') === 'upgrades';
+            
+            if (tab === 'upgrades' && carData && carData.parts_unlocked < 50 && !testMode) {
+                return; // Can't switch to locked tab
+            }
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('content-' + tab).classList.add('active');
+            
+            // Load upgrades if switching to that tab
+            if (tab === 'upgrades') {
+                loadUpgrades();
+            }
+        }
+        
+        // Update tab UI based on car completion
+        function updateTabState() {
+            const partsUnlocked = carData ? carData.parts_unlocked : 0;
+            const upgradesTab = document.getElementById('tab-upgrades');
+            const lockIcon = document.getElementById('upgrade-lock-icon');
+            
+            // TEST OVERRIDE: Add ?test=upgrades to URL to unlock upgrades tab for testing
+            const urlParams = new URLSearchParams(window.location.search);
+            const testMode = urlParams.get('test') === 'upgrades';
+            
+            if (partsUnlocked >= 50 || testMode) {
+                // Car complete OR test mode - unlock upgrades tab
+                upgradesTab.classList.remove('locked');
+                
+                if (testMode && partsUnlocked < 50) {
+                    lockIcon.innerHTML = '<i class="fas fa-flask"></i>';
+                    lockIcon.style.color = '#f59e0b';
+                    lockIcon.title = 'TEST MODE';
+                } else {
+                    lockIcon.innerHTML = '<i class="fas fa-unlock"></i>';
+                    lockIcon.style.color = '#10b981';
+                }
+                
+                document.getElementById('upgrades-locked').style.display = 'none';
+                document.getElementById('upgrades-unlocked').style.display = 'block';
+                
+                // If test mode, show a banner
+                if (testMode && partsUnlocked < 50) {
+                    const banner = document.querySelector('.car-complete-banner');
+                    if (banner) {
+                        banner.innerHTML = `
+                            <h2>🧪 TEST MODE ACTIVE</h2>
+                            <p>Upgrade shop unlocked for testing (normally requires 50/50 parts)</p>
+                            <p style="font-size: 0.85em; margin-top: 5px;">Current: ${partsUnlocked}/50 parts</p>
+                        `;
+                        banner.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                    }
+                }
+            } else {
+                // Car incomplete - keep locked
+                upgradesTab.classList.add('locked');
+                lockIcon.innerHTML = '<i class="fas fa-lock"></i>';
+                lockIcon.style.color = '#ef4444';
+                
+                document.getElementById('parts-remaining-lock').textContent = 50 - partsUnlocked;
+                document.getElementById('upgrades-locked').style.display = 'block';
+                document.getElementById('upgrades-unlocked').style.display = 'none';
+            }
+        }
+        
+        // Load upgrades from API
+        async function loadUpgrades() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const testMode = urlParams.get('test') === 'upgrades';
+            const apiUrl = testMode ? '/api/racing-car/upgrades?test=upgrades' : '/api/racing-car/upgrades';
+            
+            try {
+                console.log('Loading upgrades from:', apiUrl);
+                const response = await fetch(apiUrl);
+                upgradeData = await response.json();
+                console.log('Upgrade data received:', upgradeData);
+                
+                if (upgradeData.error) {
+                    console.error('API Error:', upgradeData.error);
+                    showUpgradeToast('Error: ' + upgradeData.error, 'error');
+                    return;
+                }
+                
+                if (!upgradeData.car_complete && !testMode) {
+                    console.log('Car not complete, upgrades locked');
+                    return;
+                }
+                
+                if (!upgradeData.upgrades_by_category || Object.keys(upgradeData.upgrades_by_category).length === 0) {
+                    console.error('No upgrades found in response!');
+                    showUpgradeToast('No upgrades available - check if migration was run', 'error');
+                    return;
+                }
+                
+                renderUpgrades();
+                updateBudgetDisplay();
+                updatePerformanceDisplay();
+                
+            } catch (error) {
+                console.error('Failed to load upgrades:', error);
+                showUpgradeToast('Failed to load upgrades: ' + error.message, 'error');
+            }
+        }
+        
+        // Render upgrade cards
+        function renderUpgrades() {
+            if (!upgradeData || !upgradeData.upgrades_by_category) return;
+            
+            const categories = ['driver', 'aero', 'engine', 'tyres', 'team'];
+            
+            categories.forEach(cat => {
+                const container = document.getElementById('upgrades-' + cat);
+                const upgrades = upgradeData.upgrades_by_category[cat] || [];
+                
+                container.innerHTML = upgrades.map(upgrade => {
+                    const canAfford = !upgrade.owned && upgrade.cost <= upgradeData.budget_remaining;
+                    const cardClass = upgrade.owned ? 'owned' : (!canAfford ? 'cant-afford' : '');
+                    
+                    return `
+                        <div class="upgrade-card ${cardClass}" id="upgrade-card-${upgrade.id}">
+                            <div class="upgrade-header">
+                                <div class="upgrade-icon">
+                                    <i class="fas ${upgrade.icon}"></i>
+                                </div>
+                                <div class="upgrade-name">${upgrade.name}</div>
+                            </div>
+                            <div class="upgrade-desc">${upgrade.description}</div>
+                            <div class="upgrade-footer">
+                                <span class="upgrade-cost">${upgrade.cost.toLocaleString()} pts</span>
+                                <span class="upgrade-boost">+${upgrade.boost} perf</span>
+                            </div>
+                            ${upgrade.owned 
+                                ? `<button class="upgrade-btn sell" onclick="sellUpgrade(${upgrade.id}, '${upgrade.name}')">
+                                      <i class="fas fa-times"></i> Sell
+                                   </button>`
+                                : `<button class="upgrade-btn buy" onclick="buyUpgrade(${upgrade.id}, '${upgrade.name}')" ${!canAfford ? 'disabled' : ''}>
+                                      <i class="fas fa-shopping-cart"></i> ${canAfford ? 'Buy' : 'Not enough budget'}
+                                   </button>`
+                            }
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+        
+        // Update budget display
+        function updateBudgetDisplay() {
+            if (!upgradeData) return;
+            
+            const remaining = upgradeData.budget_remaining;
+            const used = upgradeData.budget_used;
+            const percentage = (used / UPGRADE_BUDGET) * 100;
+            
+            document.getElementById('budget-remaining').textContent = remaining.toLocaleString();
+            document.getElementById('budget-bar').style.width = percentage + '%';
+            document.getElementById('budget-spent-label').textContent = `${used.toLocaleString()} / ${UPGRADE_BUDGET.toLocaleString()}`;
+        }
+        
+        // Update performance display
+        function updatePerformanceDisplay() {
+            if (!upgradeData) return;
+            
+            const basePerf = 50; // Base from car completion
+            const upgradeBonus = upgradeData.total_performance_boost || 0;
+            document.getElementById('total-performance').textContent = basePerf + upgradeBonus;
+        }
+        
+        // Buy an upgrade
+        async function buyUpgrade(upgradeId, upgradeName) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const testMode = urlParams.get('test') === 'upgrades';
+            
+            try {
+                const response = await fetch('/api/racing-car/upgrades/buy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ upgrade_id: upgradeId, test_mode: testMode })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show success feedback
+                    showUpgradeToast(`✓ Purchased ${upgradeName}!`, 'success');
+                    // Reload upgrades
+                    await loadUpgrades();
+                } else {
+                    showUpgradeToast(result.error || 'Purchase failed', 'error');
+                }
+            } catch (error) {
+                showUpgradeToast('Purchase failed', 'error');
+            }
+        }
+        
+        // Sell an upgrade
+        async function sellUpgrade(upgradeId, upgradeName) {
+            if (!confirm(`Sell ${upgradeName} and get a full refund?`)) return;
+            
+            try {
+                const response = await fetch('/api/racing-car/upgrades/sell', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ upgrade_id: upgradeId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showUpgradeToast(`✓ Sold ${upgradeName} - ${result.refund} pts refunded`, 'success');
+                    await loadUpgrades();
+                } else {
+                    showUpgradeToast(result.error || 'Sale failed', 'error');
+                }
+            } catch (error) {
+                showUpgradeToast('Sale failed', 'error');
+            }
+        }
+        
+        // Reset all upgrades
+        async function resetUpgrades() {
+            if (!confirm('Reset ALL upgrades? This will refund your entire budget so you can start fresh.')) return;
+            
+            try {
+                const response = await fetch('/api/racing-car/upgrades/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showUpgradeToast('✓ All upgrades reset! Full budget restored.', 'success');
+                    await loadUpgrades();
+                } else {
+                    showUpgradeToast(result.error || 'Reset failed', 'error');
+                }
+            } catch (error) {
+                showUpgradeToast('Reset failed', 'error');
+            }
+        }
+        
+        // Toast notification
+        function showUpgradeToast(message, type) {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 15px 30px;
+                border-radius: 10px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideUp 0.3s ease;
+                ${type === 'success' 
+                    ? 'background: linear-gradient(135deg, #10b981, #059669);' 
+                    : 'background: linear-gradient(135deg, #ef4444, #dc2626);'}
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideDown 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // Add animation styles
+        const toastStyles = document.createElement('style');
+        toastStyles.textContent = `
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+            @keyframes slideDown {
+                from { opacity: 1; transform: translateX(-50%) translateY(0); }
+                to { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            }
+        `;
+        document.head.appendChild(toastStyles);
+        
+        // Original loadCarData needs to update tab state
+        const originalLoadCarData = loadCarData;
+        loadCarData = async function() {
+            await originalLoadCarData();
+            updateTabState();
+        };
+        
+        // =============================================
+        // PHASE 3: ANIMATED RACE EXPERIENCE
+        // =============================================
+        
+        let currentRace = null;
+        let selectedTyre = 'medium';
+        let selectedPracticeTyre = 'medium';
+        let raceAnimationInterval = null;
+        let raceResults = null;
+        let raceMode = 'official'; // 'official' or 'practice'
+        let practiceTracksLoaded = false;
+        let allTracks = [];
+        
+        // Driver colors for track visualization
+        const DRIVER_COLORS = {
+            'YOU': '#e10600',
+            'Max Velocity': '#1e41ff',
+            'Lewis Hammer': '#00d2be',
+            'Charles Leclerc': '#dc0000',
+            'Carlos Sainz': '#dc0000',
+            'Lando Norris': '#ff8700',
+            'Oscar Piastri': '#ff8700',
+            'George Russell': '#00d2be',
+            'Fernando Alonso': '#006f62',
+            'Sergio Perez': '#1e41ff'
+        };
+        
+        // Commentary templates
+        const COMMENTARY = {
+            start: [
+                "🚦 LIGHTS OUT AND AWAY WE GO!",
+                "🚦 It's lights out at {track}!",
+                "🚦 The race is ON! {track} Grand Prix underway!"
+            ],
+            earlyRace: [
+                "The pack is bunched up through the first corners!",
+                "Drivers jockeying for position in the opening laps!",
+                "{driver} looking aggressive early on!",
+                "The tyres are coming up to temperature now."
+            ],
+            overtake: [
+                "🔥 {driver1} OVERTAKES {driver2} for P{position}!",
+                "💨 {driver1} makes a move on {driver2}! Now P{position}!",
+                "⚡ Brilliant overtake! {driver1} passes {driver2}!",
+                "🎯 {driver1} dives down the inside on {driver2}!"
+            ],
+            battle: [
+                "⚔️ {driver1} and {driver2} are fighting hard for P{position}!",
+                "🔥 Incredible battle between {driver1} and {driver2}!",
+                "Wheel to wheel racing! {driver1} defending from {driver2}!"
+            ],
+            midRace: [
+                "We're at the halfway point of the race!",
+                "Tyre management becoming crucial now.",
+                "The gaps are starting to stabilize.",
+                "{driver} setting consistent lap times."
+            ],
+            lateRace: [
+                "Final laps approaching! This is tense!",
+                "Can {driver} hold on to P{position}?",
+                "The pressure is immense in these closing stages!",
+                "Every corner counts now!"
+            ],
+            playerGood: [
+                "🌟 YOU are driving brilliantly today!",
+                "🚀 Fantastic pace from YOUR car!",
+                "💪 YOU are making this look easy!",
+                "⭐ What a drive from YOU so far!"
+            ],
+            playerStruggle: [
+                "😰 YOU are struggling for pace here.",
+                "Your car seems to be losing grip...",
+                "Tough going for YOU at the moment.",
+                "YOU needs to find some extra speed!"
+            ],
+            rain: [
+                "🌧️ RAIN IS STARTING TO FALL!",
+                "💧 The track is getting wet! This changes everything!",
+                "☔ Conditions are tricky now with the rain!"
+            ],
+            finish: [
+                "🏁 CHEQUERED FLAG! The race is OVER!",
+                "🏁 And that's the finish at {track}!",
+                "🏁 What a race! Chequered flag is out!"
+            ]
+        };
+        
+        // Update tab state to include race tab
+        const originalUpdateTabState = updateTabState;
+        updateTabState = function() {
+            originalUpdateTabState();
+            
+            const partsUnlocked = carData ? carData.parts_unlocked : 0;
+            const raceTab = document.getElementById('tab-race');
+            const raceLockIcon = document.getElementById('race-lock-icon');
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const testMode = urlParams.get('test') === 'upgrades' || urlParams.get('test') === 'race';
+            
+            if (partsUnlocked >= 50 || testMode) {
+                raceTab.classList.remove('locked');
+                raceLockIcon.innerHTML = '<i class="fas fa-unlock"></i>';
+                raceLockIcon.style.color = '#10b981';
+                
+                document.getElementById('race-locked').style.display = 'none';
+                document.getElementById('race-unlocked').style.display = 'block';
+            } else {
+                raceTab.classList.add('locked');
+                raceLockIcon.innerHTML = '<i class="fas fa-lock"></i>';
+                raceLockIcon.style.color = '#ef4444';
+                
+                document.getElementById('parts-remaining-race').textContent = 50 - partsUnlocked;
+            }
+        };
+        
+        // Update switchTab to handle race tab
+        const originalSwitchTab = switchTab;
+        switchTab = function(tab) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const testMode = urlParams.get('test') === 'upgrades' || urlParams.get('test') === 'race';
+            
+            if (tab === 'race' && carData && carData.parts_unlocked < 50 && !testMode) {
+                return;
+            }
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('content-' + tab).classList.add('active');
+            
+            if (tab === 'upgrades') {
+                loadUpgrades();
+            } else if (tab === 'race') {
+                loadRaceData();
+            }
+        };
+        
+        // Load current race data
+        async function loadRaceData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const testMode = urlParams.get('test') === 'race' || urlParams.get('test') === 'upgrades';
+            const apiUrl = testMode ? '/api/racing-car/race/current?test=race' : '/api/racing-car/race/current';
+            
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                if (!data.has_race) {
+                    document.getElementById('race-info').innerHTML = '<p style="text-align: center; padding: 20px; color: white;">No race available right now</p>';
+                    return;
+                }
+                
+                currentRace = data.race;
+                
+                document.getElementById('race-number').textContent = currentRace.number;
+                document.getElementById('race-name').textContent = currentRace.name;
+                document.getElementById('race-flag').textContent = currentRace.flag;
+                document.getElementById('race-country-name').textContent = currentRace.country;
+                document.getElementById('race-description').textContent = currentRace.description;
+                
+                const rainChance = currentRace.rain_chance;
+                let weatherIcon = '☀️';
+                if (rainChance > 40) weatherIcon = '🌧️';
+                else if (rainChance > 20) weatherIcon = '⛅';
+                document.getElementById('race-weather').textContent = weatherIcon;
+                document.getElementById('race-weather').title = `${rainChance}% chance of rain`;
+                
+                document.getElementById('factor-aero').textContent = `🌬️ Aero: ${Math.round(currentRace.factors.aero * 100)}%`;
+                document.getElementById('factor-engine').textContent = `🔧 Engine: ${Math.round(currentRace.factors.engine * 100)}%`;
+                document.getElementById('factor-driver').textContent = `👤 Driver: ${Math.round(currentRace.factors.driver * 100)}%`;
+                
+                document.getElementById('your-performance').textContent = data.car_performance;
+                
+                const breakdown = data.performance_breakdown;
+                document.getElementById('stat-driver').textContent = breakdown.driver || 0;
+                document.getElementById('stat-aero').textContent = breakdown.aero || 0;
+                document.getElementById('stat-engine').textContent = breakdown.engine || 0;
+                document.getElementById('stat-tyres').textContent = breakdown.tyres || 0;
+                document.getElementById('stat-team').textContent = breakdown.team || 0;
+                
+                if (data.already_raced) {
+                    document.getElementById('pre-race').style.display = 'none';
+                    document.getElementById('already-raced').style.display = 'block';
+                    document.getElementById('previous-position').textContent = data.previous_result.position;
+                    document.getElementById('previous-points').textContent = data.previous_result.points;
+                } else {
+                    document.getElementById('pre-race').style.display = 'block';
+                    document.getElementById('already-raced').style.display = 'none';
+                }
+                
+                loadChampionship();
+                
+            } catch (error) {
+                console.error('Failed to load race data:', error);
+            }
+        }
+        
+        // Load championship standings
+        async function loadChampionship() {
+            try {
+                const response = await fetch('/api/racing-car/championship');
+                const data = await response.json();
+                
+                document.getElementById('champ-points').textContent = data.standing.total_points;
+                document.getElementById('champ-wins').textContent = data.standing.wins;
+                document.getElementById('champ-races').textContent = data.standing.races_entered;
+            } catch (error) {
+                console.error('Failed to load championship:', error);
+            }
+        }
+        
+        // Select tyre compound
+        function selectTyre(compound) {
+            selectedTyre = compound;
+            document.querySelectorAll('.tyre-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                btn.style.background = 'white';
+            });
+            const selected = document.getElementById('tyre-' + compound);
+            selected.classList.add('selected');
+            
+            const colors = { soft: '#fee2e2', medium: '#fef3c7', hard: '#f3f4f6' };
+            selected.style.background = colors[compound];
+        }
+        
+        // Start race - now with animation!
+        async function startRace() {
+            if (!currentRace && raceMode === 'official') return;
+            
+            const btn = document.getElementById('start-race-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
+            
+            // If practice mode, run practice race instead
+            if (raceMode === 'practice') {
+                const trackSelect = document.getElementById('practice-track-select-main');
+                const trackId = trackSelect ? trackSelect.value : 'random';
+                await runPracticeRace(trackId, selectedTyre);
+                return;
+            }
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const testMode = urlParams.get('test') === 'race' || urlParams.get('test') === 'upgrades';
+            
+            try {
+                const response = await fetch('/api/racing-car/race/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        race_id: currentRace.id,
+                        tyre_choice: selectedTyre,
+                        test_mode: testMode
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    raceResults = result;
+                    startRaceAnimation(result);
+                } else {
+                    showUpgradeToast(result.error || 'Race failed!', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-flag-checkered"></i> START RACE';
+                }
+            } catch (error) {
+                console.error('Race error:', error);
+                showUpgradeToast('Race failed!', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-flag-checkered"></i> START RACE';
+            }
+        }
+        
+        // Start the animated race sequence
+        function startRaceAnimation(result) {
+            const modal = document.getElementById('race-animation-modal');
+            modal.classList.add('show');
+            
+            // Set up race info - handle practice races
+            const isPractice = result.is_practice || false;
+            const raceName = result.race_name || currentRace?.name || 'Practice Race';
+            const raceNumber = result.race_number || currentRace?.number || 'P';
+            
+            document.getElementById('anim-race-round').textContent = isPractice ? 'PRACTICE' : raceNumber;
+            document.getElementById('anim-race-name').textContent = raceName;
+            document.getElementById('anim-weather-icon').textContent = result.is_wet ? '🌧️' : '☀️';
+            document.getElementById('anim-weather-text').textContent = result.is_wet ? 'WET' : 'DRY';
+            
+            // Add practice banner styling
+            const header = document.querySelector('#race-animation-modal .onboarding-header, #race-animation-modal > div > div:first-child');
+            if (isPractice) {
+                document.querySelector('#race-animation-modal > div > div:first-child').style.background = 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)';
+            } else {
+                document.querySelector('#race-animation-modal > div > div:first-child').style.background = 'linear-gradient(90deg, #e10600 0%, #ff4444 100%)';
+            }
+            
+            const totalLaps = 50;
+            document.getElementById('total-laps').textContent = totalLaps;
+            document.getElementById('current-lap').textContent = '0';
+            document.getElementById('race-progress-bar').style.width = '0%';
+            
+            // Initialize positions (scrambled start based on final results + randomness)
+            let currentPositions = result.results.map((r, i) => ({
+                ...r,
+                currentPos: i + 1,
+                finalPos: r.position,
+                progress: 0
+            }));
+            
+            // Shuffle starting positions a bit
+            currentPositions.sort(() => Math.random() - 0.5);
+            currentPositions.forEach((p, i) => p.currentPos = i + 1);
+            
+            // Create car markers on track
+            createCarMarkers(currentPositions);
+            
+            // Update standings display
+            updateLiveStandings(currentPositions);
+            
+            // Commentary
+            const trackName = currentRace.name.replace(' Grand Prix', '');
+            addCommentary(getRandomCommentary(COMMENTARY.start).replace('{track}', trackName));
+            
+            let currentLap = 0;
+            const raceInterval = 1200; // 1.2 seconds per lap update
+            
+            // Race animation loop
+            raceAnimationInterval = setInterval(() => {
+                currentLap++;
+                document.getElementById('current-lap').textContent = currentLap;
+                document.getElementById('race-progress-bar').style.width = `${(currentLap / totalLaps) * 100}%`;
+                
+                // Gradually move positions towards final positions
+                const progress = currentLap / totalLaps;
+                
+                currentPositions.forEach(driver => {
+                    // Calculate target position based on progress
+                    const positionDiff = driver.currentPos - driver.finalPos;
+                    
+                    // Random chance to move towards final position
+                    if (Math.random() < 0.3 + progress * 0.5) {
+                        if (positionDiff > 0 && Math.random() < 0.6) {
+                            // Need to move up
+                            const swapWith = currentPositions.find(d => d.currentPos === driver.currentPos - 1);
+                            if (swapWith) {
+                                // Overtake!
+                                swapWith.currentPos++;
+                                driver.currentPos--;
+                                
+                                if (Math.random() < 0.5) {
+                                    const commentary = getRandomCommentary(COMMENTARY.overtake)
+                                        .replace('{driver1}', driver.name)
+                                        .replace('{driver2}', swapWith.name)
+                                        .replace('{position}', driver.currentPos);
+                                    addCommentary(commentary);
+                                }
+                            }
+                        } else if (positionDiff < 0 && Math.random() < 0.4) {
+                            // Need to move down
+                            const swapWith = currentPositions.find(d => d.currentPos === driver.currentPos + 1);
+                            if (swapWith) {
+                                swapWith.currentPos--;
+                                driver.currentPos++;
+                            }
+                        }
+                    }
+                    
+                    driver.progress = progress;
+                });
+                
+                // Sort by current position
+                currentPositions.sort((a, b) => a.currentPos - b.currentPos);
+                
+                // Update visuals
+                updateCarPositions(currentPositions, currentLap);
+                updateLiveStandings(currentPositions);
+                
+                // Add commentary at key moments
+                if (currentLap === 5) {
+                    addCommentary(getRandomCommentary(COMMENTARY.earlyRace).replace('{driver}', currentPositions[0].name));
+                } else if (currentLap === 15) {
+                    const playerPos = currentPositions.find(p => p.is_player).currentPos;
+                    if (playerPos <= 5) {
+                        addCommentary(getRandomCommentary(COMMENTARY.playerGood));
+                    } else {
+                        addCommentary(getRandomCommentary(COMMENTARY.playerStruggle));
+                    }
+                } else if (currentLap === 25) {
+                    addCommentary(getRandomCommentary(COMMENTARY.midRace).replace('{driver}', currentPositions[0].name));
+                } else if (currentLap === 35 && result.is_wet) {
+                    addCommentary(getRandomCommentary(COMMENTARY.rain));
+                } else if (currentLap === 40) {
+                    const player = currentPositions.find(p => p.is_player);
+                    addCommentary(getRandomCommentary(COMMENTARY.lateRace)
+                        .replace('{driver}', player.name === 'YOU' ? 'YOU' : player.name)
+                        .replace('{position}', player.currentPos));
+                } else if (currentLap === 48) {
+                    addCommentary("🏁 FINAL LAP! Here we go!");
+                }
+                
+                // Race finished!
+                if (currentLap >= totalLaps) {
+                    clearInterval(raceAnimationInterval);
+                    document.getElementById('race-status').innerHTML = '🏁 RACE FINISHED';
+                    document.getElementById('race-status').style.color = '#ffd700';
+                    
+                    const trackName = currentRace.name.replace(' Grand Prix', '');
+                    addCommentary(getRandomCommentary(COMMENTARY.finish).replace('{track}', trackName));
+                    
+                    // Force final positions
+                    currentPositions.forEach(p => p.currentPos = p.finalPos);
+                    currentPositions.sort((a, b) => a.currentPos - b.currentPos);
+                    updateLiveStandings(currentPositions);
+                    updateCarPositions(currentPositions, totalLaps);
+                    
+                    // Show results after delay
+                    setTimeout(() => {
+                        document.getElementById('race-animation-modal').classList.remove('show');
+                        showRaceResults(result);
+                    }, 3000);
+                }
+                
+            }, raceInterval);
+        }
+        
+        // Create car markers on track SVG
+        function createCarMarkers(positions) {
+            const markersGroup = document.getElementById('car-markers');
+            markersGroup.innerHTML = '';
+            
+            positions.forEach((driver, i) => {
+                const color = DRIVER_COLORS[driver.name] || '#888';
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                marker.setAttribute('id', `car-${i}`);
+                marker.setAttribute('r', driver.is_player ? '8' : '5');
+                marker.setAttribute('fill', color);
+                marker.setAttribute('stroke', driver.is_player ? '#fff' : 'none');
+                marker.setAttribute('stroke-width', driver.is_player ? '2' : '0');
+                markersGroup.appendChild(marker);
+            });
+            
+            updateCarPositions(positions, 0);
+        }
+        
+        // Update car positions on track
+        function updateCarPositions(positions, lap) {
+            const totalLaps = 50;
+            const progress = lap / totalLaps;
+            
+            positions.forEach((driver, i) => {
+                const marker = document.getElementById(`car-${i}`);
+                if (!marker) return;
+                
+                // Calculate position on oval track
+                // Spread cars around the track based on position
+                const baseAngle = -Math.PI / 2; // Start at top
+                const positionOffset = (driver.currentPos - 1) * 0.15; // Spread based on position
+                const lapOffset = (progress * Math.PI * 2) % (Math.PI * 2);
+                const angle = baseAngle + lapOffset - positionOffset;
+                
+                const cx = 200;
+                const cy = 75;
+                const rx = 170;
+                const ry = 55;
+                
+                const x = cx + rx * Math.cos(angle);
+                const y = cy + ry * Math.sin(angle);
+                
+                marker.setAttribute('cx', x);
+                marker.setAttribute('cy', y);
+            });
+        }
+        
+        // Update live standings display
+        function updateLiveStandings(positions) {
+            const container = document.getElementById('live-standings');
+            
+            container.innerHTML = positions.slice(0, 10).map((driver, i) => {
+                const posChange = driver.startPos ? driver.startPos - driver.currentPos : 0;
+                let changeIndicator = '';
+                if (posChange > 0) changeIndicator = `<span style="color: #10b981;">▲${posChange}</span>`;
+                else if (posChange < 0) changeIndicator = `<span style="color: #ef4444;">▼${Math.abs(posChange)}</span>`;
+                
+                const bgColor = driver.is_player ? 'rgba(225, 6, 0, 0.3)' : 'transparent';
+                const textWeight = driver.is_player ? 'bold' : 'normal';
+                const driverColor = DRIVER_COLORS[driver.name] || '#888';
+                
+                return `
+                    <div style="display: flex; align-items: center; padding: 6px 10px; background: ${bgColor}; border-radius: 5px; ${driver.is_player ? 'border: 1px solid #e10600;' : ''}">
+                        <span style="width: 25px; font-family: 'Orbitron', sans-serif; color: ${i < 3 ? '#ffd700' : '#fff'};">${driver.currentPos}</span>
+                        <span style="width: 12px; height: 12px; background: ${driverColor}; border-radius: 50%; margin-right: 8px;"></span>
+                        <span style="flex: 1; font-weight: ${textWeight}; color: #fff;">${driver.flag || '🏁'} ${driver.name}</span>
+                        <span style="font-size: 0.8em;">${changeIndicator}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Add commentary to the box
+        function addCommentary(text) {
+            const box = document.getElementById('commentary-text');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            box.innerHTML = `<div style="margin-bottom: 8px;"><span style="color: #888; font-size: 0.8em;">${time}</span> ${text}</div>` + box.innerHTML;
+            
+            // Keep only last 5 messages
+            const messages = box.querySelectorAll('div');
+            if (messages.length > 5) {
+                messages[messages.length - 1].remove();
+            }
+        }
+        
+        // Get random commentary from array
+        function getRandomCommentary(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+        
+        // Show final race results
+        function showRaceResults(result) {
+            const modal = document.getElementById('race-results-modal');
+            const isPractice = result.is_practice || false;
+            
+            document.getElementById('results-weather').textContent = result.is_wet ? '🌧️ WET RACE' : '☀️ DRY RACE';
+            
+            // Update title for practice
+            const titleEl = document.getElementById('results-title');
+            if (isPractice) {
+                titleEl.textContent = '🎮 PRACTICE COMPLETE!';
+                titleEl.style.color = '#6366f1';
+            } else {
+                titleEl.textContent = 'RACE COMPLETE!';
+                titleEl.style.color = '#1e3a5f';
+            }
+            
+            const pos = result.player_position;
+            let posColor = '#666';
+            if (pos === 1) posColor = '#ffd700';
+            else if (pos === 2) posColor = '#c0c0c0';
+            else if (pos === 3) posColor = '#cd7f32';
+            else if (pos <= 10) posColor = '#10b981';
+            
+            document.getElementById('results-position').innerHTML = `<span style="color: ${posColor}">P${pos}</span>`;
+            document.getElementById('results-highlight').textContent = result.player_highlight;
+            
+            // Show points or practice message
+            const pointsSection = document.getElementById('results-points');
+            if (isPractice) {
+                pointsSection.innerHTML = `
+                    <span style="font-size: 1.1em; color: #6366f1;">
+                        <i class="fas fa-info-circle"></i> Practice - No points awarded
+                    </span>
+                    <div style="font-size: 0.85em; color: #888; margin-top: 5px;">
+                        Great for testing upgrade strategies!
+                    </div>
+                `;
+                pointsSection.style.background = '#ede9fe';
+            } else {
+                pointsSection.innerHTML = `<span style="font-size: 1.5em; font-weight: bold; color: #f59e0b;">+<span id="points-earned">${result.player_points}</span> pts</span>`;
+                pointsSection.style.background = '#fef3c7';
+            }
+            
+            const tableHtml = result.results.map((r, i) => `
+                <div style="display: flex; align-items: center; padding: 8px 12px; ${r.is_player ? 'background: #fef3c7;' : ''} ${i < result.results.length - 1 ? 'border-bottom: 1px solid #e5e7eb;' : ''}">
+                    <span style="width: 30px; font-weight: bold; ${r.position <= 3 ? 'color: #f59e0b;' : ''}">${r.position}</span>
+                    <span style="flex: 1; ${r.is_player ? 'font-weight: bold;' : ''}">${r.flag} ${r.name}</span>
+                    <span style="color: #666; font-size: 0.85em;">${isPractice ? '-' : '+' + r.points}</span>
+                </div>
+            `).join('');
+            document.getElementById('results-table').innerHTML = tableHtml;
+            
+            modal.classList.add('show');
+            
+            // Only reload race data for official races
+            if (!isPractice) {
+                setTimeout(() => {
+                    loadRaceData();
+                }, 500);
+            }
+        }
+        
+        // Close race results
+        function closeRaceResults() {
+            document.getElementById('race-results-modal').classList.remove('show');
+            
+            const btn = document.getElementById('start-race-btn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-flag-checkered"></i> START RACE';
+            
+            const practiceBtn = document.getElementById('start-practice-btn');
+            if (practiceBtn) {
+                practiceBtn.disabled = false;
+                practiceBtn.innerHTML = '<i class="fas fa-play"></i> START PRACTICE';
+            }
+        }
+        
+        // =============================================
+        // PRACTICE RACE FUNCTIONS
+        // =============================================
+        
+        // Set race mode (official vs practice)
+        function setRaceMode(mode) {
+            raceMode = mode;
+            
+            const officialBtn = document.getElementById('mode-official');
+            const practiceBtn = document.getElementById('mode-practice');
+            const practiceTrackContainer = document.getElementById('practice-track-container');
+            const raceBtn = document.getElementById('start-race-btn');
+            const setupTitle = document.getElementById('race-setup-title');
+            
+            if (mode === 'official') {
+                officialBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                officialBtn.style.color = 'white';
+                practiceBtn.style.background = 'white';
+                practiceBtn.style.color = '#6366f1';
+                practiceTrackContainer.style.display = 'none';
+                raceBtn.innerHTML = '<i class="fas fa-flag-checkered"></i> START RACE';
+                raceBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                setupTitle.textContent = 'Race Setup';
+            } else {
+                officialBtn.style.background = 'white';
+                officialBtn.style.color = '#10b981';
+                practiceBtn.style.background = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
+                practiceBtn.style.color = 'white';
+                practiceTrackContainer.style.display = 'block';
+                raceBtn.innerHTML = '<i class="fas fa-play"></i> START PRACTICE';
+                raceBtn.style.background = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
+                setupTitle.textContent = 'Practice Setup';
+                
+                // Load tracks if not already loaded
+                if (!practiceTracksLoaded) {
+                    loadPracticeTracks();
+                }
+            }
+        }
+        
+        // Load available tracks for practice
+        async function loadPracticeTracks() {
+            try {
+                const response = await fetch('/api/racing-car/tracks');
+                const data = await response.json();
+                
+                if (data.tracks && data.tracks.length > 0) {
+                    allTracks = data.tracks;
+                    
+                    // Populate both track selectors
+                    const selectors = ['practice-track-select', 'practice-track-select-main'];
+                    selectors.forEach(selectorId => {
+                        const select = document.getElementById(selectorId);
+                        if (select) {
+                            select.innerHTML = '<option value="random">🎲 Random Track</option>';
+                            data.tracks.forEach(track => {
+                                const option = document.createElement('option');
+                                option.value = track.id;
+                                option.textContent = `${track.flag} ${track.name}`;
+                                select.appendChild(option);
+                            });
+                        }
+                    });
+                    
+                    practiceTracksLoaded = true;
+                }
+            } catch (error) {
+                console.error('Failed to load tracks:', error);
+            }
+        }
+        
+        // Select practice tyre
+        function selectPracticeTyre(compound) {
+            selectedPracticeTyre = compound;
+            document.querySelectorAll('.practice-tyre-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                btn.style.background = 'white';
+            });
+            const selected = document.getElementById('practice-tyre-' + compound);
+            if (selected) {
+                selected.classList.add('selected');
+                const colors = { soft: '#fee2e2', medium: '#fef3c7', hard: '#f3f4f6' };
+                selected.style.background = colors[compound];
+            }
+        }
+        
+        // Start practice race from already-raced section
+        async function startPracticeRace() {
+            const trackSelect = document.getElementById('practice-track-select');
+            const trackId = trackSelect ? trackSelect.value : 'random';
+            
+            const btn = document.getElementById('start-practice-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            
+            await runPracticeRace(trackId, selectedPracticeTyre);
+        }
+        
+        // Run a practice race
+        async function runPracticeRace(trackId, tyreChoice) {
+            try {
+                const response = await fetch('/api/racing-car/race/practice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        track_id: trackId,
+                        tyre_choice: tyreChoice
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    raceResults = result;
+                    result.is_practice = true;
+                    startRaceAnimation(result);
+                } else {
+                    showUpgradeToast(result.error || 'Practice failed!', 'error');
+                    resetPracticeButtons();
+                }
+            } catch (error) {
+                console.error('Practice race error:', error);
+                showUpgradeToast('Practice race failed!', 'error');
+                resetPracticeButtons();
+            }
+        }
+        
+        // Reset practice buttons
+        function resetPracticeButtons() {
+            const btn = document.getElementById('start-practice-btn');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> START PRACTICE';
+            }
+            const raceBtn = document.getElementById('start-race-btn');
+            if (raceBtn) {
+                raceBtn.disabled = false;
+                if (raceMode === 'practice') {
+                    raceBtn.innerHTML = '<i class="fas fa-play"></i> START PRACTICE';
+                } else {
+                    raceBtn.innerHTML = '<i class="fas fa-flag-checkered"></i> START RACE';
+                }
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initScene();
+            loadCarData();
+            checkShowOnboarding();
+        });
+        
+        // =============================================
+        // ONBOARDING FUNCTIONS
+        // =============================================
+        
+        let currentStep = 0;
+        const totalSteps = 3;
+        
+        function checkShowOnboarding() {
+            const hideUntil = localStorage.getItem('racecar_onboarding_hide_until');
+            const urlParams = new URLSearchParams(window.location.search);
+            const forceShow = urlParams.get('onboarding') === 'show';
+            
+            if (forceShow) {
+                showOnboarding();
+                return;
+            }
+            
+            if (hideUntil) {
+                const hideDate = new Date(hideUntil);
+                if (new Date() < hideDate) {
+                    // Still within "don't show" period
+                    return;
+                }
+            }
+            
+            // Show onboarding
+            showOnboarding();
+        }
+        
+        function showOnboarding() {
+            document.getElementById('onboarding-modal').classList.add('show');
+            document.getElementById('quick-overview').style.display = 'block';
+            document.getElementById('deep-dive').classList.remove('show');
+        }
+        
+        function closeOnboarding() {
+            // Check if "don't show again" is checked
+            const checkbox1 = document.getElementById('dont-show-checkbox');
+            const checkbox2 = document.getElementById('dont-show-checkbox-deep');
+            
+            if (checkbox1.checked || checkbox2.checked) {
+                // Set to hide for 1 week
+                const hideUntil = new Date();
+                hideUntil.setDate(hideUntil.getDate() + 7);
+                localStorage.setItem('racecar_onboarding_hide_until', hideUntil.toISOString());
+            }
+            
+            document.getElementById('onboarding-modal').classList.remove('show');
+        }
+        
+        function showDeepDive(startStep = 0) {
+            currentStep = startStep;
+            document.getElementById('quick-overview').style.display = 'none';
+            document.getElementById('deep-dive').classList.add('show');
+            updateStepDisplay();
+        }
+        
+        function backToOverview() {
+            document.getElementById('quick-overview').style.display = 'block';
+            document.getElementById('deep-dive').classList.remove('show');
+        }
+        
+        function updateStepDisplay() {
+            // Update step dots
+            for (let i = 0; i < totalSteps; i++) {
+                const dot = document.getElementById(`step-dot-${i}`);
+                dot.classList.remove('active', 'completed');
+                if (i === currentStep) {
+                    dot.classList.add('active');
+                } else if (i < currentStep) {
+                    dot.classList.add('completed');
+                }
+            }
+            
+            // Update step content
+            for (let i = 0; i < totalSteps; i++) {
+                const content = document.getElementById(`step-${i}`);
+                content.classList.remove('active');
+                if (i === currentStep) {
+                    content.classList.add('active');
+                }
+            }
+            
+            // Update nav buttons
+            document.getElementById('btn-prev').disabled = currentStep === 0;
+            
+            if (currentStep === totalSteps - 1) {
+                document.getElementById('btn-next').innerHTML = '<i class="fas fa-check"></i> Got it!';
+            } else {
+                document.getElementById('btn-next').innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
+            }
+        }
+        
+        function nextStep() {
+            if (currentStep < totalSteps - 1) {
+                currentStep++;
+                updateStepDisplay();
+            } else {
+                closeOnboarding();
+            }
+        }
+        
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateStepDisplay();
+            } else {
+                backToOverview();
+            }
+        }
+    </script>
+</body>
+</html>

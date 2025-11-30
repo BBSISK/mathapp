@@ -192,8 +192,14 @@
                         <span id="duplicateInfo" class="ml-4 text-orange-600 hidden">
                             <i class="fas fa-copy mr-1"></i><span id="duplicateCount">0</span> duplicate groups
                         </span>
+                        <span id="invalidOptionsInfo" class="ml-4 text-red-600 hidden">
+                            <i class="fas fa-exclamation-triangle mr-1"></i><span id="invalidOptionsCount">0</span> with invalid options
+                        </span>
                     </div>
                     <div class="flex gap-2">
+                        <button onclick="findInvalidOptions()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" title="Find questions without 4 distinct options">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Find Invalid Options
+                        </button>
                         <button onclick="findDuplicateQuestions()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">
                             <i class="fas fa-copy mr-2"></i>Find Duplicates
                         </button>
@@ -217,6 +223,9 @@
                     <div class="flex items-center gap-3">
                         <button onclick="selectAllDuplicates()" id="selectDuplicatesBtn" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 hidden">
                             <i class="fas fa-copy mr-2"></i>Select All Duplicates
+                        </button>
+                        <button onclick="selectAllInvalidOptions()" id="selectInvalidOptionsBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 hidden">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Select Invalid Options
                         </button>
                         <button onclick="deleteSelectedQuestions()" id="bulkDeleteBtn" disabled class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
                             <i class="fas fa-trash mr-2"></i>Delete Selected
@@ -285,7 +294,8 @@
     </div>
 
     <!-- Question Edit Modal -->
-    <div id="editQuestionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 overflow-y-auto">
+    <div id="editQuestionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-y-auto">
+    <div class="min-h-screen px-4 py-8 flex items-start justify-center">
         <div class="bg-white rounded-lg p-8 max-w-4xl w-full mx-4 my-8">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold">Edit Question</h2>
@@ -456,6 +466,7 @@
             <!-- Edit History -->
             <div id="editHistory" class="mt-6"></div>
         </div>
+    </div>
     </div>
 
         <!-- User Analytics Tab (Main) -->
@@ -1816,6 +1827,236 @@
         </div>
         
         <div id="coordGeneratorResult" class="mt-4 hidden"></div>
+    </div>
+</div>
+
+<!-- Speed, Distance, Time Question Generator -->
+<div class="bg-white rounded-lg shadow-md p-6 mt-6">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-tachometer-alt text-orange-600 text-lg"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold">Speed, Distance & Time Generator</h3>
+                <p class="text-sm text-gray-500">Auto-generate SDT questions with journey maps and graphs</p>
+            </div>
+        </div>
+        <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
+            <i class="fas fa-magic mr-1"></i>Auto-Generator
+        </span>
+    </div>
+    
+    <div class="border-t pt-4">
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Question Types:</label>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="sdtTypeSpeed" checked class="rounded">
+                        <span class="text-sm">🏎️ Find Speed (S = D ÷ T)</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="sdtTypeDistance" checked class="rounded">
+                        <span class="text-sm">📏 Find Distance (D = S × T)</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="sdtTypeTime" checked class="rounded">
+                        <span class="text-sm">⏱️ Find Time (T = D ÷ S)</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="sdtTypeGraph" checked class="rounded">
+                        <span class="text-sm">📈 Graph Reading</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="sdtTypeComparison" checked class="rounded">
+                        <span class="text-sm">🏁 Comparison</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="sdtTypeConversion" checked class="rounded">
+                        <span class="text-sm">🔄 Unit Conversion</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Difficulties:</label>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="sdtDiffBeginner" checked class="rounded">
+                        <span class="text-sm text-green-600"><i class="fas fa-seedling mr-1"></i> Beginner</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="sdtDiffIntermediate" checked class="rounded">
+                        <span class="text-sm text-yellow-600"><i class="fas fa-chart-line mr-1"></i> Intermediate</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="sdtDiffAdvanced" checked class="rounded">
+                        <span class="text-sm text-red-600"><i class="fas fa-rocket mr-1"></i> Advanced</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Questions per type/difficulty:</label>
+            <div class="flex items-center gap-3">
+                <input type="number" id="sdtQuestionsPerType" value="3" min="1" max="10" class="w-20 border rounded-lg px-3 py-2 text-center">
+                <span class="text-sm text-gray-600">(3 × 6 types × 3 difficulties = 54 questions)</span>
+            </div>
+        </div>
+        
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+            <div class="text-sm font-medium text-gray-700 mb-2">Current Speed, Distance & Time Questions:</div>
+            <div class="flex gap-4 text-sm">
+                <span class="text-green-600"><i class="fas fa-seedling mr-1"></i> Beginner: <strong id="sdtCountBeginner">--</strong></span>
+                <span class="text-yellow-600"><i class="fas fa-chart-line mr-1"></i> Intermediate: <strong id="sdtCountIntermediate">--</strong></span>
+                <span class="text-red-600"><i class="fas fa-rocket mr-1"></i> Advanced: <strong id="sdtCountAdvanced">--</strong></span>
+            </div>
+        </div>
+        
+        <div class="mb-6 p-4 bg-orange-50 rounded-lg">
+            <div class="text-sm font-medium text-orange-700 mb-2"><i class="fas fa-info-circle mr-1"></i> Features:</div>
+            <div class="grid md:grid-cols-2 gap-2 text-sm text-orange-800">
+                <div>• 🗺️ Journey maps with Irish locations</div>
+                <div>• 🏎️ Speedometer displays</div>
+                <div>• 📈 Distance-time graphs</div>
+                <div>• 🏁 Race track comparisons</div>
+            </div>
+        </div>
+        
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                <i class="fas fa-info-circle mr-1"></i>Questions saved to "speed_distance_time" topic
+            </div>
+            <button onclick="generateSDTQuestions()" id="sdtGenerateBtn" class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 disabled:bg-gray-400">
+                <i class="fas fa-tachometer-alt mr-2"></i>Generate SDT Questions
+            </button>
+        </div>
+        
+        <div id="sdtGeneratorProgress" class="mt-4 hidden">
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <i class="fas fa-spinner fa-spin text-orange-600 mr-3"></i>
+                    <span>Generating SDT questions...</span>
+                </div>
+            </div>
+        </div>
+        <div id="sdtGeneratorResult" class="mt-4 hidden"></div>
+    </div>
+</div>
+
+<!-- Currency Question Generator -->
+<div class="bg-white rounded-lg shadow-md p-6 mt-6">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-euro-sign text-green-600 text-lg"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold">Currency Question Generator</h3>
+                <p class="text-sm text-gray-500">Auto-generate money questions with coin and shopping visuals</p>
+            </div>
+        </div>
+        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+            <i class="fas fa-magic mr-1"></i>Auto-Generator
+        </span>
+    </div>
+    
+    <div class="border-t pt-4">
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Question Types:</label>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="currencyTypeCents" checked class="rounded">
+                        <span class="text-sm">💶 Cents ↔ Euro</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="currencyTypeCoins" checked class="rounded">
+                        <span class="text-sm">🪙 Count Coins</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="currencyTypeChange" checked class="rounded">
+                        <span class="text-sm">🧾 Making Change</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="currencyTypeShopping" checked class="rounded">
+                        <span class="text-sm">🛒 Shopping Totals</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="currencyTypeExchange" checked class="rounded">
+                        <span class="text-sm">💱 Exchange Rates</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="currencyTypeDiscount" checked class="rounded">
+                        <span class="text-sm">🏷️ Discounts</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Difficulties:</label>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="currencyDiffBeginner" checked class="rounded">
+                        <span class="text-sm text-green-600"><i class="fas fa-seedling mr-1"></i> Beginner</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="currencyDiffIntermediate" checked class="rounded">
+                        <span class="text-sm text-yellow-600"><i class="fas fa-chart-line mr-1"></i> Intermediate</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="currencyDiffAdvanced" checked class="rounded">
+                        <span class="text-sm text-red-600"><i class="fas fa-rocket mr-1"></i> Advanced</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Questions per type/difficulty:</label>
+            <div class="flex items-center gap-3">
+                <input type="number" id="currencyQuestionsPerType" value="3" min="1" max="10" class="w-20 border rounded-lg px-3 py-2 text-center">
+                <span class="text-sm text-gray-600">(3 × 6 types × 3 difficulties = 54 questions)</span>
+            </div>
+        </div>
+        
+        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+            <div class="text-sm font-medium text-gray-700 mb-2">Current Currency Questions:</div>
+            <div class="flex gap-4 text-sm">
+                <span class="text-green-600"><i class="fas fa-seedling mr-1"></i> Beginner: <strong id="currencyCountBeginner">--</strong></span>
+                <span class="text-yellow-600"><i class="fas fa-chart-line mr-1"></i> Intermediate: <strong id="currencyCountIntermediate">--</strong></span>
+                <span class="text-red-600"><i class="fas fa-rocket mr-1"></i> Advanced: <strong id="currencyCountAdvanced">--</strong></span>
+            </div>
+        </div>
+        
+        <div class="mb-6 p-4 bg-green-50 rounded-lg">
+            <div class="text-sm font-medium text-green-700 mb-2"><i class="fas fa-info-circle mr-1"></i> Features:</div>
+            <div class="grid md:grid-cols-2 gap-2 text-sm text-green-800">
+                <div>• 🪙 Euro coin images</div>
+                <div>• 🛒 Shopping basket visuals</div>
+                <div>• 🧾 Change calculator displays</div>
+                <div>• 💱 Exchange rate boards</div>
+            </div>
+        </div>
+        
+        <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                <i class="fas fa-info-circle mr-1"></i>Questions saved to "currency" topic
+            </div>
+            <button onclick="generateCurrencyQuestions()" id="currencyGenerateBtn" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400">
+                <i class="fas fa-euro-sign mr-2"></i>Generate Currency Questions
+            </button>
+        </div>
+        
+        <div id="currencyGeneratorProgress" class="mt-4 hidden">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <i class="fas fa-spinner fa-spin text-green-600 mr-3"></i>
+                    <span>Generating currency questions...</span>
+                </div>
+            </div>
+        </div>
+        <div id="currencyGeneratorResult" class="mt-4 hidden"></div>
     </div>
 </div>
 
@@ -4267,6 +4508,199 @@ function updateRestrictedTeachersCount() {
             });
         }
 
+        // ==================== INVALID OPTIONS FINDER FUNCTIONS ====================
+        
+        async function findInvalidOptions() {
+            const topic = document.getElementById('filterTopic').value;
+            const difficulty = document.getElementById('filterDifficulty').value;
+            const container = document.getElementById('questionsList');
+            const bulkBar = document.getElementById('bulkActionsBar');
+            const invalidOptionsInfo = document.getElementById('invalidOptionsInfo');
+            const invalidOptionsCount = document.getElementById('invalidOptionsCount');
+            const duplicateInfo = document.getElementById('duplicateInfo');
+            
+            // Hide duplicate info
+            duplicateInfo.classList.add('hidden');
+            document.getElementById('selectDuplicatesBtn').classList.add('hidden');
+            
+            // Show loading state
+            container.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-red-500 mb-3"></i>
+                    <p class="text-gray-600">Scanning for questions with invalid options...</p>
+                </div>
+            `;
+            
+            try {
+                // Load questions
+                let url = '/api/admin/all-questions?';
+                if (topic) url += `topic=${topic}&`;
+                if (difficulty) url += `difficulty=${difficulty}`;
+                
+                const response = await fetch(url);
+                const questions = await response.json();
+                
+                // Find questions with non-distinct options
+                const invalidQuestions = questions.filter(q => {
+                    if (!q.options || q.options.length !== 4) return true; // Missing options
+                    
+                    // Normalize options for comparison (trim, lowercase)
+                    const normalized = q.options.map(opt => 
+                        (opt || '').toString().trim().toLowerCase()
+                    );
+                    
+                    // Check for empty options
+                    if (normalized.some(opt => opt === '')) return true;
+                    
+                    // Check for duplicates
+                    const uniqueOptions = new Set(normalized);
+                    return uniqueOptions.size !== 4;
+                });
+                
+                if (invalidQuestions.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-green-600 py-8">
+                            <i class="fas fa-check-circle text-4xl mb-3"></i>
+                            <p class="font-semibold">All questions have 4 distinct options!</p>
+                            <p class="text-gray-500 mt-2">Scanned ${questions.length} questions</p>
+                        </div>
+                    `;
+                    invalidOptionsInfo.classList.add('hidden');
+                    bulkBar.classList.add('hidden');
+                    return;
+                }
+                
+                // Show invalid options info
+                invalidOptionsInfo.classList.remove('hidden');
+                invalidOptionsCount.textContent = invalidQuestions.length;
+                
+                // Show bulk actions bar
+                bulkBar.classList.remove('hidden');
+                document.getElementById('selectInvalidOptionsBtn').classList.remove('hidden');
+                clearSelection();
+                
+                // Update question count
+                document.getElementById('questionCount').textContent = invalidQuestions.length;
+                
+                // Store for selection
+                window.invalidOptionsQuestionIds = invalidQuestions.map(q => q.id);
+                
+                // Display invalid questions with highlighting
+                const difficultyColors = {
+                    'beginner': 'bg-green-100 text-green-800',
+                    'intermediate': 'bg-yellow-100 text-yellow-800',
+                    'advanced': 'bg-red-100 text-red-800'
+                };
+                
+                container.innerHTML = `
+                    <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4 mb-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-exclamation-triangle text-red-500"></i>
+                            <span class="font-bold text-red-700">Questions with Invalid Options</span>
+                            <span class="bg-red-200 text-red-800 px-2 py-1 rounded text-sm">${invalidQuestions.length} found</span>
+                        </div>
+                        <p class="text-sm text-red-600 mb-4">These questions have duplicate, empty, or missing options and need to be fixed.</p>
+                    </div>
+                ` + invalidQuestions.map(q => {
+                    // Identify which options are problematic
+                    const normalized = q.options.map(opt => (opt || '').toString().trim().toLowerCase());
+                    const optionIssues = q.options.map((opt, i) => {
+                        const optNorm = (opt || '').toString().trim().toLowerCase();
+                        if (optNorm === '') return 'empty';
+                        // Check if this option appears elsewhere
+                        const firstIndex = normalized.indexOf(optNorm);
+                        if (firstIndex !== i) return 'duplicate';
+                        return 'ok';
+                    });
+                    
+                    return `
+                        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow question-card border-2 border-red-300" data-question-id="${q.id}" data-invalid-options="true">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-start gap-3 flex-1">
+                                    <label class="flex items-center cursor-pointer mt-1">
+                                        <input type="checkbox" class="question-checkbox w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500" 
+                                               data-question-id="${q.id}" onchange="updateSelectionCount()">
+                                    </label>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-2 flex-wrap">
+                                            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i>Invalid Options
+                                            </span>
+                                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                                ${q.topic}
+                                            </span>
+                                            <span class="${difficultyColors[q.difficulty]} px-3 py-1 rounded-full text-sm font-semibold">
+                                                ${q.difficulty}
+                                            </span>
+                                            <span class="text-gray-500 text-sm">ID: ${q.id}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onclick="openQuestionEditor(${q.id})" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                    <i class="fas fa-edit mr-2"></i>Edit
+                                </button>
+                            </div>
+
+                            <div class="mb-4 ml-8">
+                                <div class="font-semibold text-gray-700 mb-2">Question:</div>
+                                <div class="text-gray-800 bg-gray-50 p-3 rounded-lg">${q.question}</div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 mb-4 ml-8">
+                                ${q.options.map((opt, i) => {
+                                    const issue = optionIssues[i];
+                                    const isCorrect = i === q.correct;
+                                    let bgClass = 'bg-gray-50';
+                                    let borderClass = '';
+                                    let icon = '';
+                                    
+                                    if (issue === 'empty') {
+                                        bgClass = 'bg-red-100';
+                                        borderClass = 'border-2 border-red-500';
+                                        icon = '<i class="fas fa-times-circle text-red-500 ml-auto" title="Empty option"></i>';
+                                    } else if (issue === 'duplicate') {
+                                        bgClass = 'bg-orange-100';
+                                        borderClass = 'border-2 border-orange-500';
+                                        icon = '<i class="fas fa-copy text-orange-500 ml-auto" title="Duplicate option"></i>';
+                                    } else if (isCorrect) {
+                                        bgClass = 'bg-green-50';
+                                        borderClass = 'border-2 border-green-500';
+                                        icon = '<i class="fas fa-check text-green-600 ml-auto"></i>';
+                                    }
+                                    
+                                    return `
+                                        <div class="flex items-center gap-2 p-2 rounded ${bgClass} ${borderClass}">
+                                            <span class="font-semibold ${isCorrect ? 'text-green-700' : 'text-gray-600'}">
+                                                ${String.fromCharCode(65 + i)})
+                                            </span>
+                                            <span class="${isCorrect ? 'text-green-700 font-semibold' : 'text-gray-700'}">
+                                                ${opt || '<em class="text-red-500">(empty)</em>'}
+                                            </span>
+                                            ${icon}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                container.innerHTML = `<div class="text-center text-red-500 py-8"><i class="fas fa-exclamation-circle text-4xl mb-3"></i><p>Error: ${error.message}</p></div>`;
+            }
+        }
+        
+        function selectAllInvalidOptions() {
+            // Select all questions with invalid options
+            if (window.invalidOptionsQuestionIds) {
+                window.invalidOptionsQuestionIds.forEach(id => {
+                    const checkbox = document.querySelector(`.question-checkbox[data-question-id="${id}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+                updateSelectionCount();
+            }
+        }
+
         // ==================== IMAGE HANDLING FUNCTIONS ====================
         
         function previewQuestionImage(event) {
@@ -5139,6 +5573,8 @@ function updateRestrictedTeachersCount() {
             loadGeometryQuestionCounts();
             loadPatternsQuestionCounts();
             loadCoordinateQuestionCounts();
+            loadSDTQuestionCounts();
+            loadCurrencyQuestionCounts();
         }
         
         // =================================================================
@@ -5698,6 +6134,169 @@ function updateRestrictedTeachersCount() {
                 resultDiv.classList.remove('hidden');
             }
         }
+
+        // =================================================================
+        // SPEED, DISTANCE, TIME QUESTION GENERATOR FUNCTIONS
+        // =================================================================
+        
+        async function loadSDTQuestionCounts() {
+            try {
+                const response = await fetch('/api/admin/sdt-generator-status');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('sdtCountBeginner').textContent = data.counts?.beginner || 0;
+                    document.getElementById('sdtCountIntermediate').textContent = data.counts?.intermediate || 0;
+                    document.getElementById('sdtCountAdvanced').textContent = data.counts?.advanced || 0;
+                }
+            } catch (err) {
+                console.log('Could not load SDT counts:', err);
+            }
+        }
+        
+        async function generateSDTQuestions() {
+            const questionTypes = [];
+            if (document.getElementById('sdtTypeSpeed').checked) questionTypes.push('find_speed');
+            if (document.getElementById('sdtTypeDistance').checked) questionTypes.push('find_distance');
+            if (document.getElementById('sdtTypeTime').checked) questionTypes.push('find_time');
+            if (document.getElementById('sdtTypeGraph').checked) questionTypes.push('graph_reading');
+            if (document.getElementById('sdtTypeComparison').checked) questionTypes.push('comparison');
+            if (document.getElementById('sdtTypeConversion').checked) questionTypes.push('unit_conversion');
+            
+            const difficulties = [];
+            if (document.getElementById('sdtDiffBeginner').checked) difficulties.push('beginner');
+            if (document.getElementById('sdtDiffIntermediate').checked) difficulties.push('intermediate');
+            if (document.getElementById('sdtDiffAdvanced').checked) difficulties.push('advanced');
+            
+            const questionsPerType = parseInt(document.getElementById('sdtQuestionsPerType').value) || 3;
+            
+            if (questionTypes.length === 0 || difficulties.length === 0) {
+                alert('Please select at least one question type and difficulty');
+                return;
+            }
+            
+            const btn = document.getElementById('sdtGenerateBtn');
+            const progress = document.getElementById('sdtGeneratorProgress');
+            const result = document.getElementById('sdtGeneratorResult');
+            
+            btn.disabled = true;
+            progress.classList.remove('hidden');
+            result.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/admin/generate-sdt-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question_types: questionTypes, difficulties, questions_per_type: questionsPerType })
+                });
+                
+                const data = await response.json();
+                progress.classList.add('hidden');
+                btn.disabled = false;
+                
+                if (data.success) {
+                    result.innerHTML = `<div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p class="text-green-700"><i class="fas fa-check-circle mr-2"></i>${data.message}</p>
+                        <p class="text-sm text-green-600 mt-2">Beginner: ${data.counts.beginner} | Intermediate: ${data.counts.intermediate} | Advanced: ${data.counts.advanced}</p>
+                    </div>`;
+                    loadSDTQuestionCounts();
+                    loadTopicsAdmin();
+                } else {
+                    result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p class="text-red-700"><i class="fas fa-exclamation-circle mr-2"></i>${data.error || 'Error occurred'}</p>
+                    </div>`;
+                }
+                result.classList.remove('hidden');
+            } catch (error) {
+                progress.classList.add('hidden');
+                btn.disabled = false;
+                result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p class="text-red-700">Network error: ${error.message}</p>
+                </div>`;
+                result.classList.remove('hidden');
+            }
+        }
+        
+        // =================================================================
+        // CURRENCY QUESTION GENERATOR FUNCTIONS
+        // =================================================================
+        
+        async function loadCurrencyQuestionCounts() {
+            try {
+                const response = await fetch('/api/admin/currency-generator-status');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('currencyCountBeginner').textContent = data.counts?.beginner || 0;
+                    document.getElementById('currencyCountIntermediate').textContent = data.counts?.intermediate || 0;
+                    document.getElementById('currencyCountAdvanced').textContent = data.counts?.advanced || 0;
+                }
+            } catch (err) {
+                console.log('Could not load currency counts:', err);
+            }
+        }
+        
+        async function generateCurrencyQuestions() {
+            const questionTypes = [];
+            if (document.getElementById('currencyTypeCents').checked) questionTypes.push('cents_euro');
+            if (document.getElementById('currencyTypeCoins').checked) questionTypes.push('count_coins');
+            if (document.getElementById('currencyTypeChange').checked) questionTypes.push('making_change');
+            if (document.getElementById('currencyTypeShopping').checked) questionTypes.push('shopping_total');
+            if (document.getElementById('currencyTypeExchange').checked) questionTypes.push('exchange_rate');
+            if (document.getElementById('currencyTypeDiscount').checked) questionTypes.push('discount');
+            
+            const difficulties = [];
+            if (document.getElementById('currencyDiffBeginner').checked) difficulties.push('beginner');
+            if (document.getElementById('currencyDiffIntermediate').checked) difficulties.push('intermediate');
+            if (document.getElementById('currencyDiffAdvanced').checked) difficulties.push('advanced');
+            
+            const questionsPerType = parseInt(document.getElementById('currencyQuestionsPerType').value) || 3;
+            
+            if (questionTypes.length === 0 || difficulties.length === 0) {
+                alert('Please select at least one question type and difficulty');
+                return;
+            }
+            
+            const btn = document.getElementById('currencyGenerateBtn');
+            const progress = document.getElementById('currencyGeneratorProgress');
+            const result = document.getElementById('currencyGeneratorResult');
+            
+            btn.disabled = true;
+            progress.classList.remove('hidden');
+            result.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/admin/generate-currency-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question_types: questionTypes, difficulties, questions_per_type: questionsPerType })
+                });
+                
+                const data = await response.json();
+                progress.classList.add('hidden');
+                btn.disabled = false;
+                
+                if (data.success) {
+                    result.innerHTML = `<div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p class="text-green-700"><i class="fas fa-check-circle mr-2"></i>${data.message}</p>
+                        <p class="text-sm text-green-600 mt-2">Beginner: ${data.counts.beginner} | Intermediate: ${data.counts.intermediate} | Advanced: ${data.counts.advanced}</p>
+                    </div>`;
+                    loadCurrencyQuestionCounts();
+                    loadTopicsAdmin();
+                } else {
+                    result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p class="text-red-700"><i class="fas fa-exclamation-circle mr-2"></i>${data.error || 'Error occurred'}</p>
+                    </div>`;
+                }
+                result.classList.remove('hidden');
+            } catch (error) {
+                progress.classList.add('hidden');
+                btn.disabled = false;
+                result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p class="text-red-700">Network error: ${error.message}</p>
+                </div>`;
+                result.classList.remove('hidden');
+            }
+        }
+
         
         // =================================================================
         // USER ANALYTICS FUNCTIONS

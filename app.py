@@ -3799,6 +3799,101 @@ def get_bonus_categories():
     } for cat, count in categories])
 
 
+@app.route('/api/bonus-question/archive')
+@login_required
+def get_bonus_question_archive():
+    """Get user's bonus question history for the archive"""
+    from sqlalchemy import text
+    
+    user_id = session.get('user_id') if not session.get('is_guest') else None
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
+        return jsonify({'error': 'Not authenticated', 'attempts': [], 'total': 0, 'correct': 0})
+    
+    try:
+        # Build query based on user type
+        if user_id:
+            query = text("""
+                SELECT 
+                    bqa.id,
+                    bqa.question_id,
+                    bqa.selected_answer,
+                    bqa.is_correct,
+                    bqa.points_earned,
+                    bqa.quiz_topic,
+                    bqa.quiz_score,
+                    bqa.attempted_at,
+                    bq.correct_answer,
+                    bq.image_url,
+                    bq.fun_fact,
+                    bq.era_or_region,
+                    bq.category
+                FROM bonus_question_attempts bqa
+                JOIN bonus_questions bq ON bqa.question_id = bq.id
+                WHERE bqa.user_id = :user_id
+                ORDER BY bqa.attempted_at DESC
+                LIMIT 100
+            """)
+            result = db.session.execute(query, {'user_id': user_id}).fetchall()
+        else:
+            query = text("""
+                SELECT 
+                    bqa.id,
+                    bqa.question_id,
+                    bqa.selected_answer,
+                    bqa.is_correct,
+                    bqa.points_earned,
+                    bqa.quiz_topic,
+                    bqa.quiz_score,
+                    bqa.attempted_at,
+                    bq.correct_answer,
+                    bq.image_url,
+                    bq.fun_fact,
+                    bq.era_or_region,
+                    bq.category
+                FROM bonus_question_attempts bqa
+                JOIN bonus_questions bq ON bqa.question_id = bq.id
+                WHERE bqa.guest_code = :guest_code
+                ORDER BY bqa.attempted_at DESC
+                LIMIT 100
+            """)
+            result = db.session.execute(query, {'guest_code': guest_code}).fetchall()
+        
+        attempts = []
+        total_correct = 0
+        
+        for row in result:
+            if row.is_correct:
+                total_correct += 1
+            
+            attempts.append({
+                'id': row.id,
+                'question_id': row.question_id,
+                'selected_answer': row.selected_answer,
+                'is_correct': bool(row.is_correct),
+                'points_earned': row.points_earned,
+                'quiz_topic': row.quiz_topic,
+                'quiz_score': row.quiz_score,
+                'attempted_at': row.attempted_at.isoformat() if row.attempted_at else None,
+                'correct_answer': row.correct_answer,
+                'image_url': row.image_url,
+                'fun_fact': row.fun_fact,
+                'era_or_region': row.era_or_region,
+                'category': row.category
+            })
+        
+        return jsonify({
+            'attempts': attempts,
+            'total': len(attempts),
+            'correct': total_correct
+        })
+        
+    except Exception as e:
+        print(f"Error getting bonus question archive: {e}")
+        return jsonify({'error': str(e), 'attempts': [], 'total': 0, 'correct': 0})
+
+
 @app.route('/student/badges')
 @login_required
 @approved_required
@@ -8825,6 +8920,57 @@ except Exception as e:
     print(f"Warning: Could not load coordinate generator: {e}")
 
 
+# ==================== SPEED, DISTANCE, TIME QUESTION GENERATOR MODULE ====================
+# Import and register SDT question generator routes
+try:
+    from speed_distance_time_generator import register_sdt_generator_routes
+    
+    # Create admin_required_api decorator for the SDT generator
+    def admin_required_api_sdt(f):
+        from functools import wraps
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                return jsonify({'error': 'Login required'}), 401
+            user = User.query.get(session['user_id'])
+            if not user or user.role != 'admin':
+                return jsonify({'error': 'Admin access required'}), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    register_sdt_generator_routes(app, db, Question, admin_required_api_sdt)
+    print("✓ Speed, Distance, Time question generator loaded successfully")
+except ImportError:
+    print("Warning: speed_distance_time_generator.py not found - SDT generator disabled")
+except Exception as e:
+    print(f"Warning: Could not load SDT generator: {e}")
+
+# ==================== CURRENCY QUESTION GENERATOR MODULE ====================
+# Import and register currency question generator routes
+try:
+    from currency_question_generator import register_currency_generator_routes
+    
+    # Create admin_required_api decorator for the currency generator
+    def admin_required_api_currency(f):
+        from functools import wraps
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                return jsonify({'error': 'Login required'}), 401
+            user = User.query.get(session['user_id'])
+            if not user or user.role != 'admin':
+                return jsonify({'error': 'Admin access required'}), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    register_currency_generator_routes(app, db, Question, admin_required_api_currency)
+    print("✓ Currency question generator loaded successfully")
+except ImportError:
+    print("Warning: currency_question_generator.py not found - currency generator disabled")
+except Exception as e:
+    print(f"Warning: Could not load currency generator: {e}")
+
+
 
 # =============================================================================
 # PHASE 4: RAFFLE SYSTEM (Student & Admin Routes)
@@ -10686,6 +10832,1126 @@ def admin_delete_question_image():
         return jsonify({'success': True, 'message': 'Image deleted'})
     else:
         return jsonify({'success': False, 'error': 'Image not found'}), 404
+
+
+
+
+# =====================================================
+# RACING CAR CHALLENGE ROUTES
+# =====================================================
+
+@app.route('/racing-car')
+@guest_or_login_required
+def racing_car_page():
+    """Racing Car 3D viewer page"""
+    return render_template('racing_car.html')
+
+
+@app.route('/api/racing-car/status')
+@guest_or_login_required
+def get_racing_car_status():
+    """Get the user's racing car status including parts unlocked, points, next part"""
+    from sqlalchemy import text
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    # Get current points
+    current_points = 0
+    if guest_code:
+        result = db.session.execute(text(
+            "SELECT total_score FROM guest_users WHERE guest_code = :code"
+        ), {"code": guest_code}).fetchone()
+        current_points = result[0] if result else 0
+    elif user_id:
+        stats = UserStats.query.filter_by(user_id=user_id).first()
+        current_points = stats.total_points if stats else 0
+    
+    # Get or create user's race car record
+    try:
+        if guest_code:
+            car = db.session.execute(text(
+                "SELECT id, user_id, guest_code, parts_unlocked, highest_points_seen, car_name, primary_color, secondary_color FROM user_race_cars WHERE guest_code = :code"
+            ), {"code": guest_code}).fetchone()
+            
+            if not car:
+                db.session.execute(text("""
+                    INSERT INTO user_race_cars (guest_code, parts_unlocked, highest_points_seen, created_at, updated_at)
+                    VALUES (:code, 0, :points, :now, :now)
+                """), {"code": guest_code, "points": current_points, "now": datetime.utcnow()})
+                db.session.commit()
+                car = db.session.execute(text(
+                    "SELECT id, user_id, guest_code, parts_unlocked, highest_points_seen, car_name, primary_color, secondary_color FROM user_race_cars WHERE guest_code = :code"
+                ), {"code": guest_code}).fetchone()
+        else:
+            car = db.session.execute(text(
+                "SELECT id, user_id, guest_code, parts_unlocked, highest_points_seen, car_name, primary_color, secondary_color FROM user_race_cars WHERE user_id = :uid"
+            ), {"uid": user_id}).fetchone()
+            
+            if not car:
+                db.session.execute(text("""
+                    INSERT INTO user_race_cars (user_id, parts_unlocked, highest_points_seen, created_at, updated_at)
+                    VALUES (:uid, 0, :points, :now, :now)
+                """), {"uid": user_id, "points": current_points, "now": datetime.utcnow()})
+                db.session.commit()
+                car = db.session.execute(text(
+                    "SELECT id, user_id, guest_code, parts_unlocked, highest_points_seen, car_name, primary_color, secondary_color FROM user_race_cars WHERE user_id = :uid"
+                ), {"uid": user_id}).fetchone()
+    except Exception as e:
+        return jsonify({'error': f'Database error: {str(e)}', 'parts_unlocked': 0, 'current_points': current_points, 'all_parts': []})
+    
+    car_columns = ['id', 'user_id', 'guest_code', 'parts_unlocked', 'highest_points_seen', 'car_name', 'primary_color', 'secondary_color']
+    car_dict = dict(zip(car_columns, car)) if car else {}
+    
+    # Calculate parts that should be unlocked (1 part per 1000 points)
+    parts_should_have = min(50, current_points // 1000)
+    current_parts = car_dict.get('parts_unlocked', 0)
+    
+    # Check for new unlocks
+    new_unlocks = []
+    if parts_should_have > current_parts:
+        try:
+            new_parts = db.session.execute(text("""
+                SELECT part_number, part_name, category, description, points_required
+                FROM car_parts
+                WHERE part_number > :current AND part_number <= :new
+                ORDER BY part_number
+            """), {"current": current_parts, "new": parts_should_have}).fetchall()
+            
+            for part in new_parts:
+                new_unlocks.append({
+                    'part_number': part[0],
+                    'part_name': part[1],
+                    'category': part[2],
+                    'description': part[3],
+                    'points_required': part[4]
+                })
+                
+                # Record unlock
+                try:
+                    if guest_code:
+                        db.session.execute(text("""
+                            INSERT INTO car_part_unlocks (guest_code, part_id, unlocked_at, points_at_unlock)
+                            SELECT :code, id, :now, :points FROM car_parts WHERE part_number = :pnum
+                        """), {"code": guest_code, "now": datetime.utcnow(), "points": current_points, "pnum": part[0]})
+                    else:
+                        db.session.execute(text("""
+                            INSERT INTO car_part_unlocks (user_id, part_id, unlocked_at, points_at_unlock)
+                            SELECT :uid, id, :now, :points FROM car_parts WHERE part_number = :pnum
+                        """), {"uid": user_id, "now": datetime.utcnow(), "points": current_points, "pnum": part[0]})
+                except:
+                    pass
+            
+            # Update car record
+            if guest_code:
+                db.session.execute(text("""
+                    UPDATE user_race_cars 
+                    SET parts_unlocked = :parts, highest_points_seen = :points, updated_at = :now
+                    WHERE guest_code = :code
+                """), {"parts": parts_should_have, "points": current_points, "now": datetime.utcnow(), "code": guest_code})
+            else:
+                db.session.execute(text("""
+                    UPDATE user_race_cars 
+                    SET parts_unlocked = :parts, highest_points_seen = :points, updated_at = :now
+                    WHERE user_id = :uid
+                """), {"parts": parts_should_have, "points": current_points, "now": datetime.utcnow(), "uid": user_id})
+            
+            db.session.commit()
+            current_parts = parts_should_have
+        except Exception as e:
+            print(f"Error updating parts: {e}")
+    
+    # Get next part
+    next_part = None
+    if current_parts < 50:
+        try:
+            next_result = db.session.execute(text("""
+                SELECT part_number, part_name, category, description, points_required
+                FROM car_parts WHERE part_number = :next_num
+            """), {"next_num": current_parts + 1}).fetchone()
+            
+            if next_result:
+                next_part = {
+                    'part_number': next_result[0],
+                    'part_name': next_result[1],
+                    'category': next_result[2],
+                    'description': next_result[3],
+                    'points_required': next_result[4]
+                }
+        except:
+            pass
+    
+    # Get all parts
+    all_parts_list = []
+    try:
+        all_parts = db.session.execute(text("""
+            SELECT part_number, part_name, category, description, points_required
+            FROM car_parts ORDER BY part_number
+        """)).fetchall()
+        
+        all_parts_list = [{
+            'part_number': p[0],
+            'part_name': p[1],
+            'category': p[2],
+            'description': p[3],
+            'points_required': p[4]
+        } for p in all_parts]
+    except:
+        pass
+    
+    return jsonify({
+        'parts_unlocked': current_parts,
+        'current_points': current_points,
+        'car_name': car_dict.get('car_name') or 'Your F1 Car',
+        'primary_color': car_dict.get('primary_color', '#e10600'),
+        'secondary_color': car_dict.get('secondary_color', '#1e1e1e'),
+        'next_part': next_part,
+        'new_unlocks': new_unlocks,
+        'all_parts': all_parts_list,
+        'completion_percentage': round((current_parts / 50) * 100, 1)
+    })
+
+
+@app.route('/api/racing-car/parts')
+@guest_or_login_required
+def get_racing_car_parts():
+    """Get the full catalog of car parts"""
+    from sqlalchemy import text
+    
+    try:
+        parts = db.session.execute(text("""
+            SELECT part_number, part_name, category, description, points_required, model_component
+            FROM car_parts ORDER BY part_number
+        """)).fetchall()
+        
+        return jsonify({
+            'parts': [{
+                'part_number': p[0],
+                'part_name': p[1],
+                'category': p[2],
+                'description': p[3],
+                'points_required': p[4],
+                'model_component': p[5]
+            } for p in parts]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e), 'parts': []})
+
+
+@app.route('/api/racing-car/customize', methods=['POST'])
+@guest_or_login_required
+def customize_racing_car():
+    """Update car name and colors"""
+    from sqlalchemy import text
+    import re
+    
+    data = request.get_json()
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    car_name = data.get('car_name', '')[:100]
+    primary_color = data.get('primary_color', '#e10600')
+    secondary_color = data.get('secondary_color', '#1e1e1e')
+    
+    hex_pattern = re.compile(r'^#[0-9A-Fa-f]{6}$')
+    if not hex_pattern.match(primary_color):
+        primary_color = '#e10600'
+    if not hex_pattern.match(secondary_color):
+        secondary_color = '#1e1e1e'
+    
+    try:
+        if guest_code:
+            db.session.execute(text("""
+                UPDATE user_race_cars 
+                SET car_name = :name, primary_color = :pc, secondary_color = :sc, updated_at = :now
+                WHERE guest_code = :code
+            """), {"name": car_name, "pc": primary_color, "sc": secondary_color, 
+                   "now": datetime.utcnow(), "code": guest_code})
+        else:
+            db.session.execute(text("""
+                UPDATE user_race_cars 
+                SET car_name = :name, primary_color = :pc, secondary_color = :sc, updated_at = :now
+                WHERE user_id = :uid
+            """), {"name": car_name, "pc": primary_color, "sc": secondary_color,
+                   "now": datetime.utcnow(), "uid": user_id})
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Car customization saved'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# =====================================================
+# END RACING CAR ROUTES
+
+# =====================================================
+# RACING CAR PHASE 2 - UPGRADE SHOP ROUTES
+# =====================================================
+
+UPGRADE_BUDGET = 20000  # Maximum points user can spend on upgrades
+
+
+@app.route('/api/racing-car/upgrades')
+@guest_or_login_required
+def get_racing_car_upgrades():
+    """Get all available upgrades and user's current purchases"""
+    from sqlalchemy import text
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    # TEST MODE: Allow ?test=upgrades to bypass car completion check
+    test_mode = request.args.get('test') == 'upgrades'
+    
+    # Check if car is complete (50 parts)
+    try:
+        if guest_code:
+            car = db.session.execute(text(
+                "SELECT parts_unlocked, upgrade_budget_used FROM user_race_cars WHERE guest_code = :code"
+            ), {"code": guest_code}).fetchone()
+        else:
+            car = db.session.execute(text(
+                "SELECT parts_unlocked, upgrade_budget_used FROM user_race_cars WHERE user_id = :uid"
+            ), {"uid": user_id}).fetchone()
+        
+        if not car:
+            return jsonify({'error': 'No car found', 'car_complete': False})
+        
+        parts_unlocked = car[0] or 0
+        budget_used = car[1] or 0
+        
+        # Allow access if car complete OR test mode
+        if parts_unlocked < 50 and not test_mode:
+            return jsonify({
+                'car_complete': False,
+                'parts_unlocked': parts_unlocked,
+                'parts_needed': 50 - parts_unlocked,
+                'message': f'Complete your car first! {50 - parts_unlocked} parts remaining.'
+            })
+    except Exception as e:
+        return jsonify({'error': str(e), 'car_complete': False})
+    
+    # Get all upgrades
+    try:
+        upgrades = db.session.execute(text("""
+            SELECT id, upgrade_number, category, name, description, cost, performance_boost, icon, stat_key
+            FROM car_upgrades ORDER BY category, upgrade_number
+        """)).fetchall()
+    except Exception as e:
+        return jsonify({'error': f'Failed to load upgrades: {str(e)}', 'car_complete': True})
+    
+    # Get user's purchased upgrades
+    try:
+        if guest_code:
+            purchased = db.session.execute(text(
+                "SELECT upgrade_id FROM user_car_upgrades WHERE guest_code = :code"
+            ), {"code": guest_code}).fetchall()
+        else:
+            purchased = db.session.execute(text(
+                "SELECT upgrade_id FROM user_car_upgrades WHERE user_id = :uid"
+            ), {"uid": user_id}).fetchall()
+        purchased_ids = [p[0] for p in purchased]
+    except:
+        purchased_ids = []
+    
+    # Format upgrades by category
+    upgrades_by_category = {}
+    total_boost = 0
+    
+    for u in upgrades:
+        cat = u[2]
+        if cat not in upgrades_by_category:
+            upgrades_by_category[cat] = []
+        
+        is_owned = u[0] in purchased_ids
+        if is_owned:
+            total_boost += u[6]
+        
+        upgrades_by_category[cat].append({
+            'id': u[0], 'number': u[1], 'category': u[2], 'name': u[3],
+            'description': u[4], 'cost': u[5], 'boost': u[6],
+            'icon': u[7], 'stat_key': u[8], 'owned': is_owned
+        })
+    
+    return jsonify({
+        'car_complete': True,
+        'budget_total': UPGRADE_BUDGET,
+        'budget_used': budget_used,
+        'budget_remaining': UPGRADE_BUDGET - budget_used,
+        'total_performance_boost': total_boost,
+        'upgrades_by_category': upgrades_by_category,
+        'purchased_count': len(purchased_ids),
+        'total_upgrades': len(upgrades)
+    })
+
+
+@app.route('/api/racing-car/upgrades/buy', methods=['POST'])
+@guest_or_login_required
+def buy_racing_car_upgrade():
+    """Purchase an upgrade"""
+    from sqlalchemy import text
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    data = request.get_json()
+    upgrade_id = data.get('upgrade_id')
+    test_mode = data.get('test_mode', False)
+    
+    if not upgrade_id:
+        return jsonify({'error': 'No upgrade specified'}), 400
+    
+    try:
+        upgrade = db.session.execute(text(
+            "SELECT id, name, cost, performance_boost FROM car_upgrades WHERE id = :uid"
+        ), {"uid": upgrade_id}).fetchone()
+        
+        if not upgrade:
+            return jsonify({'error': 'Upgrade not found'}), 404
+        
+        upgrade_cost = upgrade[2]
+        
+        if guest_code:
+            car = db.session.execute(text(
+                "SELECT parts_unlocked, upgrade_budget_used FROM user_race_cars WHERE guest_code = :code"
+            ), {"code": guest_code}).fetchone()
+        else:
+            car = db.session.execute(text(
+                "SELECT parts_unlocked, upgrade_budget_used FROM user_race_cars WHERE user_id = :uid"
+            ), {"uid": user_id}).fetchone()
+        
+        # Allow if car complete OR test mode
+        if not car or (car[0] < 50 and not test_mode):
+            return jsonify({'error': 'Car must be complete to buy upgrades'}), 400
+        
+        budget_used = car[1] or 0
+        budget_remaining = UPGRADE_BUDGET - budget_used
+        
+        if upgrade_cost > budget_remaining:
+            return jsonify({'error': 'Not enough budget', 'cost': upgrade_cost, 'budget_remaining': budget_remaining}), 400
+        
+        # Check if already owned
+        if guest_code:
+            existing = db.session.execute(text(
+                "SELECT id FROM user_car_upgrades WHERE guest_code = :code AND upgrade_id = :uid"
+            ), {"code": guest_code, "uid": upgrade_id}).fetchone()
+        else:
+            existing = db.session.execute(text(
+                "SELECT id FROM user_car_upgrades WHERE user_id = :uid AND upgrade_id = :upid"
+            ), {"uid": user_id, "upid": upgrade_id}).fetchone()
+        
+        if existing:
+            return jsonify({'error': 'Upgrade already owned'}), 400
+        
+        # Purchase
+        if guest_code:
+            db.session.execute(text("""
+                INSERT INTO user_car_upgrades (guest_code, upgrade_id, purchased_at, points_spent)
+                VALUES (:code, :uid, :now, :cost)
+            """), {"code": guest_code, "uid": upgrade_id, "now": datetime.utcnow(), "cost": upgrade_cost})
+            db.session.execute(text("""
+                UPDATE user_race_cars SET upgrade_budget_used = upgrade_budget_used + :cost, updated_at = :now
+                WHERE guest_code = :code
+            """), {"cost": upgrade_cost, "now": datetime.utcnow(), "code": guest_code})
+        else:
+            db.session.execute(text("""
+                INSERT INTO user_car_upgrades (user_id, upgrade_id, purchased_at, points_spent)
+                VALUES (:uid, :upid, :now, :cost)
+            """), {"uid": user_id, "upid": upgrade_id, "now": datetime.utcnow(), "cost": upgrade_cost})
+            db.session.execute(text("""
+                UPDATE user_race_cars SET upgrade_budget_used = upgrade_budget_used + :cost, updated_at = :now
+                WHERE user_id = :uid
+            """), {"cost": upgrade_cost, "now": datetime.utcnow(), "uid": user_id})
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': f'Purchased {upgrade[1]}!', 'upgrade_name': upgrade[1],
+                       'cost': upgrade_cost, 'boost': upgrade[3], 'budget_remaining': budget_remaining - upgrade_cost})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/racing-car/upgrades/sell', methods=['POST'])
+@guest_or_login_required
+def sell_racing_car_upgrade():
+    """Sell an upgrade for full refund"""
+    from sqlalchemy import text
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    data = request.get_json()
+    upgrade_id = data.get('upgrade_id')
+    
+    if not upgrade_id:
+        return jsonify({'error': 'No upgrade specified'}), 400
+    
+    try:
+        upgrade = db.session.execute(text(
+            "SELECT id, name, cost FROM car_upgrades WHERE id = :uid"
+        ), {"uid": upgrade_id}).fetchone()
+        
+        if not upgrade:
+            return jsonify({'error': 'Upgrade not found'}), 404
+        
+        upgrade_cost = upgrade[2]
+        
+        if guest_code:
+            owned = db.session.execute(text(
+                "SELECT id FROM user_car_upgrades WHERE guest_code = :code AND upgrade_id = :uid"
+            ), {"code": guest_code, "uid": upgrade_id}).fetchone()
+        else:
+            owned = db.session.execute(text(
+                "SELECT id FROM user_car_upgrades WHERE user_id = :uid AND upgrade_id = :upid"
+            ), {"uid": user_id, "upid": upgrade_id}).fetchone()
+        
+        if not owned:
+            return jsonify({'error': 'You do not own this upgrade'}), 400
+        
+        if guest_code:
+            db.session.execute(text(
+                "DELETE FROM user_car_upgrades WHERE guest_code = :code AND upgrade_id = :uid"
+            ), {"code": guest_code, "uid": upgrade_id})
+            db.session.execute(text("""
+                UPDATE user_race_cars SET upgrade_budget_used = MAX(0, upgrade_budget_used - :cost), updated_at = :now
+                WHERE guest_code = :code
+            """), {"cost": upgrade_cost, "now": datetime.utcnow(), "code": guest_code})
+        else:
+            db.session.execute(text(
+                "DELETE FROM user_car_upgrades WHERE user_id = :uid AND upgrade_id = :upid"
+            ), {"uid": user_id, "upid": upgrade_id})
+            db.session.execute(text("""
+                UPDATE user_race_cars SET upgrade_budget_used = MAX(0, upgrade_budget_used - :cost), updated_at = :now
+                WHERE user_id = :uid
+            """), {"cost": upgrade_cost, "now": datetime.utcnow(), "uid": user_id})
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': f'Sold {upgrade[1]}', 'refund': upgrade_cost})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/racing-car/upgrades/reset', methods=['POST'])
+@guest_or_login_required
+def reset_racing_car_upgrades():
+    """Reset all upgrades and refund budget"""
+    from sqlalchemy import text
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    try:
+        if guest_code:
+            db.session.execute(text("DELETE FROM user_car_upgrades WHERE guest_code = :code"), {"code": guest_code})
+            db.session.execute(text("""
+                UPDATE user_race_cars SET upgrade_budget_used = 0, updated_at = :now WHERE guest_code = :code
+            """), {"now": datetime.utcnow(), "code": guest_code})
+        else:
+            db.session.execute(text("DELETE FROM user_car_upgrades WHERE user_id = :uid"), {"uid": user_id})
+            db.session.execute(text("""
+                UPDATE user_race_cars SET upgrade_budget_used = 0, updated_at = :now WHERE user_id = :uid
+            """), {"now": datetime.utcnow(), "uid": user_id})
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'All upgrades reset!', 'budget_remaining': UPGRADE_BUDGET})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# =====================================================
+# END RACING CAR PHASE 2 ROUTES
+# =====================================================
+
+# =====================================================
+
+
+
+
+# =====================================================
+# RACING CAR PHASE 3 - WEEKLY RACES
+# =====================================================
+
+import random
+from datetime import datetime, timedelta
+
+# Points for finishing positions
+RACE_POINTS = {1: 500, 2: 350, 3: 250, 4: 180, 5: 140, 6: 110, 7: 85, 8: 65, 9: 50, 10: 25}
+
+
+def calculate_car_performance(user_id=None, guest_code=None):
+    """Calculate total car performance from upgrades"""
+    from sqlalchemy import text
+    
+    base_performance = 50  # Base from completed car
+    
+    try:
+        if guest_code:
+            result = db.session.execute(text("""
+                SELECT COALESCE(SUM(u.performance_boost), 0)
+                FROM user_car_upgrades uc
+                JOIN car_upgrades u ON uc.upgrade_id = u.id
+                WHERE uc.guest_code = :code
+            """), {"code": guest_code}).fetchone()
+        else:
+            result = db.session.execute(text("""
+                SELECT COALESCE(SUM(u.performance_boost), 0)
+                FROM user_car_upgrades uc
+                JOIN car_upgrades u ON uc.upgrade_id = u.id
+                WHERE uc.user_id = :uid
+            """), {"uid": user_id}).fetchone()
+        
+        upgrade_bonus = result[0] if result else 0
+        return base_performance + upgrade_bonus
+    except:
+        return base_performance
+
+
+def get_upgrade_breakdown(user_id=None, guest_code=None):
+    """Get performance breakdown by category"""
+    from sqlalchemy import text
+    
+    breakdown = {'driver': 0, 'aero': 0, 'engine': 0, 'tyres': 0, 'team': 0}
+    
+    try:
+        if guest_code:
+            results = db.session.execute(text("""
+                SELECT u.category, SUM(u.performance_boost)
+                FROM user_car_upgrades uc
+                JOIN car_upgrades u ON uc.upgrade_id = u.id
+                WHERE uc.guest_code = :code
+                GROUP BY u.category
+            """), {"code": guest_code}).fetchall()
+        else:
+            results = db.session.execute(text("""
+                SELECT u.category, SUM(u.performance_boost)
+                FROM user_car_upgrades uc
+                JOIN car_upgrades u ON uc.upgrade_id = u.id
+                WHERE uc.user_id = :uid
+                GROUP BY u.category
+            """), {"uid": user_id}).fetchall()
+        
+        for cat, boost in results:
+            if cat in breakdown:
+                breakdown[cat] = boost
+    except:
+        pass
+    
+    return breakdown
+
+
+def simulate_race(user_performance, user_breakdown, race, ai_drivers, is_wet):
+    """
+    Simulate a race and return results.
+    Returns list of (position, name, is_player, performance_score, highlight)
+    """
+    results = []
+    
+    # Calculate player's race score
+    player_score = calculate_race_score(
+        base_perf=user_performance,
+        breakdown=user_breakdown,
+        race=race,
+        is_wet=is_wet,
+        is_ai=False
+    )
+    results.append({
+        'name': 'YOU',
+        'is_player': True,
+        'score': player_score,
+        'team': 'Your Team',
+        'flag': '🏁'
+    })
+    
+    # Calculate AI scores
+    for ai in ai_drivers:
+        ai_breakdown = {
+            'driver': ai['base_skill'] * 0.4,
+            'aero': 30 + random.randint(-5, 5),
+            'engine': 30 + random.randint(-5, 5),
+            'tyres': ai['tyre_management'] * 0.3,
+            'team': 25 + random.randint(-5, 5)
+        }
+        
+        ai_base = 50 + (ai['base_skill'] - 80) * 2  # Scale AI skill to performance
+        
+        ai_score = calculate_race_score(
+            base_perf=ai_base,
+            breakdown=ai_breakdown,
+            race=race,
+            is_wet=is_wet,
+            is_ai=True,
+            ai_data=ai
+        )
+        
+        results.append({
+            'name': ai['name'],
+            'is_player': False,
+            'score': ai_score,
+            'team': ai['team'],
+            'flag': ai['flag'],
+            'ai_id': ai['id']
+        })
+    
+    # Sort by score (higher is better)
+    results.sort(key=lambda x: x['score'], reverse=True)
+    
+    # Assign positions and generate highlights
+    for i, r in enumerate(results):
+        r['position'] = i + 1
+        r['points'] = RACE_POINTS.get(i + 1, 10)
+        r['highlight'] = generate_highlight(r, i + 1, is_wet, race)
+    
+    return results
+
+
+def calculate_race_score(base_perf, breakdown, race, is_wet, is_ai=False, ai_data=None):
+    """Calculate race performance score"""
+    
+    # Base score from car performance
+    score = base_perf * 10
+    
+    # Apply track factors
+    score += breakdown.get('aero', 0) * race['aero_factor'] * 20
+    score += breakdown.get('engine', 0) * race['engine_factor'] * 20
+    score += breakdown.get('driver', 0) * race['driver_factor'] * 20
+    score += breakdown.get('tyres', 0) * race['tyre_factor'] * 20
+    score += breakdown.get('team', 0) * race['team_factor'] * 20
+    
+    # Weather effect
+    if is_wet:
+        if is_ai and ai_data:
+            wet_bonus = (ai_data['wet_skill'] - 80) * 3
+            score += wet_bonus
+        else:
+            # Player wet performance based on driver upgrades
+            driver_skill = breakdown.get('driver', 0)
+            wet_bonus = (driver_skill - 20) * 2
+            score += wet_bonus
+    
+    # Consistency factor (AI only)
+    if is_ai and ai_data:
+        consistency = ai_data['consistency']
+        variance = (100 - consistency) * 2
+        score += random.randint(-variance, variance)
+    
+    # Random race events (luck factor)
+    luck = random.randint(-50, 50)
+    score += luck
+    
+    # Small random variance
+    score += random.randint(-20, 20)
+    
+    return max(0, score)
+
+
+def generate_highlight(result, position, is_wet, race):
+    """Generate a race highlight text"""
+    name = result['name']
+    
+    if result['is_player']:
+        if position == 1:
+            highlights = [
+                "🏆 VICTORY! Incredible drive from start to finish!",
+                "🏆 WINNER! You dominated the {track}!",
+                "🏆 P1! A masterclass performance today!"
+            ]
+        elif position <= 3:
+            highlights = [
+                f"🥈 P{position}! Brilliant podium finish!",
+                f"🥉 P{position}! Fought hard for that podium!",
+                f"🏅 P{position}! Great result at {race['name']}!"
+            ]
+        elif position <= 6:
+            highlights = [
+                f"✓ P{position} - Solid points finish",
+                f"✓ P{position} - Good pace throughout",
+                f"✓ P{position} - Consistent drive"
+            ]
+        else:
+            highlights = [
+                f"P{position} - Struggled with pace today",
+                f"P{position} - Tough race, but finished",
+                f"P{position} - More upgrades needed!"
+            ]
+    else:
+        if position == 1:
+            highlights = [f"{name} takes victory!", f"{name} wins at {race['name']}!"]
+        elif position <= 3:
+            highlights = [f"{name} claims P{position}", f"{name} on the podium"]
+        else:
+            highlights = [f"{name} finishes P{position}", f"{name} in P{position}"]
+    
+    text = random.choice(highlights)
+    return text.format(track=race['name'])
+
+
+@app.route('/api/racing-car/race/current')
+@guest_or_login_required  
+def get_current_race():
+    """Get the current race information"""
+    from sqlalchemy import text
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    current_year = datetime.now().year
+    
+    # TEST MODE
+    test_mode = request.args.get('test') == 'race'
+    
+    try:
+        # Get current race from calendar
+        race = db.session.execute(text("""
+            SELECT rc.id, rc.race_number, rc.name, rc.country, rc.flag, rc.track_type,
+                   rc.aero_factor, rc.engine_factor, rc.driver_factor, rc.tyre_factor, 
+                   rc.team_factor, rc.rain_chance, rc.description, rc.race_date
+            FROM race_calendar rc
+            JOIN race_season_status rs ON rc.season_year = rs.season_year
+            WHERE rc.season_year = :year AND rc.race_number = rs.current_race_number
+        """), {"year": current_year}).fetchone()
+        
+        if not race:
+            return jsonify({'error': 'No active race found', 'has_race': False})
+        
+        # Check if user already raced this
+        if guest_code:
+            existing = db.session.execute(text(
+                "SELECT id, finish_position, points_earned FROM race_results WHERE race_id = :rid AND guest_code = :code"
+            ), {"rid": race[0], "code": guest_code}).fetchone()
+        else:
+            existing = db.session.execute(text(
+                "SELECT id, finish_position, points_earned FROM race_results WHERE race_id = :rid AND user_id = :uid"
+            ), {"rid": race[0], "uid": user_id}).fetchone()
+        
+        already_raced = existing is not None
+        
+        # Get user's car performance
+        car_performance = calculate_car_performance(user_id, guest_code)
+        breakdown = get_upgrade_breakdown(user_id, guest_code)
+        
+        # Check if car is complete (or test mode)
+        if guest_code:
+            car = db.session.execute(text(
+                "SELECT parts_unlocked FROM user_race_cars WHERE guest_code = :code"
+            ), {"code": guest_code}).fetchone()
+        else:
+            car = db.session.execute(text(
+                "SELECT parts_unlocked FROM user_race_cars WHERE user_id = :uid"
+            ), {"uid": user_id}).fetchone()
+        
+        car_complete = (car and car[0] >= 50) or test_mode
+        
+        return jsonify({
+            'has_race': True,
+            'race': {
+                'id': race[0],
+                'number': race[1],
+                'name': race[2],
+                'country': race[3],
+                'flag': race[4],
+                'track_type': race[5],
+                'factors': {
+                    'aero': race[6],
+                    'engine': race[7],
+                    'driver': race[8],
+                    'tyres': race[9],
+                    'team': race[10]
+                },
+                'rain_chance': race[11],
+                'description': race[12],
+                'date': race[13]
+            },
+            'already_raced': already_raced,
+            'previous_result': {
+                'position': existing[1],
+                'points': existing[2]
+            } if existing else None,
+            'car_complete': car_complete,
+            'car_performance': car_performance,
+            'performance_breakdown': breakdown
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e), 'has_race': False})
+
+
+@app.route('/api/racing-car/race/start', methods=['POST'])
+@guest_or_login_required
+def start_race():
+    """Start/simulate a race"""
+    from sqlalchemy import text
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    data = request.get_json()
+    
+    race_id = data.get('race_id')
+    tyre_choice = data.get('tyre_choice', 'medium')  # soft, medium, hard
+    test_mode = data.get('test_mode', False)
+    
+    if not race_id:
+        return jsonify({'error': 'No race specified'}), 400
+    
+    try:
+        # Get race details
+        race_row = db.session.execute(text("""
+            SELECT id, race_number, name, country, flag, track_type,
+                   aero_factor, engine_factor, driver_factor, tyre_factor, 
+                   team_factor, rain_chance, description
+            FROM race_calendar WHERE id = :rid
+        """), {"rid": race_id}).fetchone()
+        
+        if not race_row:
+            return jsonify({'error': 'Race not found'}), 404
+        
+        race = {
+            'id': race_row[0], 'number': race_row[1], 'name': race_row[2],
+            'country': race_row[3], 'flag': race_row[4], 'track_type': race_row[5],
+            'aero_factor': race_row[6], 'engine_factor': race_row[7],
+            'driver_factor': race_row[8], 'tyre_factor': race_row[9],
+            'team_factor': race_row[10], 'rain_chance': race_row[11],
+            'description': race_row[12]
+        }
+        
+        # Check if already raced
+        if guest_code:
+            existing = db.session.execute(text(
+                "SELECT id FROM race_results WHERE race_id = :rid AND guest_code = :code"
+            ), {"rid": race_id, "code": guest_code}).fetchone()
+        else:
+            existing = db.session.execute(text(
+                "SELECT id FROM race_results WHERE race_id = :rid AND user_id = :uid"
+            ), {"rid": race_id, "uid": user_id}).fetchone()
+        
+        if existing:
+            return jsonify({'error': 'Already raced this week!'}), 400
+        
+        # Determine weather
+        is_wet = random.randint(1, 100) <= race['rain_chance']
+        
+        # Get AI drivers
+        ai_rows = db.session.execute(text("""
+            SELECT id, name, team, nationality, flag, driving_style,
+                   base_skill, consistency, aggression, wet_skill, tyre_management
+            FROM ai_race_drivers
+        """)).fetchall()
+        
+        ai_drivers = [{
+            'id': a[0], 'name': a[1], 'team': a[2], 'nationality': a[3],
+            'flag': a[4], 'driving_style': a[5], 'base_skill': a[6],
+            'consistency': a[7], 'aggression': a[8], 'wet_skill': a[9],
+            'tyre_management': a[10]
+        } for a in ai_rows]
+        
+        # Get user's car performance
+        car_performance = calculate_car_performance(user_id, guest_code)
+        breakdown = get_upgrade_breakdown(user_id, guest_code)
+        
+        # Apply tyre choice bonus
+        tyre_bonus = {'soft': 15, 'medium': 8, 'hard': 0}
+        breakdown['tyres'] = breakdown.get('tyres', 0) + tyre_bonus.get(tyre_choice, 8)
+        
+        # Simulate the race!
+        results = simulate_race(car_performance, breakdown, race, ai_drivers, is_wet)
+        
+        # Find player result
+        player_result = next(r for r in results if r['is_player'])
+        position = player_result['position']
+        points = player_result['points']
+        highlight = player_result['highlight']
+        
+        # Save player result
+        if guest_code:
+            db.session.execute(text("""
+                INSERT INTO race_results 
+                (race_id, guest_code, finish_position, points_earned, tyre_choice, 
+                 is_wet_race, race_performance_score, highlight_text, created_at)
+                VALUES (:rid, :code, :pos, :pts, :tyre, :wet, :score, :highlight, :now)
+            """), {
+                "rid": race_id, "code": guest_code, "pos": position, "pts": points,
+                "tyre": tyre_choice, "wet": is_wet, "score": player_result['score'],
+                "highlight": highlight, "now": datetime.utcnow()
+            })
+        else:
+            db.session.execute(text("""
+                INSERT INTO race_results 
+                (race_id, user_id, finish_position, points_earned, tyre_choice, 
+                 is_wet_race, race_performance_score, highlight_text, created_at)
+                VALUES (:rid, :uid, :pos, :pts, :tyre, :wet, :score, :highlight, :now)
+            """), {
+                "rid": race_id, "uid": user_id, "pos": position, "pts": points,
+                "tyre": tyre_choice, "wet": is_wet, "score": player_result['score'],
+                "highlight": highlight, "now": datetime.utcnow()
+            })
+        
+        # Update championship standings
+        current_year = datetime.now().year
+        if guest_code:
+            db.session.execute(text("""
+                INSERT INTO championship_standings (season_year, guest_code, total_points, races_entered, wins, podiums, best_finish, last_updated)
+                VALUES (:year, :code, :pts, 1, :wins, :podiums, :pos, :now)
+                ON CONFLICT(season_year, guest_code) DO UPDATE SET
+                    total_points = total_points + :pts,
+                    races_entered = races_entered + 1,
+                    wins = wins + :wins,
+                    podiums = podiums + :podiums,
+                    best_finish = CASE WHEN :pos < best_finish OR best_finish = 0 THEN :pos ELSE best_finish END,
+                    last_updated = :now
+            """), {
+                "year": current_year, "code": guest_code, "pts": points,
+                "wins": 1 if position == 1 else 0,
+                "podiums": 1 if position <= 3 else 0,
+                "pos": position, "now": datetime.utcnow()
+            })
+        else:
+            db.session.execute(text("""
+                INSERT INTO championship_standings (season_year, user_id, total_points, races_entered, wins, podiums, best_finish, last_updated)
+                VALUES (:year, :uid, :pts, 1, :wins, :podiums, :pos, :now)
+                ON CONFLICT(season_year, user_id) DO UPDATE SET
+                    total_points = total_points + :pts,
+                    races_entered = races_entered + 1,
+                    wins = wins + :wins,
+                    podiums = podiums + :podiums,
+                    best_finish = CASE WHEN :pos < best_finish OR best_finish = 0 THEN :pos ELSE best_finish END,
+                    last_updated = :now
+            """), {
+                "year": current_year, "uid": user_id, "pts": points,
+                "wins": 1 if position == 1 else 0,
+                "podiums": 1 if position <= 3 else 0,
+                "pos": position, "now": datetime.utcnow()
+            })
+        
+        # Award points to user's total score
+        if guest_code:
+            db.session.execute(text(
+                "UPDATE guest_users SET total_score = total_score + :pts WHERE guest_code = :code"
+            ), {"pts": points, "code": guest_code})
+        else:
+            db.session.execute(text(
+                "UPDATE user_stats SET total_points = total_points + :pts WHERE user_id = :uid"
+            ), {"pts": points, "uid": user_id})
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'race_name': race['name'],
+            'is_wet': is_wet,
+            'weather': 'Wet' if is_wet else 'Dry',
+            'results': results,
+            'player_position': position,
+            'player_points': points,
+            'player_highlight': highlight,
+            'tyre_choice': tyre_choice
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/racing-car/championship')
+@guest_or_login_required
+def get_championship_standings():
+    """Get championship standings"""
+    from sqlalchemy import text
+    
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    current_year = datetime.now().year
+    
+    try:
+        # Get user's standing
+        if guest_code:
+            user_standing = db.session.execute(text("""
+                SELECT total_points, races_entered, wins, podiums, best_finish
+                FROM championship_standings
+                WHERE season_year = :year AND guest_code = :code
+            """), {"year": current_year, "code": guest_code}).fetchone()
+        else:
+            user_standing = db.session.execute(text("""
+                SELECT total_points, races_entered, wins, podiums, best_finish
+                FROM championship_standings
+                WHERE season_year = :year AND user_id = :uid
+            """), {"year": current_year, "uid": user_id}).fetchone()
+        
+        # Get race history
+        if guest_code:
+            history = db.session.execute(text("""
+                SELECT rc.name, rc.flag, rr.finish_position, rr.points_earned, rr.is_wet_race, rr.highlight_text
+                FROM race_results rr
+                JOIN race_calendar rc ON rr.race_id = rc.id
+                WHERE rr.guest_code = :code AND rc.season_year = :year
+                ORDER BY rc.race_number
+            """), {"code": guest_code, "year": current_year}).fetchall()
+        else:
+            history = db.session.execute(text("""
+                SELECT rc.name, rc.flag, rr.finish_position, rr.points_earned, rr.is_wet_race, rr.highlight_text
+                FROM race_results rr
+                JOIN race_calendar rc ON rr.race_id = rc.id
+                WHERE rr.user_id = :uid AND rc.season_year = :year
+                ORDER BY rc.race_number
+            """), {"uid": user_id, "year": current_year}).fetchall()
+        
+        return jsonify({
+            'season': current_year,
+            'standing': {
+                'total_points': user_standing[0] if user_standing else 0,
+                'races_entered': user_standing[1] if user_standing else 0,
+                'wins': user_standing[2] if user_standing else 0,
+                'podiums': user_standing[3] if user_standing else 0,
+                'best_finish': user_standing[4] if user_standing else 0
+            },
+            'race_history': [{
+                'name': h[0],
+                'flag': h[1],
+                'position': h[2],
+                'points': h[3],
+                'wet': h[4],
+                'highlight': h[5]
+            } for h in history]
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+
+@app.route('/api/racing-car/ai-drivers')
+@guest_or_login_required
+def get_ai_drivers():
+    """Get list of AI competitors"""
+    from sqlalchemy import text
+    
+    try:
+        drivers = db.session.execute(text("""
+            SELECT id, name, team, nationality, flag, driving_style, 
+                   base_skill, personality_desc, avatar_color
+            FROM ai_race_drivers
+            ORDER BY base_skill DESC
+        """)).fetchall()
+        
+        return jsonify({
+            'drivers': [{
+                'id': d[0],
+                'name': d[1],
+                'team': d[2],
+                'nationality': d[3],
+                'flag': d[4],
+                'style': d[5],
+                'skill': d[6],
+                'description': d[7],
+                'color': d[8]
+            } for d in drivers]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e), 'drivers': []})
+
+# =====================================================
+# END RACING CAR PHASE 3 ROUTES
+# =====================================================
 
 
 if __name__ == '__main__':
