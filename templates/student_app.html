@@ -1981,16 +1981,16 @@
             <!-- Flex container for side-by-side layout -->
             <div class="flex flex-col lg:flex-row gap-6 px-4 py-4">
                 
-                <!-- WHO AM I: Reveal Grid - Left side on desktop, top on mobile -->
-                <div id="who-am-i-container" class="who-am-i-container w-full lg:w-5/12 flex-shrink-0" style="display: none;">
+                <!-- WHO AM I: Reveal Grid - Left side on desktop, BELOW question on mobile -->
+                <div id="who-am-i-container" class="who-am-i-container w-full lg:w-5/12 flex-shrink-0 order-2 lg:order-1" style="display: none;">
                     <div class="text-center">
                         <i class="fas fa-spinner fa-spin fa-2x text-white"></i>
                         <p class="text-white mt-2">Loading mystery image...</p>
                     </div>
                 </div>
 
-                <!-- Question Card - Right side on desktop, bottom on mobile -->
-                <div id="questionCard" class="bg-white rounded-2xl p-6 shadow-2xl flex-1">
+                <!-- Question Card - Right side on desktop, ABOVE image on mobile -->
+                <div id="questionCard" class="bg-white rounded-2xl p-6 shadow-2xl flex-1 order-1 lg:order-2">
                     <!-- Hidden elements for compatibility -->
                     <div class="hidden">
                         <h2 id="quizTopicTitle"></h2>
@@ -2199,6 +2199,68 @@
             }
         }
 
+        
+        // ==================== SESSION VALIDATION ====================
+        // Prevent cached pages from resuming after logout
+        
+        // Check if session is still valid
+        async function validateSession() {
+            try {
+                const response = await fetch('/api/current-user', {
+                    method: 'GET',
+                    credentials: 'include',
+                    cache: 'no-store'
+                });
+                
+                if (!response.ok) {
+                    // Session expired or user logged out
+                    console.log('Session invalid, redirecting to login...');
+                    window.location.href = '/login?session_expired=1';
+                    return false;
+                }
+                
+                const user = await response.json();
+                if (!user || (!user.id && !user.is_guest)) {
+                    console.log('No valid user session, redirecting to login...');
+                    window.location.href = '/login?session_expired=1';
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Session validation error:', error);
+                window.location.href = '/login?session_expired=1';
+                return false;
+            }
+        }
+        
+        // Validate session when page is shown (catches back button navigation)
+        window.addEventListener('pageshow', function(event) {
+            // If page was restored from bfcache (back-forward cache)
+            if (event.persisted) {
+                console.log('Page restored from cache, validating session...');
+                validateSession();
+            }
+        });
+        
+        // Also validate when tab becomes visible (catches tab switching)
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // Add small delay to avoid too many checks
+                setTimeout(validateSession, 500);
+            }
+        });
+        
+        // Check for logged_out parameter in URL (set by logout redirect)
+        if (window.location.search.includes('logged_out=1')) {
+            // Clear any cached state and redirect to clean login
+            sessionStorage.clear();
+            localStorage.removeItem('mathmaster_session');
+            window.location.href = '/login';
+        }
+        
+        // ==================== END SESSION VALIDATION ====================
+
         window.onload = async function() {
             await loadCurrentUser();
             await loadMasteryData(); // Load mastery data BEFORE topics
@@ -2379,6 +2441,10 @@
                 }
             } catch (error) {
                 console.error('Error loading user:', error);
+                // If we can't load user, session may have expired
+                if (error.message && error.message.includes('401')) {
+                    window.location.href = '/login?session_expired=1';
+                }
             }
         }
 
@@ -6679,7 +6745,69 @@ console.log('Tutorial Manager initialized');
 
     // Hook into page load
     const originalWindowOnload = window.onload;
-    window.onload = async function() {
+    
+        // ==================== SESSION VALIDATION ====================
+        // Prevent cached pages from resuming after logout
+        
+        // Check if session is still valid
+        async function validateSession() {
+            try {
+                const response = await fetch('/api/current-user', {
+                    method: 'GET',
+                    credentials: 'include',
+                    cache: 'no-store'
+                });
+                
+                if (!response.ok) {
+                    // Session expired or user logged out
+                    console.log('Session invalid, redirecting to login...');
+                    window.location.href = '/login?session_expired=1';
+                    return false;
+                }
+                
+                const user = await response.json();
+                if (!user || (!user.id && !user.is_guest)) {
+                    console.log('No valid user session, redirecting to login...');
+                    window.location.href = '/login?session_expired=1';
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Session validation error:', error);
+                window.location.href = '/login?session_expired=1';
+                return false;
+            }
+        }
+        
+        // Validate session when page is shown (catches back button navigation)
+        window.addEventListener('pageshow', function(event) {
+            // If page was restored from bfcache (back-forward cache)
+            if (event.persisted) {
+                console.log('Page restored from cache, validating session...');
+                validateSession();
+            }
+        });
+        
+        // Also validate when tab becomes visible (catches tab switching)
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // Add small delay to avoid too many checks
+                setTimeout(validateSession, 500);
+            }
+        });
+        
+        // Check for logged_out parameter in URL (set by logout redirect)
+        if (window.location.search.includes('logged_out=1')) {
+            // Clear any cached state and redirect to clean login
+            sessionStorage.clear();
+            localStorage.removeItem('mathmaster_session');
+            window.location.href = '/login';
+        }
+        
+        // ==================== END SESSION VALIDATION ====================
+
+        window.onload = async function() {
         if (originalWindowOnload) {
             await originalWindowOnload();
         }

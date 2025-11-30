@@ -114,6 +114,19 @@ def register_topic_routes(app, db):
     Topic = get_topic_model(db)
     Tutorial = get_tutorial_model(db)
     
+    # Helper to invalidate topic cache when topics are modified
+    def invalidate_topics_cache():
+        """Clear the topics cache so changes take effect immediately"""
+        try:
+            from app import invalidate_topics_cache as app_invalidate
+            app_invalidate()
+            print("✓ Topics cache invalidated")
+        except ImportError:
+            # Function not available in app.py yet - that's OK
+            pass
+        except Exception as e:
+            print(f"Warning: Could not invalidate cache: {e}")
+    
     # Helper to check if user is admin
     def admin_required_api(f):
         @wraps(f)
@@ -325,6 +338,7 @@ def register_topic_routes(app, db):
                 'is_visible': data.get('is_visible', True)
             })
             db.session.commit()
+            invalidate_topics_cache()
             return jsonify({'success': True, 'message': 'Topic created', 'topic_id': topic_id})
         except Exception as e:
             db.session.rollback()
@@ -351,6 +365,7 @@ def register_topic_routes(app, db):
                 'is_visible': data.get('is_visible', True)
             })
             db.session.commit()
+            invalidate_topics_cache()
             return jsonify({'success': True, 'message': 'Topic updated'})
         except Exception as e:
             db.session.rollback()
@@ -385,6 +400,7 @@ def register_topic_routes(app, db):
             # Delete topic
             db.session.execute(text("DELETE FROM topics WHERE id = :id"), {'id': topic_db_id})
             db.session.commit()
+            invalidate_topics_cache()
             return jsonify({'success': True, 'message': 'Topic deleted'})
         except Exception as e:
             db.session.rollback()

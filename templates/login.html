@@ -1323,6 +1323,41 @@
     <!-- ==================== END LEADERBOARD ==================== -->
 
     <script>
+        // ==================== SESSION EXPIRED HANDLING ====================
+        // Check URL parameters on page load
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('session_expired') === '1') {
+                // Show session expired message
+                setTimeout(function() {
+                    const errorDiv = document.getElementById('errorMessage');
+                    if (errorDiv) {
+                        errorDiv.textContent = 'Your session has expired. Please log in again.';
+                        errorDiv.style.display = 'block';
+                    }
+                }, 100);
+                
+                // Clean up URL
+                window.history.replaceState({}, document.title, '/login');
+            }
+            
+            if (urlParams.get('logged_out') === '1') {
+                // Show logged out message
+                setTimeout(function() {
+                    const successDiv = document.getElementById('successMessage');
+                    if (successDiv) {
+                        successDiv.textContent = 'You have been logged out successfully.';
+                        successDiv.style.display = 'block';
+                    }
+                }, 100);
+                
+                // Clean up URL
+                window.history.replaceState({}, document.title, '/login');
+            }
+        })();
+        
+
         // ==================== MOBILE TOGGLE FUNCTIONALITY ====================
         function toggleLeaderboard() {
             const section = document.querySelector('.leaderboard-section');

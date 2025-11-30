@@ -221,6 +221,51 @@
             margin-top: 10px;
         }
 
+        .topic-progress-table {
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .topic-progress-table table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: auto;
+        }
+
+        .topic-progress-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            padding: 12px 8px;
+            text-align: left;
+        }
+
+        .topic-progress-table th:not(:first-child) {
+            text-align: center;
+        }
+
+        .topic-progress-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .topic-progress-table td:not(:first-child) {
+            text-align: center;
+        }
+
+        .topic-progress-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        @media (max-width: 640px) {
+            .topic-progress-table {
+                font-size: 0.8em;
+            }
+            .topic-progress-table th,
+            .topic-progress-table td {
+                padding: 8px 4px;
+            }
+        }
+
         .level-display {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -477,26 +522,56 @@
                 return;
             }
 
-            container.innerHTML = topicProgress.map(topic => {
-                const masteredBadge = topic.is_mastered ? '<div class="mastery-badge">✓ MASTERED</div>' : '';
-                const masteredClass = topic.is_mastered ? 'mastered' : '';
-
-                return `
-                    <div class="topic-card ${masteredClass}">
-                        <div class="topic-name">${topic.topic}</div>
-                        <span class="topic-difficulty">${topic.difficulty}</span>
-                        <div class="topic-stats">
-                            <span><strong>${topic.attempts}</strong> attempts</span>
-                            <span><strong>${topic.accuracy}%</strong> accuracy</span>
-                        </div>
-                        <div class="topic-stats">
-                            <span>Best: ${topic.best_score} correct</span>
-                            <span>${topic.best_percentage}%</span>
-                        </div>
-                        ${masteredBadge}
-                    </div>
+            // Create table layout - one topic per row
+            let tableHTML = `
+                <div class="topic-progress-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Topic</th>
+                                <th>Level</th>
+                                <th>Attempts</th>
+                                <th>Best %</th>
+                                <th>Max Points</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            topicProgress.forEach(topic => {
+                const maxPoints = topic.max_points !== undefined ? topic.max_points : topic.best_score || '-';
+                const difficultyColors = {
+                    'Beginner': 'background:#d1fae5;color:#065f46',
+                    'Intermediate': 'background:#fef3c7;color:#92400e',
+                    'Advanced': 'background:#fee2e2;color:#991b1b'
+                };
+                const diffStyle = difficultyColors[topic.difficulty] || 'background:#f3f4f6;color:#374151';
+                const masteredBadge = topic.is_mastered 
+                    ? '<span style="background:#10b981;color:white;padding:2px 8px;border-radius:10px;font-size:0.75em;">🏆 Mastered</span>' 
+                    : '<span style="color:#9ca3af;font-size:0.85em;">In Progress</span>';
+                const rowStyle = topic.is_mastered ? 'background-color:#ecfdf5;' : '';
+                const pctColor = topic.best_percentage >= 80 ? '#059669' : topic.best_percentage >= 60 ? '#d97706' : '#dc2626';
+                
+                tableHTML += `
+                    <tr style="${rowStyle}">
+                        <td><strong>${topic.topic}</strong></td>
+                        <td><span style="padding:2px 8px;border-radius:4px;font-size:0.8em;${diffStyle}">${topic.difficulty}</span></td>
+                        <td>${topic.attempts}</td>
+                        <td><strong style="color:${pctColor}">${topic.best_percentage}%</strong></td>
+                        <td><strong style="color:#7c3aed;">⭐ ${maxPoints}</strong></td>
+                        <td>${masteredBadge}</td>
+                    </tr>
                 `;
-            }).join('');
+            });
+            
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = tableHTML;
         }
 
         function getBadgeEmoji(iconClass) {

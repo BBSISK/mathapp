@@ -37,6 +37,79 @@ FEATURE_FLAGS = {
 def get_feature_flag(flag_name):
     """Get a feature flag value"""
     return FEATURE_FLAGS.get(flag_name, False)
+# ==================== FALLBACK TOPIC CONFIGURATION ====================
+# FALLBACK ONLY - Primary source is the `topics` database table
+# This list is used ONLY when database is unavailable
+# To add new topics, use Admin Dashboard > Topic Management
+FALLBACK_TOPICS = [
+    # Number Strand
+    'arithmetic', 'fractions', 'decimals', 'multiplication_division',
+    'number_systems', 'bodmas', 'sets', 'surds',
+    
+    # Algebra and Functions Strand
+    'introductory_algebra', 'functions', 'patterns', 'solving_equations',
+    'simplifying_expressions', 'expanding_factorising',
+    'complex_numbers_intro', 'complex_numbers_expanded', 'simultaneous_equations',
+    
+    # Geometry and Trigonometry Strand
+    'coordinate_geometry', 'trigonometry',
+    
+    # Statistics and Probability Strand
+    'probability', 'descriptive_statistics',
+]
+
+VALID_DIFFICULTIES = ['beginner', 'intermediate', 'advanced']
+
+# Cache for database topics (refreshed periodically)
+_topics_cache = {'topics': None, 'timestamp': None}
+_CACHE_DURATION_SECONDS = 300  # 5 minutes
+
+def get_valid_topics_from_db():
+    """
+    Get valid topics from the database `topics` table.
+    Returns list of topic_id strings that are visible.
+    Falls back to FALLBACK_TOPICS if database unavailable.
+    
+    This is the SINGLE SOURCE OF TRUTH for topic validation.
+    When you add a topic via Admin Dashboard, it automatically becomes valid everywhere.
+    """
+    import time
+    from sqlalchemy import text
+    
+    # Check cache first
+    current_time = time.time()
+    if (_topics_cache['topics'] is not None and 
+        _topics_cache['timestamp'] is not None and
+        current_time - _topics_cache['timestamp'] < _CACHE_DURATION_SECONDS):
+        return _topics_cache['topics']
+    
+    try:
+        # Query visible topics from database
+        result = db.session.execute(text(
+            "SELECT topic_id FROM topics WHERE is_visible = 1"
+        )).fetchall()
+        
+        if result:
+            topics = [row[0] for row in result]
+            # Update cache
+            _topics_cache['topics'] = topics
+            _topics_cache['timestamp'] = current_time
+            return topics
+        else:
+            # No topics in database, use fallback
+            return FALLBACK_TOPICS
+            
+    except Exception as e:
+        # Database error, use fallback
+        print(f"Warning: Could not load topics from database: {e}")
+        return FALLBACK_TOPICS
+
+def invalidate_topics_cache():
+    """Call this after adding/removing topics via admin to refresh cache immediately"""
+    _topics_cache['topics'] = None
+    _topics_cache['timestamp'] = None
+
+
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mathquiz.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -65,6 +138,20 @@ def inject_feature_flags():
         'feature_flags': FEATURE_FLAGS,
         'avatar_enabled': FEATURE_FLAGS.get('AVATAR_SYSTEM_ENABLED', False)
     }
+# ==================== SESSION SECURITY ====================
+@app.after_request
+def add_no_cache_headers(response):
+    """Add no-cache headers to authenticated pages to prevent back-button session resumption"""
+    # Only add headers to HTML responses (not API calls or static files)
+    if 'text/html' in response.content_type:
+        # Check if this is an authenticated route (has user_id in session)
+        if 'user_id' in session or 'is_guest' in session:
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+    return response
+
+
 
 # ==================== DATABASE MODELS ====================
 
@@ -1426,11 +1513,37 @@ def update_user_stats_after_quiz(user_id, quiz_attempt):
     if quiz_attempt.percentage == 100:
         stats.perfect_scores += 1
 
-    # Award points for quiz completion (base points + performance bonus)
+    # Award points for quiz completion with deduplication
     base_points = 5  # Base points for completing any quiz
     performance_bonus = int(quiz_attempt.percentage / 10)  # 0-10 points based on score
     quiz_points = base_points + performance_bonus
-    stats.total_points += quiz_points
+    
+    # Only award points for first completion OR improvement
+    from sqlalchemy import text
+    existing_best = db.session.execute(text('''
+        SELECT MAX(percentage) as best_pct
+        FROM quiz_attempts
+        WHERE user_id = :user_id 
+        AND topic = :topic 
+        AND difficulty = :difficulty
+        AND id != :current_id
+    '''), {
+        'user_id': user_id,
+        'topic': quiz_attempt.topic,
+        'difficulty': quiz_attempt.difficulty,
+        'current_id': quiz_attempt.id
+    }).fetchone()
+    
+    previous_best = existing_best.best_pct if existing_best and existing_best.best_pct else 0
+    
+    if previous_best == 0:
+        # First time - award full points
+        stats.total_points += quiz_points
+    elif quiz_attempt.percentage > previous_best:
+        # Improvement - award points for improvement only
+        improvement_points = int((quiz_attempt.percentage - previous_best) / 10)
+        if improvement_points > 0:
+            stats.total_points += improvement_points
 
     # Update streak (using Irish school calendar if available)
     today = date.today()
@@ -2158,8 +2271,14 @@ def login():
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
+    """Logout API endpoint with proper session invalidation"""
     session.clear()
-    return jsonify({'message': 'Logged out successfully'}), 200
+    response = jsonify({'message': 'Logged out successfully', 'redirect': '/login?logged_out=1'})
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    response.delete_cookie('session')
+    return response, 200
 
 
 # ==================== FIXED GUEST ROUTES ====================
@@ -2576,15 +2695,9 @@ def submit_quiz():
     percentage = data.get('percentage', 0)
     time_taken = data.get('time_taken', 0)
 
-    # Validate topic and difficulty
-    valid_topics = [
-        'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'number_systems',
-        'bodmas', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'sets', 'probability', 'descriptive_statistics', 'surds',
-        'complex_numbers_intro', 'complex_numbers_expanded',
-        'trigonometry', 'coordinate_geometry', 'simultaneous_equations'  # Added missing topics
-    ]
-    valid_difficulties = ['beginner', 'intermediate', 'advanced']
+    # Validate topic and difficulty - reads from database
+    valid_topics = get_valid_topics_from_db()  # Database-driven!
+    valid_difficulties = VALID_DIFFICULTIES
 
     if topic not in valid_topics:
         return jsonify({'error': f'Invalid topic: {topic}'}), 400
@@ -2838,16 +2951,32 @@ def get_student_badges():
         quizzes_completed = guest_stats[1] if guest_stats and len(guest_stats) > 1 else 0
         level = (total_points // 100) + 1
 
-        # Format earned badges for frontend
+        # Format earned badges for frontend - need to look up full badge details!
         earned_badges_list = []
         earned_badge_names = set()
+        
+        # Create a lookup dict for badge details
+        badge_lookup = {}
+        try:
+            all_badge_records = Badge.query.all()
+            for b in all_badge_records:
+                badge_lookup[b.name] = b
+        except Exception as e:
+            print(f"Warning: Could not load badge details: {e}")
+        
         for badge in guest_badges:
+            badge_name = badge[0]
+            badge_details = badge_lookup.get(badge_name)
+            
             earned_badges_list.append({
-                'name': badge[0],
-                'earned_at': badge[1] if badge[1] else None,
-                'icon': 'fa-trophy'
+                'name': badge_name,
+                'description': badge_details.description if badge_details else 'Achievement unlocked!',
+                'points': badge_details.points if badge_details else 0,
+                'icon': badge_details.icon if badge_details else 'fa-trophy',
+                'category': badge_details.category if badge_details else 'achievement',
+                'earned_at': badge[1] if badge[1] else None
             })
-            earned_badge_names.add(badge[0])
+            earned_badge_names.add(badge_name)
 
         # GET ALL BADGES FROM DATABASE (same as registered users!)
         try:
@@ -3076,7 +3205,7 @@ def get_student_stats():
             WHERE guest_code = :code
         """), {"code": guest_code}).fetchone()
 
-        # Get guest quiz attempts
+        # Get guest quiz attempts (recent 10 for display)
         attempts = db.session.execute(text("""
             SELECT topic, difficulty, score, total_questions, completed_at
             FROM guest_quiz_attempts
@@ -3091,9 +3220,107 @@ def get_student_stats():
         accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
 
         # Get badge count
-        badge_count = db.session.execute(text("""
-            SELECT COUNT(*) FROM guest_badges WHERE guest_code = :code
-        """), {"code": guest_code}).fetchone()[0]
+        try:
+            badge_count = db.session.execute(text("""
+                SELECT COUNT(*) FROM guest_badges WHERE guest_code = :code
+            """), {"code": guest_code}).fetchone()[0]
+        except:
+            badge_count = 0
+
+        # =====================================================
+        # CALCULATE TOPIC PROGRESS FROM GUEST_QUIZ_ATTEMPTS
+        # =====================================================
+        # Try to include bonus columns if they exist, fallback to basic query
+        try:
+            topic_progress_data = db.session.execute(text("""
+                SELECT 
+                    topic,
+                    difficulty,
+                    COUNT(*) as attempts,
+                    MAX(score) as best_score,
+                    MAX(CAST(score AS FLOAT) / NULLIF(total_questions, 0) * 100) as best_percentage,
+                    SUM(total_questions) as total_questions_answered,
+                    SUM(score) as total_correct,
+                    MAX(completed_at) as last_attempt,
+                    MAX(score + COALESCE(who_am_i_bonus, 0) + COALESCE(milestone_points, 0)) as max_points
+                FROM guest_quiz_attempts
+                WHERE guest_code = :code
+                GROUP BY topic, difficulty
+                ORDER BY topic, 
+                    CASE difficulty 
+                        WHEN 'beginner' THEN 1 
+                        WHEN 'intermediate' THEN 2 
+                        WHEN 'advanced' THEN 3 
+                        ELSE 4 
+                    END
+            """), {"code": guest_code}).fetchall()
+        except:
+            # Fallback: bonus columns don't exist yet
+            topic_progress_data = db.session.execute(text("""
+                SELECT 
+                    topic,
+                    difficulty,
+                    COUNT(*) as attempts,
+                    MAX(score) as best_score,
+                    MAX(CAST(score AS FLOAT) / NULLIF(total_questions, 0) * 100) as best_percentage,
+                    SUM(total_questions) as total_questions_answered,
+                    SUM(score) as total_correct,
+                    MAX(completed_at) as last_attempt,
+                    MAX(score) as max_points
+                FROM guest_quiz_attempts
+                WHERE guest_code = :code
+                GROUP BY topic, difficulty
+                ORDER BY topic, 
+                    CASE difficulty 
+                        WHEN 'beginner' THEN 1 
+                        WHEN 'intermediate' THEN 2 
+                        WHEN 'advanced' THEN 3 
+                        ELSE 4 
+                    END
+            """), {"code": guest_code}).fetchall()
+        
+        # Format topic progress for frontend
+        topic_progress = []
+        for row in topic_progress_data:
+            topic, difficulty, attempt_count, best_score, best_pct, total_q, total_correct_topic, last_attempt, max_points = row
+            
+            # Calculate accuracy for this topic/difficulty
+            topic_accuracy = (total_correct_topic / total_q * 100) if total_q > 0 else 0
+            
+            # Check if mastered (90%+ accuracy with 5+ attempts)
+            is_mastered = (attempt_count >= 5 and topic_accuracy >= 90)
+            
+            # Format topic name for display
+            display_name = topic.replace('_', ' ').title()
+            
+            topic_progress.append({
+                'topic': display_name,
+                'topic_id': topic,
+                'difficulty': difficulty.title() if difficulty else 'Unknown',
+                'attempts': attempt_count,
+                'best_score': best_score or 0,
+                'best_percentage': round(best_pct, 1) if best_pct else 0,
+                'accuracy': round(topic_accuracy, 1),
+                'is_mastered': is_mastered,
+                'max_points': max_points or 0,
+                'last_attempt_at': last_attempt
+            })
+        
+        # Count perfect scores
+        try:
+            perfect_count = db.session.execute(text("""
+                SELECT COUNT(*) FROM guest_quiz_attempts
+                WHERE guest_code = :code AND score = total_questions AND total_questions > 0
+            """), {"code": guest_code}).fetchone()[0]
+        except:
+            perfect_count = 0
+        
+        # Count topics mastered
+        topics_mastered = sum(1 for tp in topic_progress if tp['is_mastered'])
+        
+        # Calculate level properly (1 level per 100 points)
+        total_points = guest_stats[0] if guest_stats else 0
+        level = (total_points // 100) + 1
 
         return jsonify({
             'stats': {
@@ -3103,13 +3330,13 @@ def get_student_stats():
                 'overall_accuracy': round(accuracy, 1),
                 'current_streak_days': 0,
                 'longest_streak_days': 0,
-                'total_points': guest_stats[0] if guest_stats else 0,
-                'level': 1,
-                'topics_mastered': 0,
-                'perfect_scores': 0,
+                'total_points': total_points,
+                'level': level,
+                'topics_mastered': topics_mastered,
+                'perfect_scores': perfect_count,
                 'badges_earned': badge_count
             },
-            'topic_progress': [],
+            'topic_progress': topic_progress,
             'recent_attempts': [{
                 'topic': a[0],
                 'difficulty': a[1],
@@ -3205,13 +3432,9 @@ def get_student_mastery():
     if 'is_guest' in session and 'guest_code' not in session:
         return jsonify({}), 200
 
-    # Get all topics - MUST match topics in get_topics() API
-    topics = [
-        'arithmetic', 'fractions', 'decimals', 'multiplication_division',
-        'number_systems', 'bodmas', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'probability', 'descriptive_statistics', 'sets',
-        'surds', 'complex_numbers_intro', 'complex_numbers_expanded'
-    ]
-    difficulties = ['beginner', 'intermediate', 'advanced']
+    # Get all topics from database - automatically includes new topics
+    topics = get_valid_topics_from_db()  # Database-driven!
+    difficulties = VALID_DIFFICULTIES
 
     # Check if this is a guest_code user or registered user
     if 'guest_code' in session:
@@ -4020,8 +4243,8 @@ def get_class_performance_matrix(class_id):
     students = User.query.filter(User.id.in_(student_ids)).all()
 
     # Get all topics and difficulties
-    topics = ['arithmetic', 'fractions', 'decimals', 'multiplication_division', 'number_systems', 'bodmas', 'probability', 'descriptive_statistics', 'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'sets', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded']
-    difficulties = ['beginner', 'intermediate', 'advanced']
+    topics = get_valid_topics_from_db()  # Database-driven!
+    difficulties = VALID_DIFFICULTIES
 
     students_data = []
 
@@ -4737,29 +4960,61 @@ def admin_statistics():
 @login_required
 @role_required('admin')
 def admin_topics_list():
-    """Get all distinct topics from questions table with counts"""
-    from sqlalchemy import func
-
-    # Query to get topics and their question counts
-    topics_query = db.session.query(
-        Question.topic,
-        func.count(Question.id).label('count')
-    ).group_by(Question.topic).order_by(Question.topic).all()
-
-    # Format topic names for display
-    def format_topic_name(topic):
-        """Convert topic key to display name"""
-        return topic.replace('_', ' ').title()
-
-    topics = [
-        {
-            'value': topic,
-            'name': format_topic_name(topic),
-            'count': count
-        }
-        for topic, count in topics_query
-    ]
-
+    """
+    Get all topics for dropdown - combines topics from:
+    1. The topics table (admin-managed, authoritative)
+    2. The questions table (for topics with questions but not yet in topics table)
+    
+    This ensures new topics added via Admin Dashboard appear immediately.
+    """
+    from sqlalchemy import func, text
+    
+    topics_dict = {}  # Use dict to avoid duplicates
+    
+    # First, get all topics from the topics table (admin-managed)
+    try:
+        db_topics = db.session.execute(text("""
+            SELECT t.topic_id, t.display_name, 
+                   (SELECT COUNT(*) FROM questions q WHERE q.topic = t.topic_id) as question_count
+            FROM topics t
+            WHERE t.is_visible = 1
+            ORDER BY t.sort_order, t.display_name
+        """)).fetchall()
+        
+        for topic_id, display_name, count in db_topics:
+            topics_dict[topic_id] = {
+                'value': topic_id,
+                'name': display_name,
+                'count': count or 0
+            }
+    except Exception as e:
+        print(f"Warning: Could not load from topics table: {e}")
+    
+    # Also get topics from questions table (for any topics not yet in topics table)
+    try:
+        questions_topics = db.session.query(
+            Question.topic,
+            func.count(Question.id).label('count')
+        ).group_by(Question.topic).all()
+        
+        for topic, count in questions_topics:
+            if topic not in topics_dict:
+                # Topic exists in questions but not in topics table
+                topics_dict[topic] = {
+                    'value': topic,
+                    'name': topic.replace('_', ' ').title(),
+                    'count': count
+                }
+            else:
+                # Update count if questions table has more (shouldn't happen, but safety)
+                if count > topics_dict[topic]['count']:
+                    topics_dict[topic]['count'] = count
+    except Exception as e:
+        print(f"Warning: Could not load from questions table: {e}")
+    
+    # Convert to list and sort
+    topics = sorted(topics_dict.values(), key=lambda x: x['name'])
+    
     return jsonify({'topics': topics})
 
 
@@ -4880,16 +5135,17 @@ def get_class_matrix_data(class_id):
 
     # If no strands found (strands not yet added), fall back to hardcoded list
     if not all_topics:
-        all_topics = ['arithmetic', 'multiplication_division', 'number_systems',
-                      'bodmas', 'fractions', 'decimals', 'sets',
-                      'introductory_algebra', 'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 'expanding_factorising', 'surds', 'complex_numbers_intro', 'complex_numbers_expanded',
-                      'probability', 'descriptive_statistics']
+        all_topics = get_valid_topics_from_db()  # Database-driven fallback!
+        # Default strands for fallback
         strands = {
-            'Number': ['arithmetic', 'multiplication_division', 'number_systems',
-                      'bodmas', 'fractions', 'decimals', 'sets'],
-            'Algebra and Functions': ['functions', 'patterns', 'solving_equations',
-                                      'simplifying_expressions', 'expanding_factorising',
-                                      'surds', 'complex_numbers_intro', 'complex_numbers_expanded'],
+            'Number': [t for t in all_topics if t in ['arithmetic', 'fractions', 'decimals', 
+                      'multiplication_division', 'number_systems', 'bodmas', 'sets', 'surds']],
+            'Algebra and Functions': [t for t in all_topics if t in ['introductory_algebra', 
+                      'functions', 'patterns', 'solving_equations', 'simplifying_expressions', 
+                      'expanding_factorising', 'complex_numbers_intro', 'complex_numbers_expanded', 
+                      'simultaneous_equations']],
+            'Geometry and Trigonometry': [t for t in all_topics if t in ['coordinate_geometry', 'trigonometry']],
+            'Statistics and Probability': [t for t in all_topics if t in ['probability', 'descriptive_statistics']],
         }
 
     difficulties = ['beginner', 'intermediate', 'advanced']
@@ -5603,11 +5859,17 @@ if __name__ == '__main__':
 
 @app.route('/logout', methods=['GET'])
 def logout_simple():
+    """Simple logout route with proper session invalidation"""
     session.clear()
     try:
-        return redirect(url_for('index'))
+        response = redirect(url_for('index') + '?logged_out=1')
     except Exception:
-        return redirect('/')
+        response = redirect('/?logged_out=1')
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    response.delete_cookie('session')
+    return response
 
 @app.route('/teacher/class/<int:class_id>/rename', methods=['POST'], endpoint='teacher_simple_rename_class')
 @login_required
