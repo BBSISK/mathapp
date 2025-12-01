@@ -1293,6 +1293,27 @@ class BonusQuestionAttempt(db.Model):
     question = db.relationship('BonusQuestion', backref='attempts')
 
 
+class UserQuestionHistory(db.Model):
+    """Track which questions each user has seen to prevent duplicates in quizzes"""
+    __tablename__ = 'user_question_history'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    guest_code = db.Column(db.String(20), nullable=True)  # For guest users
+    question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
+    topic = db.Column(db.String(50), nullable=False)
+    difficulty = db.Column(db.String(20), nullable=False)
+    seen_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Indexes for fast lookups
+    __table_args__ = (
+        db.Index('idx_user_question', 'user_id', 'question_id'),
+        db.Index('idx_guest_question', 'guest_code', 'question_id'),
+        db.Index('idx_user_topic_diff', 'user_id', 'topic', 'difficulty'),
+        db.Index('idx_guest_topic_diff', 'guest_code', 'topic', 'difficulty'),
+    )
+
+
 # ==================== DECORATORS ====================
 
 def login_required(f):
@@ -2631,18 +2652,108 @@ def get_topics():
 @approved_required
 def get_questions(topic, difficulty):
     """
-    Get 25 random questions from the pool of 40 available questions
-    for the given topic and difficulty level.
-    Each student gets a different random selection.
+    Get 25 random questions from the pool, excluding questions the user has already seen.
+    If fewer than 25 unseen questions are available, returns all available unseen questions.
+    This ensures users never see duplicate questions, even if the quiz is shorter.
+    Questions are marked as seen immediately when fetched.
     """
+    from sqlalchemy import text
+    
+    # Get user identifier
+    user_id = session.get('user_id') if not session.get('is_guest') else None
+    guest_code = session.get('guest_code')
+    
+    # Get IDs of questions this user has already seen for this topic/difficulty
+    seen_question_ids = set()
+    
+    try:
+        if user_id:
+            seen = db.session.execute(text("""
+                SELECT question_id FROM user_question_history
+                WHERE user_id = :user_id AND topic = :topic AND difficulty = :difficulty
+            """), {'user_id': user_id, 'topic': topic, 'difficulty': difficulty}).fetchall()
+            seen_question_ids = {row.question_id for row in seen}
+        elif guest_code:
+            seen = db.session.execute(text("""
+                SELECT question_id FROM user_question_history
+                WHERE guest_code = :guest_code AND topic = :topic AND difficulty = :difficulty
+            """), {'guest_code': guest_code, 'topic': topic, 'difficulty': difficulty}).fetchall()
+            seen_question_ids = {row.question_id for row in seen}
+    except Exception as e:
+        # Table might not exist yet - proceed without filtering
+        print(f"Note: Could not check question history (table may not exist): {e}")
+        seen_question_ids = set()
+    
+    # Get all questions for this topic/difficulty
     questions = Question.query.filter_by(topic=topic, difficulty=difficulty).all()
-    questions_list = [q.to_dict() for q in questions]
-
-    # Shuffle to randomize order
+    
+    # Filter out seen questions
+    unseen_questions = [q for q in questions if q.id not in seen_question_ids]
+    
+    # If no unseen questions, reset history for this topic/difficulty and use all questions
+    if len(unseen_questions) == 0 and len(questions) > 0:
+        try:
+            if user_id:
+                db.session.execute(text("""
+                    DELETE FROM user_question_history
+                    WHERE user_id = :user_id AND topic = :topic AND difficulty = :difficulty
+                """), {'user_id': user_id, 'topic': topic, 'difficulty': difficulty})
+            elif guest_code:
+                db.session.execute(text("""
+                    DELETE FROM user_question_history
+                    WHERE guest_code = :guest_code AND topic = :topic AND difficulty = :difficulty
+                """), {'guest_code': guest_code, 'topic': topic, 'difficulty': difficulty})
+            db.session.commit()
+            unseen_questions = questions  # All questions are now "unseen" again
+            print(f"Reset question history for {user_id or guest_code} on {topic}/{difficulty}")
+        except Exception as e:
+            print(f"Could not reset question history: {e}")
+            unseen_questions = questions
+    
+    # Convert to dict and shuffle
+    questions_list = [q.to_dict() for q in unseen_questions]
     random.shuffle(questions_list)
 
-    # Return 25 questions (or all available if less than 25)
-    return jsonify(questions_list[:25])
+    # Return up to 25 questions (or fewer if not enough unseen)
+    selected_questions = questions_list[:25]
+    
+    # Record these questions as seen
+    if selected_questions:
+        try:
+            for q in selected_questions:
+                if user_id:
+                    db.session.execute(text("""
+                        INSERT OR IGNORE INTO user_question_history 
+                        (user_id, question_id, topic, difficulty, seen_at)
+                        VALUES (:user_id, :question_id, :topic, :difficulty, CURRENT_TIMESTAMP)
+                    """), {
+                        'user_id': user_id,
+                        'question_id': q['id'],
+                        'topic': topic,
+                        'difficulty': difficulty
+                    })
+                elif guest_code:
+                    db.session.execute(text("""
+                        INSERT OR IGNORE INTO user_question_history 
+                        (guest_code, question_id, topic, difficulty, seen_at)
+                        VALUES (:guest_code, :question_id, :topic, :difficulty, CURRENT_TIMESTAMP)
+                    """), {
+                        'guest_code': guest_code,
+                        'question_id': q['id'],
+                        'topic': topic,
+                        'difficulty': difficulty
+                    })
+            db.session.commit()
+        except Exception as e:
+            # Don't fail the request if tracking fails
+            print(f"Could not record question history: {e}")
+            db.session.rollback()
+    
+    # Log if quiz will be shorter than usual
+    if len(selected_questions) < 25 and len(questions) >= 25:
+        print(f"Quiz for {user_id or guest_code}: {len(selected_questions)} unseen questions available (of {len(questions)} total)")
+    
+    return jsonify(selected_questions)
 
 @app.route('/api/create-quiz-attempt', methods=['POST'])
 @login_required
@@ -2871,12 +2982,42 @@ def submit_quiz():
 @app.route('/api/my-progress')
 @guest_or_login_required
 def my_progress():
-    # Guest users have no progress
-    if 'is_guest' in session:
-        return jsonify([]), 200
-
-    attempts = QuizAttempt.query.filter_by(user_id=session['user_id']).order_by(QuizAttempt.completed_at.desc()).all()
-    return jsonify([a.to_dict() for a in attempts])
+    from sqlalchemy import text
+    
+    guest_code = session.get('guest_code')
+    user_id = session.get('user_id')
+    
+    # Check if this is a guest user with data in guest_quiz_attempts
+    if guest_code:
+        try:
+            attempts = db.session.execute(text("""
+                SELECT id, topic, difficulty, score, total_questions, time_spent, completed_at
+                FROM guest_quiz_attempts
+                WHERE guest_code = :code
+                ORDER BY completed_at DESC
+                LIMIT 100
+            """), {'code': guest_code}).fetchall()
+            
+            if attempts:
+                return jsonify([{
+                    'id': a.id,
+                    'topic': a.topic,
+                    'difficulty': a.difficulty,
+                    'score': a.score,
+                    'total_questions': a.total_questions,
+                    'percentage': round((a.score / a.total_questions * 100), 1) if a.total_questions > 0 else 0,
+                    'time_taken': a.time_spent,
+                    'completed_at': a.completed_at if isinstance(a.completed_at, str) else (a.completed_at.isoformat() if a.completed_at else None)
+                } for a in attempts])
+        except Exception as e:
+            print(f"Error loading guest progress: {e}")
+    
+    # Fallback: check for registered user quiz attempts
+    if user_id and not session.get('is_guest'):
+        attempts = QuizAttempt.query.filter_by(user_id=user_id).order_by(QuizAttempt.completed_at.desc()).all()
+        return jsonify([a.to_dict() for a in attempts])
+    
+    return jsonify([]), 200
 
 # ==================== BADGES API ROUTES ====================
 
@@ -3704,6 +3845,168 @@ def get_random_bonus_question():
     return jsonify(question.to_dict())
 
 
+@app.route('/api/bonus-question/debug')
+@login_required
+def debug_bonus_questions():
+    """
+    Debug endpoint to check bonus question image URLs
+    Access: /api/bonus-question/debug
+    """
+    from sqlalchemy import text
+    
+    try:
+        # Get all bonus questions with their image URLs
+        questions = db.session.execute(text("""
+            SELECT id, category, correct_answer, image_url, is_active
+            FROM bonus_questions
+            ORDER BY category, id
+            LIMIT 50
+        """)).fetchall()
+        
+        results = []
+        for q in questions:
+            # Check if image_url looks valid
+            image_url = q.image_url or ''
+            
+            # Determine potential issues
+            issues = []
+            if not image_url:
+                issues.append('No image URL')
+            elif not image_url.startswith('/') and not image_url.startswith('http'):
+                issues.append('URL does not start with / or http')
+            elif 'static/' not in image_url and not image_url.startswith('http'):
+                issues.append('May be missing /static/ prefix')
+            
+            results.append({
+                'id': q.id,
+                'category': q.category,
+                'answer': q.correct_answer,
+                'image_url': image_url,
+                'is_active': q.is_active,
+                'issues': issues if issues else ['OK']
+            })
+        
+        return jsonify({
+            'total': len(results),
+            'questions': results
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/bonus-question/test')
+@login_required  
+def test_bonus_question():
+    """
+    Test endpoint to simulate bonus question popup without completing quiz
+    Access: /api/bonus-question/test
+    This returns a bonus question that you can test the image loading with
+    """
+    category = request.args.get('category', 'dinosaurs')
+    
+    question = BonusQuestion.query.filter_by(category=category, is_active=True).first()
+    
+    if not question:
+        return jsonify({'error': f'No bonus questions found for category: {category}'}), 404
+    
+    # Return in the same format as the random endpoint
+    result = question.to_dict()
+    
+    # Add debug info
+    result['_debug'] = {
+        'raw_image_url': question.image_url,
+        'category': question.category,
+        'id': question.id,
+        'test_image_tag': f'<img src="{question.image_url}" onerror="console.log(\'Image load failed:\', this.src)">'
+    }
+    
+    return jsonify(result)
+
+
+@app.route('/test-dino-image')
+@login_required
+def test_dino_image_page():
+    """
+    Visual test page for bonus question images
+    Access: /test-dino-image
+    """
+    from sqlalchemy import text
+    
+    # Get first few bonus questions
+    questions = db.session.execute(text("""
+        SELECT id, category, correct_answer, image_url
+        FROM bonus_questions
+        WHERE is_active = 1
+        LIMIT 5
+    """)).fetchall()
+    
+    html = '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Dino Image Test</title>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+            .card { background: white; padding: 20px; margin: 20px 0; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+            .card h3 { margin-top: 0; }
+            .image-container { 
+                width: 300px; height: 300px; 
+                background: #e0e0e0; 
+                display: flex; align-items: center; justify-content: center;
+                border-radius: 8px; overflow: hidden;
+                margin: 10px 0;
+            }
+            .image-container img { max-width: 100%; max-height: 100%; }
+            .url { font-family: monospace; background: #f0f0f0; padding: 5px 10px; border-radius: 4px; word-break: break-all; }
+            .status { padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 10px; }
+            .status.loading { background: #fff3cd; color: #856404; }
+            .status.success { background: #d4edda; color: #155724; }
+            .status.error { background: #f8d7da; color: #721c24; }
+        </style>
+    </head>
+    <body>
+        <h1>🦕 Dino Image Test Page</h1>
+        <p>This page tests whether bonus question images load correctly.</p>
+    '''
+    
+    if not questions:
+        html += '<div class="card"><p>No bonus questions found in database!</p></div>'
+    else:
+        for q in questions:
+            html += f'''
+            <div class="card">
+                <h3>ID: {q.id} - {q.correct_answer}</h3>
+                <p>Category: {q.category}</p>
+                <p>Image URL: <span class="url">{q.image_url or 'NULL'}</span></p>
+                <div class="image-container" id="container-{q.id}">
+                    <img src="{q.image_url}" 
+                         onload="document.getElementById('status-{q.id}').className='status success'; document.getElementById('status-{q.id}').textContent='✓ Image loaded successfully'"
+                         onerror="document.getElementById('status-{q.id}').className='status error'; document.getElementById('status-{q.id}').textContent='✗ Image failed to load'; this.style.display='none'; document.getElementById('container-{q.id}').innerHTML='<span style=\\'color:red\\'>Image failed to load</span>'"
+                         alt="{q.correct_answer}">
+                </div>
+                <div id="status-{q.id}" class="status loading">Loading...</div>
+            </div>
+            '''
+    
+    html += '''
+        <div class="card">
+            <h3>🔍 Debug Info</h3>
+            <p>If images fail to load, check:</p>
+            <ul>
+                <li>Is the image URL correct? (should start with /static/ or be a full URL)</li>
+                <li>Does the file exist in the static folder?</li>
+                <li>Check browser Network tab (F12) for 404 errors</li>
+            </ul>
+            <p><a href="/api/bonus-question/debug">View all bonus question URLs (JSON)</a></p>
+        </div>
+    </body>
+    </html>
+    '''
+    
+    return html
+
+
 @app.route('/api/bonus-question/submit', methods=['POST'])
 @login_required
 def submit_bonus_answer():
@@ -3795,8 +4098,53 @@ def get_bonus_categories():
     return jsonify([{
         'category': cat,
         'count': count,
-        'display_name': cat.replace('_', ' ').title()
+        'display_name': cat.title()
     } for cat, count in categories])
+
+
+@app.route('/api/bonus-question/test-submit')
+@login_required
+def test_submit_bonus_question():
+    """
+    Test endpoint to create a fake bonus question attempt for testing the archive.
+    Access: /api/bonus-question/test-submit
+    This creates a test entry so you can verify the Dino Archive works.
+    """
+    from sqlalchemy import text
+    
+    user_id = session.get('user_id') if not session.get('is_guest') else None
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    # Get a random bonus question
+    question = BonusQuestion.query.filter_by(category='dinosaurs', is_active=True).first()
+    
+    if not question:
+        return jsonify({'error': 'No dinosaur questions found'}), 404
+    
+    # Create a test attempt (mark as correct for fun)
+    attempt = BonusQuestionAttempt(
+        question_id=question.id,
+        user_id=user_id,
+        guest_code=guest_code,
+        selected_answer=question.correct_answer,  # Auto-correct answer
+        is_correct=True,
+        points_earned=100,
+        quiz_topic='test',
+        quiz_score=25
+    )
+    db.session.add(attempt)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Test bonus attempt created!',
+        'question': question.correct_answer,
+        'attempt_id': attempt.id,
+        'hint': 'Now check /api/bonus-question/archive or click the Dino Archive button'
+    })
 
 
 @app.route('/api/bonus-question/archive')
@@ -9062,69 +9410,240 @@ def api_admin_create_raffle():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/admin/raffles/<int:raffle_id>', methods=['PUT'])
+@login_required
+@role_required('admin')
+def api_admin_update_raffle(raffle_id):
+    """Update raffle"""
+    from sqlalchemy import text
+    
+    data = request.json
+    
+    try:
+        # Build update query dynamically based on provided fields
+        update_fields = []
+        params = {'raffle_id': raffle_id}
+        
+        field_mapping = {
+            'name': 'name',
+            'description': 'description',
+            'prize_description': 'prize_description',
+            'emoji': 'emoji',
+            'entry_cost': 'entry_cost',
+            'max_entries_per_student': 'max_entries_per_student',
+            'draw_frequency': 'draw_frequency',
+            'draw_day_of_week': 'draw_day_of_week',
+            'draw_time': 'draw_time',
+            'is_active': 'is_active',
+            'auto_draw_enabled': 'auto_draw_enabled'
+        }
+        
+        for json_key, db_key in field_mapping.items():
+            if json_key in data:
+                update_fields.append(f"{db_key} = :{json_key}")
+                params[json_key] = data[json_key]
+        
+        if not update_fields:
+            return jsonify({'error': 'No fields to update'}), 400
+        
+        query = f"UPDATE raffles SET {', '.join(update_fields)} WHERE id = :raffle_id"
+        db.session.execute(text(query), params)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/raffles/<int:raffle_id>/entries')
+@login_required
+@role_required('admin')
+def api_admin_get_raffle_entries(raffle_id):
+    """Get all entries for a raffle"""
+    from sqlalchemy import text
+    
+    try:
+        entries = db.session.execute(text("""
+            SELECT re.*, 
+                   u.full_name as student_name,
+                   re.guest_code
+            FROM raffle_entries re
+            LEFT JOIN users u ON re.student_id = u.id
+            WHERE re.raffle_id = :raffle_id AND re.is_active = 1
+            ORDER BY re.entered_at DESC
+        """), {'raffle_id': raffle_id}).fetchall()
+        
+        return jsonify([{
+            'id': e.id,
+            'student_name': e.student_name,
+            'guest_code': e.guest_code,
+            'entered_at': e.entered_at.isoformat() if e.entered_at else None
+        } for e in entries])
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/raffles/winners')
+@login_required
+@role_required('admin')
+def api_admin_get_raffle_winners():
+    """Get recent raffle winners"""
+    from sqlalchemy import text
+    
+    try:
+        winners = db.session.execute(text("""
+            SELECT rd.*, 
+                   r.name as raffle_name,
+                   r.emoji,
+                   r.prize_description,
+                   u.full_name as winner_name,
+                   rd.winner_guest_code
+            FROM raffle_draws rd
+            JOIN raffles r ON rd.raffle_id = r.id
+            LEFT JOIN users u ON rd.winner_id = u.id
+            WHERE rd.status = 'drawn' AND rd.winner_id IS NOT NULL
+            ORDER BY rd.drawn_at DESC
+            LIMIT 20
+        """)).fetchall()
+        
+        return jsonify([{
+            'id': w.id,
+            'raffle_name': w.raffle_name,
+            'emoji': w.emoji,
+            'prize_description': w.prize_description,
+            'winner_name': w.winner_name or w.winner_guest_code or 'Unknown',
+            'drawn_at': w.drawn_at.isoformat() if w.drawn_at else None,
+            'total_entries': w.total_entries if hasattr(w, 'total_entries') else None
+        } for w in winners])
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/admin/raffles/<int:raffle_id>/draw', methods=['POST'])
 @login_required
 @role_required('admin')
 def api_admin_manual_draw(raffle_id):
-    """Manual draw"""
+    """Manual draw with winner info returned"""
+    from sqlalchemy import text
+    
     draw_id = perform_raffle_draw(raffle_id)
     
     if draw_id:
+        # Get winner info from the draw
+        try:
+            winner_info = db.session.execute(text("""
+                SELECT rd.*, 
+                       r.name as raffle_name,
+                       r.prize_description,
+                       u.full_name as winner_name,
+                       rd.winner_guest_code
+                FROM raffle_draws rd
+                JOIN raffles r ON rd.raffle_id = r.id
+                LEFT JOIN users u ON rd.winner_id = u.id
+                WHERE rd.id = :draw_id
+            """), {'draw_id': draw_id}).fetchone()
+            
+            if winner_info:
+                return jsonify({
+                    'success': True, 
+                    'draw_id': draw_id,
+                    'winner': {
+                        'name': winner_info.winner_name or winner_info.winner_guest_code or 'Unknown',
+                        'class': None  # Could add class info if needed
+                    },
+                    'prize': winner_info.prize_description
+                })
+        except Exception as e:
+            print(f"Error getting winner info: {e}")
+        
         return jsonify({'success': True, 'draw_id': draw_id})
     else:
-        return jsonify({'error': 'Draw failed'}), 500
+        return jsonify({'error': 'Draw failed - no entries or error occurred'}), 500
 
 
 # Student Raffle Routes
 @app.route('/api/raffles/available')
 @login_required
 def api_raffles_available():
-    """Get available raffles for student"""
+    """Get available raffles for student (supports both registered and guest users)"""
     from sqlalchemy import text
     
-    user_id = session['user_id']
-    school_id = get_user_school_id(user_id)
+    user_id = session.get('user_id') if not session.get('is_guest') else None
+    guest_code = session.get('guest_code')
     
-    raffles = db.session.execute(text("""
-        SELECT r.*,
-               (SELECT COUNT(*) FROM raffle_entries WHERE raffle_id = r.id AND student_id = :user_id AND is_active = 1) as my_entries,
-               (SELECT COUNT(DISTINCT student_id) FROM raffle_entries WHERE raffle_id = r.id AND is_active = 1) as total_participants
-        FROM raffles r
-        WHERE r.is_active = 1
-        AND (r.school_id IS NULL OR r.school_id = :school_id)
-        ORDER BY r.created_at DESC
-    """), {'user_id': user_id, 'school_id': school_id}).fetchall()
-    
-    return jsonify([{
-        'id': r.id,
-        'name': r.name,
-        'description': r.description,
-        'prize_description': r.prize_description,
-        'emoji': r.emoji,
-        'entry_cost': r.entry_cost,
-        'max_entries_per_student': r.max_entries_per_student,
-        'draw_frequency': r.draw_frequency,
-        'my_entries': r.my_entries,
-        'total_participants': r.total_participants
-    } for r in raffles])
+    try:
+        # Build query based on user type
+        if user_id:
+            raffles = db.session.execute(text("""
+                SELECT r.*,
+                       (SELECT COUNT(*) FROM raffle_entries WHERE raffle_id = r.id AND student_id = :user_id AND is_active = 1) as my_entries,
+                       (SELECT COUNT(*) FROM raffle_entries WHERE raffle_id = r.id AND is_active = 1) as total_entries
+                FROM raffles r
+                WHERE r.is_active = 1
+                ORDER BY r.created_at DESC
+            """), {'user_id': user_id}).fetchall()
+        elif guest_code:
+            raffles = db.session.execute(text("""
+                SELECT r.*,
+                       (SELECT COUNT(*) FROM raffle_entries WHERE raffle_id = r.id AND guest_code = :guest_code AND is_active = 1) as my_entries,
+                       (SELECT COUNT(*) FROM raffle_entries WHERE raffle_id = r.id AND is_active = 1) as total_entries
+                FROM raffles r
+                WHERE r.is_active = 1
+                ORDER BY r.created_at DESC
+            """), {'guest_code': guest_code}).fetchall()
+        else:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        return jsonify([{
+            'id': r.id,
+            'name': r.name,
+            'description': r.description,
+            'prize_description': r.prize_description,
+            'emoji': r.emoji or '🎟️',
+            'entry_cost': r.entry_cost,
+            'max_entries_per_student': r.max_entries_per_student,
+            'draw_frequency': r.draw_frequency,
+            'my_entries': r.my_entries or 0,
+            'total_entries': r.total_entries or 0
+        } for r in raffles])
+        
+    except Exception as e:
+        print(f"Error getting raffles: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/raffles/<int:raffle_id>/enter', methods=['POST'])
 @login_required
 def api_raffle_enter(raffle_id):
-    """Buy raffle entries"""
+    """Buy raffle entries - supports both registered users and guests"""
     from sqlalchemy import text
     
     data = request.json
     num_entries = data.get('entries', 1)
     
-    user_id = session['user_id']
-    school_id = get_user_school_id(user_id)
+    guest_code = session.get('guest_code')
+    user_id = session.get('user_id')
     
-    if not school_id:
-        return jsonify({'error': 'No school assigned'}), 400
+    # Determine if this is a guest user (has guest_code and points in guest_users)
+    # or a registered user (has user_id and points in user_stats)
+    is_guest_user = False
+    if guest_code:
+        # Check if this guest has points in guest_users table
+        guest_check = db.session.execute(text("""
+            SELECT total_score FROM guest_users WHERE guest_code = :guest_code
+        """), {'guest_code': guest_code}).fetchone()
+        if guest_check:
+            is_guest_user = True
+    
+    if not user_id and not guest_code:
+        return jsonify({'error': 'Not authenticated'}), 401
     
     try:
+        # Get raffle info
         raffle = db.session.execute(text("""
             SELECT * FROM raffles WHERE id = :raffle_id AND is_active = 1
         """), {'raffle_id': raffle_id}).fetchone()
@@ -9132,41 +9651,68 @@ def api_raffle_enter(raffle_id):
         if not raffle:
             return jsonify({'error': 'Raffle not found'}), 404
         
-        current = db.session.execute(text("""
-            SELECT COALESCE(SUM(entry_count), 0) as total
-            FROM raffle_entries
-            WHERE raffle_id = :raffle_id AND student_id = :user_id AND is_active = 1
-        """), {'raffle_id': raffle_id, 'user_id': user_id}).fetchone()
+        # Check current entries for this user
+        if is_guest_user:
+            current = db.session.execute(text("""
+                SELECT COUNT(*) as total
+                FROM raffle_entries
+                WHERE raffle_id = :raffle_id AND guest_code = :guest_code AND is_active = 1
+            """), {'raffle_id': raffle_id, 'guest_code': guest_code}).fetchone()
+        else:
+            current = db.session.execute(text("""
+                SELECT COUNT(*) as total
+                FROM raffle_entries
+                WHERE raffle_id = :raffle_id AND student_id = :user_id AND is_active = 1
+            """), {'raffle_id': raffle_id, 'user_id': user_id}).fetchone()
         
-        if current.total + num_entries > raffle.max_entries_per_student:
-            return jsonify({'error': f'Max {raffle.max_entries_per_student} entries per student'}), 400
+        current_count = current.total if current else 0
+        
+        if current_count + num_entries > raffle.max_entries_per_student:
+            return jsonify({'error': f'Maximum {raffle.max_entries_per_student} entries allowed. You have {current_count}.'}), 400
         
         cost = raffle.entry_cost * num_entries
-        points = db.session.execute(text("""
-            SELECT points FROM users WHERE id = :user_id
-        """), {'user_id': user_id}).fetchone()
         
-        if points.points < cost:
-            return jsonify({'error': 'Not enough points'}), 400
+        # Get and check user's points
+        if is_guest_user:
+            guest = db.session.execute(text("""
+                SELECT total_score FROM guest_users WHERE guest_code = :guest_code
+            """), {'guest_code': guest_code}).fetchone()
+            points = guest.total_score if guest else 0
+        else:
+            stats = db.session.execute(text("""
+                SELECT total_points FROM user_stats WHERE user_id = :user_id
+            """), {'user_id': user_id}).fetchone()
+            points = stats.total_points if stats else 0
         
-        db.session.execute(text("""
-            UPDATE users SET points = points - :cost WHERE id = :user_id
-        """), {'cost': cost, 'user_id': user_id})
+        if points < cost:
+            return jsonify({'error': f'Not enough points. Need {cost}, have {points}.'}), 400
         
-        db.session.execute(text("""
-            INSERT INTO raffle_entries (
-                raffle_id, student_id, school_id, entry_count, points_spent
-            ) VALUES (
-                :raffle_id, :student_id, :school_id, :entries, :cost
-            )
-        """), {
-            'raffle_id': raffle_id,
-            'student_id': user_id,
-            'school_id': school_id,
-            'entries': num_entries,
-            'cost': cost
-        })
+        # Deduct points
+        if is_guest_user:
+            db.session.execute(text("""
+                UPDATE guest_users SET total_score = total_score - :cost WHERE guest_code = :guest_code
+            """), {'cost': cost, 'guest_code': guest_code})
+        else:
+            db.session.execute(text("""
+                UPDATE user_stats SET total_points = total_points - :cost WHERE user_id = :user_id
+            """), {'cost': cost, 'user_id': user_id})
         
+        # Create entry records (one per entry for fair drawing)
+        for _ in range(num_entries):
+            db.session.execute(text("""
+                INSERT INTO raffle_entries (
+                    raffle_id, student_id, guest_code, points_spent, is_active
+                ) VALUES (
+                    :raffle_id, :student_id, :guest_code, :cost_per_entry, 1
+                )
+            """), {
+                'raffle_id': raffle_id,
+                'student_id': user_id if not is_guest_user else None,
+                'guest_code': guest_code if is_guest_user else None,
+                'cost_per_entry': raffle.entry_cost
+            })
+        
+        # Update raffle total entries
         db.session.execute(text("""
             UPDATE raffles SET total_entries = total_entries + :entries
             WHERE id = :raffle_id
@@ -9174,7 +9720,16 @@ def api_raffle_enter(raffle_id):
         
         db.session.commit()
         
-        return jsonify({'success': True, 'entries_purchased': num_entries})
+        # Get updated entry count
+        new_total = current_count + num_entries
+        
+        return jsonify({
+            'success': True, 
+            'entries_purchased': num_entries,
+            'total_entries': new_total,
+            'points_spent': cost,
+            'remaining_points': points - cost
+        })
         
     except Exception as e:
         db.session.rollback()
@@ -9184,45 +9739,117 @@ def api_raffle_enter(raffle_id):
 @app.route('/api/raffles/check-wins')
 @login_required
 def api_check_raffle_wins():
-    """Check for unacknowledged wins"""
+    """Check for unacknowledged wins - supports both registered users and guests"""
     from sqlalchemy import text
     
-    wins = db.session.execute(text("""
-        SELECT wn.*, rd.token, rd.token_expires_at,
-               r.name as raffle_name, r.prize_description, r.emoji
-        FROM winner_notifications wn
-        JOIN raffle_draws rd ON wn.draw_id = rd.id
-        JOIN raffles r ON rd.raffle_id = r.id
-        WHERE wn.winner_id = :user_id AND wn.acknowledged = 0
-    """), {'user_id': session['user_id']}).fetchall()
+    user_id = session.get('user_id') if not session.get('is_guest') else None
+    guest_code = session.get('guest_code')
     
-    return jsonify([{
-        'id': w.id,
-        'draw_id': w.draw_id,
-        'raffle_name': w.raffle_name,
-        'prize_description': w.prize_description,
-        'emoji': w.emoji,
-        'token': w.token,
-        'expires_at': str(w.token_expires_at),
-        'message': w.message
-    } for w in wins])
+    try:
+        if user_id:
+            wins = db.session.execute(text("""
+                SELECT wn.*, rd.token, rd.token_expires_at,
+                       r.name as raffle_name, r.prize_description, r.emoji
+                FROM winner_notifications wn
+                JOIN raffle_draws rd ON wn.draw_id = rd.id
+                JOIN raffles r ON rd.raffle_id = r.id
+                WHERE wn.winner_id = :user_id AND wn.acknowledged = 0
+            """), {'user_id': user_id}).fetchall()
+        elif guest_code:
+            wins = db.session.execute(text("""
+                SELECT wn.*, rd.token, rd.token_expires_at,
+                       r.name as raffle_name, r.prize_description, r.emoji
+                FROM winner_notifications wn
+                JOIN raffle_draws rd ON wn.draw_id = rd.id
+                JOIN raffles r ON rd.raffle_id = r.id
+                WHERE wn.winner_guest_code = :guest_code AND wn.acknowledged = 0
+            """), {'guest_code': guest_code}).fetchall()
+        else:
+            return jsonify([])
+        
+        return jsonify([{
+            'id': w.id,
+            'draw_id': w.draw_id,
+            'raffle_name': w.raffle_name,
+            'prize_description': w.prize_description,
+            'emoji': w.emoji,
+            'token': w.token,
+            'expires_at': str(w.token_expires_at) if w.token_expires_at else None,
+            'message': w.message
+        } for w in wins])
+        
+    except Exception as e:
+        print(f"Error checking wins: {e}")
+        return jsonify([])
 
 
-@app.route('/api/raffles/acknowledge-win/<int:notification_id>', methods=['POST'])
+@app.route('/api/raffles/wins/<int:notification_id>/acknowledge', methods=['POST'])
 @login_required
 def api_acknowledge_win(notification_id):
     """Acknowledge winner notification"""
     from sqlalchemy import text
     
-    db.session.execute(text("""
-        UPDATE winner_notifications
-        SET acknowledged = 1, acknowledged_at = CURRENT_TIMESTAMP
-        WHERE id = :notification_id AND winner_id = :user_id
-    """), {'notification_id': notification_id, 'user_id': session['user_id']})
+    user_id = session.get('user_id') if not session.get('is_guest') else None
+    guest_code = session.get('guest_code')
+    
+    if user_id:
+        db.session.execute(text("""
+            UPDATE winner_notifications
+            SET acknowledged = 1, acknowledged_at = CURRENT_TIMESTAMP
+            WHERE id = :notification_id AND winner_id = :user_id
+        """), {'notification_id': notification_id, 'user_id': user_id})
+    elif guest_code:
+        db.session.execute(text("""
+            UPDATE winner_notifications
+            SET acknowledged = 1, acknowledged_at = CURRENT_TIMESTAMP
+            WHERE id = :notification_id AND winner_guest_code = :guest_code
+        """), {'notification_id': notification_id, 'guest_code': guest_code})
     
     db.session.commit()
     
     return jsonify({'success': True})
+
+
+@app.route('/api/raffles/winners')
+@login_required
+def api_student_raffle_winners():
+    """Get recent raffle winners for students to see"""
+    from sqlalchemy import text
+    
+    try:
+        winners = db.session.execute(text("""
+            SELECT rd.id, rd.drawn_at, rd.total_entries,
+                   r.name as raffle_name, r.emoji, r.prize_description,
+                   CASE 
+                       WHEN u.id IS NOT NULL THEN u.full_name
+                       WHEN rd.winner_guest_code IS NOT NULL THEN 'Guest ' || SUBSTR(rd.winner_guest_code, 1, 4) || '***'
+                       ELSE 'Anonymous'
+                   END as winner_name
+            FROM raffle_draws rd
+            JOIN raffles r ON rd.raffle_id = r.id
+            LEFT JOIN users u ON rd.winner_id = u.id
+            WHERE rd.status = 'drawn' AND rd.winner_id IS NOT NULL
+            ORDER BY rd.drawn_at DESC
+            LIMIT 10
+        """)).fetchall()
+        
+        return jsonify([{
+            'id': w.id,
+            'raffle_name': w.raffle_name,
+            'emoji': w.emoji,
+            'prize_description': w.prize_description,
+            'winner_name': w.winner_name,
+            'drawn_at': w.drawn_at.isoformat() if w.drawn_at else None,
+            'total_entries': w.total_entries
+        } for w in winners])
+        
+    except Exception as e:
+        print(f"Error getting winners: {e}")
+        return jsonify([])
+
+
+# Remove old duplicate route
+# @app.route('/api/raffles/acknowledge-win/<int:notification_id>', methods=['POST'])
 
 
 # =============================================================================
@@ -9259,35 +9886,29 @@ def get_user_school_id(user_id):
 
 
 def select_raffle_winner(raffle_id, draw_id):
-    """Randomly select a winner from active entries"""
+    """Randomly select a winner from active entries (supports both users and guests)"""
     from sqlalchemy import text
     import random
     
+    # Get all active entries - each row is one entry (ticket)
     entries = db.session.execute(text("""
-        SELECT id, student_id, entry_count
+        SELECT id, student_id, guest_code
         FROM raffle_entries
         WHERE raffle_id = :raffle_id 
         AND is_active = 1
-        AND (draw_id IS NULL OR draw_id = :draw_id)
-    """), {'raffle_id': raffle_id, 'draw_id': draw_id}).fetchall()
+    """), {'raffle_id': raffle_id}).fetchall()
     
     if not entries:
-        return None, None
+        return None, None, None
     
-    weighted_entries = []
-    for entry in entries:
-        for _ in range(entry.entry_count):
-            weighted_entries.append((entry.id, entry.student_id))
+    # Each entry is already one ticket, so just pick randomly
+    winning_entry = random.choice(entries)
     
-    if weighted_entries:
-        winning_entry_id, winner_id = random.choice(weighted_entries)
-        return winner_id, winning_entry_id
-    
-    return None, None
+    return winning_entry.student_id, winning_entry.guest_code, winning_entry.id
 
 
 def perform_raffle_draw(raffle_id):
-    """Perform a raffle draw"""
+    """Perform a raffle draw - supports both registered users and guests"""
     from sqlalchemy import text
     from datetime import datetime, timedelta
     
@@ -9297,6 +9918,17 @@ def perform_raffle_draw(raffle_id):
         """), {'raffle_id': raffle_id}).fetchone()
         
         if not raffle:
+            print(f"Raffle {raffle_id} not found")
+            return None
+        
+        # Check if there are any entries
+        entry_count = db.session.execute(text("""
+            SELECT COUNT(*) as cnt FROM raffle_entries
+            WHERE raffle_id = :raffle_id AND is_active = 1
+        """), {'raffle_id': raffle_id}).fetchone()
+        
+        if not entry_count or entry_count.cnt == 0:
+            print(f"Raffle {raffle_id} has no entries - skipping draw")
             return None
         
         draw_date = datetime.now().date()
@@ -9312,7 +9944,7 @@ def perform_raffle_draw(raffle_id):
             )
         """), {
             'raffle_id': raffle_id,
-            'school_id': raffle.school_id,
+            'school_id': raffle.school_id if hasattr(raffle, 'school_id') else None,
             'draw_date': draw_date,
             'draw_time': draw_time
         })
@@ -9320,22 +9952,24 @@ def perform_raffle_draw(raffle_id):
         draw_id = result.lastrowid
         db.session.commit()
         
-        winner_id, winning_entry_id = select_raffle_winner(raffle_id, draw_id)
+        # Select winner (returns user_id, guest_code, entry_id)
+        winner_id, winner_guest_code, winning_entry_id = select_raffle_winner(raffle_id, draw_id)
         
         stats = db.session.execute(text("""
             SELECT COUNT(*) as total_entries,
-                   COUNT(DISTINCT student_id) as total_participants
+                   COUNT(DISTINCT COALESCE(student_id, guest_code)) as total_participants
             FROM raffle_entries
             WHERE raffle_id = :raffle_id AND is_active = 1
         """), {'raffle_id': raffle_id}).fetchone()
         
-        if winner_id:
+        if winner_id or winner_guest_code:
             token = generate_raffle_token()
             token_expires = draw_time + timedelta(days=7)
             
             db.session.execute(text("""
                 UPDATE raffle_draws
                 SET winner_id = :winner_id,
+                    winner_guest_code = :winner_guest_code,
                     winning_entry_id = :winning_entry_id,
                     total_entries = :total_entries,
                     total_participants = :total_participants,
@@ -9345,6 +9979,7 @@ def perform_raffle_draw(raffle_id):
                 WHERE id = :draw_id
             """), {
                 'winner_id': winner_id,
+                'winner_guest_code': winner_guest_code,
                 'winning_entry_id': winning_entry_id,
                 'total_entries': stats.total_entries,
                 'total_participants': stats.total_participants,
@@ -9353,27 +9988,31 @@ def perform_raffle_draw(raffle_id):
                 'draw_id': draw_id
             })
             
+            # Mark all entries for this raffle as used
             db.session.execute(text("""
                 UPDATE raffle_entries
                 SET is_active = 0, draw_id = :draw_id
                 WHERE raffle_id = :raffle_id AND is_active = 1
             """), {'draw_id': draw_id, 'raffle_id': raffle_id})
             
+            # Create winner notification
             message = f"🎉 Congratulations! You won the {raffle.name}! Prize: {raffle.prize_description}"
             
             db.session.execute(text("""
                 INSERT INTO winner_notifications (
-                    draw_id, winner_id, notification_type, message
+                    draw_id, winner_id, winner_guest_code, notification_type, message, acknowledged
                 ) VALUES (
-                    :draw_id, :winner_id, 'on_login', :message
+                    :draw_id, :winner_id, :winner_guest_code, 'on_login', :message, 0
                 )
             """), {
                 'draw_id': draw_id,
                 'winner_id': winner_id,
+                'winner_guest_code': winner_guest_code,
                 'message': message
             })
             
             db.session.commit()
+            print(f"Raffle {raffle_id} draw complete - Winner: {winner_id or winner_guest_code}")
             
         else:
             db.session.execute(text("""
@@ -9384,7 +10023,9 @@ def perform_raffle_draw(raffle_id):
                 WHERE id = :draw_id
             """), {'draw_id': draw_id})
             db.session.commit()
+            print(f"Raffle {raffle_id} draw complete - No winner (no valid entries)")
         
+        # Update raffle total draws count
         db.session.execute(text("""
             UPDATE raffles
             SET total_draws = total_draws + 1
@@ -9397,7 +10038,301 @@ def perform_raffle_draw(raffle_id):
     except Exception as e:
         db.session.rollback()
         print(f"Error drawing raffle {raffle_id}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
+
+
+def check_and_run_auto_draws():
+    """Check for raffles that need automatic draws and run them"""
+    from sqlalchemy import text
+    from datetime import datetime
+    
+    now = datetime.now()
+    current_day = now.weekday()  # 0=Monday, 6=Sunday
+    current_time = now.strftime('%H:%M')
+    
+    results = {
+        'checked': 0,
+        'drawn': 0,
+        'skipped': 0,
+        'errors': 0,
+        'details': []
+    }
+    
+    try:
+        # Find raffles due for auto-draw
+        # Weekly: check if today is the draw day and we haven't drawn this week
+        # Monthly: check if today is the 1st and we haven't drawn this month
+        
+        raffles = db.session.execute(text("""
+            SELECT r.* FROM raffles r
+            WHERE r.is_active = 1 
+            AND r.auto_draw_enabled = 1
+            AND r.draw_frequency IN ('weekly', 'daily', 'monthly')
+        """)).fetchall()
+        
+        results['checked'] = len(raffles)
+        
+        for raffle in raffles:
+            try:
+                should_draw = False
+                reason = ""
+                
+                # Check if already drawn today
+                today_draw = db.session.execute(text("""
+                    SELECT id FROM raffle_draws 
+                    WHERE raffle_id = :raffle_id 
+                    AND DATE(drawn_at) = DATE('now')
+                """), {'raffle_id': raffle.id}).fetchone()
+                
+                if today_draw:
+                    results['skipped'] += 1
+                    results['details'].append({
+                        'raffle': raffle.name,
+                        'action': 'skipped',
+                        'reason': 'Already drawn today'
+                    })
+                    continue
+                
+                # Check draw frequency
+                if raffle.draw_frequency == 'daily':
+                    # Daily draws happen every day at the specified time
+                    draw_time = raffle.draw_time or '15:00'
+                    if current_time >= draw_time[:5]:
+                        should_draw = True
+                        reason = "Daily draw time reached"
+                        
+                elif raffle.draw_frequency == 'weekly':
+                    # Weekly draws happen on the specified day
+                    draw_day = raffle.draw_day_of_week if raffle.draw_day_of_week is not None else 4  # Default Friday
+                    draw_time = raffle.draw_time or '15:00'
+                    
+                    if current_day == draw_day and current_time >= draw_time[:5]:
+                        # Check if already drawn this week
+                        week_start = now.date() - timedelta(days=current_day)
+                        week_draw = db.session.execute(text("""
+                            SELECT id FROM raffle_draws 
+                            WHERE raffle_id = :raffle_id 
+                            AND DATE(drawn_at) >= :week_start
+                        """), {'raffle_id': raffle.id, 'week_start': week_start}).fetchone()
+                        
+                        if not week_draw:
+                            should_draw = True
+                            reason = f"Weekly draw day ({['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][draw_day]})"
+                            
+                elif raffle.draw_frequency == 'monthly':
+                    # Monthly draws happen on the 1st of each month
+                    if now.day == 1:
+                        draw_time = raffle.draw_time or '15:00'
+                        if current_time >= draw_time[:5]:
+                            # Check if already drawn this month
+                            month_draw = db.session.execute(text("""
+                                SELECT id FROM raffle_draws 
+                                WHERE raffle_id = :raffle_id 
+                                AND strftime('%Y-%m', drawn_at) = strftime('%Y-%m', 'now')
+                            """), {'raffle_id': raffle.id}).fetchone()
+                            
+                            if not month_draw:
+                                should_draw = True
+                                reason = "Monthly draw (1st of month)"
+                
+                if should_draw:
+                    # Check if there are entries
+                    entry_count = db.session.execute(text("""
+                        SELECT COUNT(*) as cnt FROM raffle_entries
+                        WHERE raffle_id = :raffle_id AND is_active = 1
+                    """), {'raffle_id': raffle.id}).fetchone()
+                    
+                    if entry_count and entry_count.cnt > 0:
+                        draw_id = perform_raffle_draw(raffle.id)
+                        if draw_id:
+                            results['drawn'] += 1
+                            results['details'].append({
+                                'raffle': raffle.name,
+                                'action': 'drawn',
+                                'reason': reason,
+                                'draw_id': draw_id,
+                                'entries': entry_count.cnt
+                            })
+                        else:
+                            results['errors'] += 1
+                            results['details'].append({
+                                'raffle': raffle.name,
+                                'action': 'error',
+                                'reason': 'Draw function failed'
+                            })
+                    else:
+                        results['skipped'] += 1
+                        results['details'].append({
+                            'raffle': raffle.name,
+                            'action': 'skipped',
+                            'reason': 'No entries to draw from'
+                        })
+                else:
+                    results['skipped'] += 1
+                    
+            except Exception as e:
+                results['errors'] += 1
+                results['details'].append({
+                    'raffle': raffle.name if raffle else 'Unknown',
+                    'action': 'error',
+                    'reason': str(e)
+                })
+                print(f"Error checking raffle {raffle.id}: {e}")
+                
+        return results
+        
+    except Exception as e:
+        print(f"Error in auto-draw check: {e}")
+        import traceback
+        traceback.print_exc()
+        return {'error': str(e)}
+
+
+@app.route('/api/admin/raffles/auto-draw', methods=['POST'])
+@login_required
+@role_required('admin')
+def api_admin_trigger_auto_draws():
+    """Manually trigger auto-draw check (for testing or manual runs)"""
+    results = check_and_run_auto_draws()
+    return jsonify(results)
+
+
+@app.route('/api/cron/raffle-auto-draw')
+def api_cron_raffle_auto_draw():
+    """Endpoint for PythonAnywhere scheduled task to trigger auto-draws
+    
+    Security: Uses a secret key to prevent unauthorized access.
+    Set up in PythonAnywhere Scheduled Tasks to run every hour or at specific times.
+    
+    Example scheduled task command:
+    curl "https://yourdomain.com/api/cron/raffle-auto-draw?key=YOUR_SECRET_KEY"
+    """
+    from sqlalchemy import text
+    
+    # Check for secret key
+    provided_key = request.args.get('key', '')
+    
+    # Get the secret key from settings or environment
+    try:
+        secret_key = SystemSetting.get('raffle_cron_secret', '')
+    except:
+        secret_key = ''
+    
+    # If no key is set, allow access (for initial setup)
+    # Once set, require the key
+    if secret_key and provided_key != secret_key:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    results = check_and_run_auto_draws()
+    
+    # Log the run
+    print(f"[CRON] Raffle auto-draw completed: {results.get('drawn', 0)} drawn, {results.get('skipped', 0)} skipped")
+    
+    return jsonify(results)
+
+
+# =============================================================================
+# ADMIN QUESTION HISTORY MANAGEMENT
+# =============================================================================
+
+@app.route('/api/admin/question-history/stats')
+@login_required
+@role_required('admin')
+def admin_question_history_stats():
+    """Get statistics about question history tracking"""
+    from sqlalchemy import text
+    
+    try:
+        stats = {}
+        
+        # Total records
+        total = db.session.execute(text(
+            "SELECT COUNT(*) FROM user_question_history"
+        )).fetchone()
+        stats['total_records'] = total[0] if total else 0
+        
+        # Unique users
+        users = db.session.execute(text(
+            "SELECT COUNT(DISTINCT user_id) FROM user_question_history WHERE user_id IS NOT NULL"
+        )).fetchone()
+        stats['unique_users'] = users[0] if users else 0
+        
+        # Unique guests
+        guests = db.session.execute(text(
+            "SELECT COUNT(DISTINCT guest_code) FROM user_question_history WHERE guest_code IS NOT NULL"
+        )).fetchone()
+        stats['unique_guests'] = guests[0] if guests else 0
+        
+        # By topic
+        by_topic = db.session.execute(text("""
+            SELECT topic, COUNT(*) as count
+            FROM user_question_history
+            GROUP BY topic
+            ORDER BY count DESC
+        """)).fetchall()
+        stats['by_topic'] = [{
+            'topic': row.topic,
+            'count': row.count
+        } for row in by_topic]
+        
+        return jsonify(stats)
+        
+    except Exception as e:
+        return jsonify({'error': str(e), 'message': 'Table may not exist yet'}), 200
+
+
+@app.route('/api/admin/question-history/clear', methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_clear_question_history():
+    """Clear question history - can clear for specific user or all"""
+    from sqlalchemy import text
+    
+    data = request.json or {}
+    user_id = data.get('user_id')
+    guest_code = data.get('guest_code')
+    topic = data.get('topic')
+    clear_all = data.get('clear_all', False)
+    
+    try:
+        if clear_all:
+            db.session.execute(text("DELETE FROM user_question_history"))
+            message = "Cleared all question history"
+        elif user_id:
+            if topic:
+                db.session.execute(text("""
+                    DELETE FROM user_question_history 
+                    WHERE user_id = :user_id AND topic = :topic
+                """), {'user_id': user_id, 'topic': topic})
+                message = f"Cleared history for user {user_id} on topic {topic}"
+            else:
+                db.session.execute(text("""
+                    DELETE FROM user_question_history WHERE user_id = :user_id
+                """), {'user_id': user_id})
+                message = f"Cleared all history for user {user_id}"
+        elif guest_code:
+            if topic:
+                db.session.execute(text("""
+                    DELETE FROM user_question_history 
+                    WHERE guest_code = :guest_code AND topic = :topic
+                """), {'guest_code': guest_code, 'topic': topic})
+                message = f"Cleared history for guest {guest_code} on topic {topic}"
+            else:
+                db.session.execute(text("""
+                    DELETE FROM user_question_history WHERE guest_code = :guest_code
+                """), {'guest_code': guest_code})
+                message = f"Cleared all history for guest {guest_code}"
+        else:
+            return jsonify({'error': 'Specify user_id, guest_code, or clear_all=true'}), 400
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': message})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 
 # =============================================================================

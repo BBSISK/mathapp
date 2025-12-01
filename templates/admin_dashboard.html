@@ -81,6 +81,10 @@
                     <i class="fas fa-gift text-lg mb-1"></i>
                     <span>Prize Management</span>
                 </button>
+                <button onclick="showTab('raffles')" id="rafflesTab" class="admin-tab-btn bg-pink-400 hover:bg-pink-500 text-white">
+                    <i class="fas fa-ticket-alt text-lg mb-1"></i>
+                    <span>Raffles</span>
+                </button>
                 <button onclick="showTab('puzzle')" id="puzzleTab" class="admin-tab-btn bg-indigo-500 hover:bg-indigo-600 text-white">
                     <i class="fas fa-puzzle-piece text-lg mb-1"></i>
                     <span>Puzzle of Week</span>
@@ -104,6 +108,7 @@
                 <span><span class="inline-block w-3 h-3 rounded bg-green-500 mr-1"></span>Classes</span>
                 <span><span class="inline-block w-3 h-3 rounded bg-purple-500 mr-1"></span>Content</span>
                 <span><span class="inline-block w-3 h-3 rounded bg-orange-500 mr-1"></span>Games</span>
+                <span><span class="inline-block w-3 h-3 rounded bg-pink-500 mr-1"></span>Prizes</span>
                 <span><span class="inline-block w-3 h-3 rounded bg-teal-500 mr-1"></span>System</span>
             </div>
         </div>
@@ -585,6 +590,245 @@
                                 <tr><td colspan="5" class="text-center py-4 text-gray-500">Loading...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raffles Management Tab -->
+        <div id="rafflesContent" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-2"><i class="fas fa-ticket-alt text-pink-600 mr-2"></i>Raffle Management</h2>
+            <p class="text-gray-600 mb-6">Create and manage raffles. Students can spend points to enter raffles for prizes.</p>
+
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="raffle-stat-active">0</div>
+                    <div class="text-pink-100">Active Raffles</div>
+                </div>
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="raffle-stat-entries">0</div>
+                    <div class="text-blue-100">Total Entries</div>
+                </div>
+                <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="raffle-stat-draws">0</div>
+                    <div class="text-green-100">Draws Completed</div>
+                </div>
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg p-4">
+                    <div class="text-3xl font-bold" id="raffle-stat-points">0</div>
+                    <div class="text-purple-100">Points Spent</div>
+                </div>
+            </div>
+
+            <!-- Auto-Draw Controls -->
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg p-6 mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold"><i class="fas fa-magic mr-2"></i>Automatic Draws</h3>
+                        <p class="opacity-80 text-sm">Raffles with auto-draw enabled will be drawn automatically at their scheduled times.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="runAutoDraw()" class="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition">
+                            <i class="fas fa-play mr-2"></i>Run Auto-Draw Now
+                        </button>
+                    </div>
+                </div>
+                <div id="auto-draw-result" class="mt-4 hidden">
+                    <div class="bg-white bg-opacity-20 rounded-lg p-3 text-sm">
+                        <div id="auto-draw-result-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Raffle Button -->
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold">All Raffles</h3>
+                <button onclick="openCreateRaffleModal()" class="bg-pink-600 text-white px-6 py-2 rounded-lg hover:bg-pink-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Create New Raffle
+                </button>
+            </div>
+
+            <!-- Raffles List -->
+            <div id="raffles-list" class="space-y-4">
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-3"></i>
+                    <p>Loading raffles...</p>
+                </div>
+            </div>
+
+            <!-- Recent Winners Section -->
+            <div class="mt-8">
+                <h3 class="text-lg font-semibold mb-4"><i class="fas fa-trophy text-yellow-500 mr-2"></i>Recent Winners</h3>
+                <div id="raffle-winners-list" class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Date</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Raffle</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Winner</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Prize</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Entries</th>
+                            </tr>
+                        </thead>
+                        <tbody id="raffle-winners-tbody">
+                            <tr><td colspan="5" class="text-center py-4 text-gray-500">Loading winners...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create/Edit Raffle Modal -->
+        <div id="raffleModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-y-auto">
+            <div class="min-h-screen px-4 py-8 flex items-start justify-center">
+                <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 my-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold" id="raffleModalTitle">Create New Raffle</h3>
+                        <button onclick="closeRaffleModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <form id="raffleForm" onsubmit="saveRaffle(event)">
+                        <input type="hidden" id="raffleId" value="">
+
+                        <!-- Basic Info -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block font-semibold mb-2">Raffle Name *</label>
+                                <input type="text" id="raffleName" required class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500" placeholder="e.g., Weekly Lucky Draw">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-2">Emoji</label>
+                                <input type="text" id="raffleEmoji" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500" placeholder="🎟️" value="🎟️">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block font-semibold mb-2">Description</label>
+                            <textarea id="raffleDescription" rows="2" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500" placeholder="Optional description for students"></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block font-semibold mb-2">Prize Description *</label>
+                            <textarea id="rafflePrize" required rows="2" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500" placeholder="What the winner will receive"></textarea>
+                        </div>
+
+                        <!-- Entry Settings -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block font-semibold mb-2">Entry Cost (Points) *</label>
+                                <input type="number" id="raffleEntryCost" required min="1" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500" value="100">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-2">Max Entries Per Student</label>
+                                <input type="number" id="raffleMaxEntries" min="1" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500" value="10" placeholder="Leave empty for unlimited">
+                            </div>
+                        </div>
+
+                        <!-- Draw Schedule -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block font-semibold mb-2">Draw Frequency</label>
+                                <select id="raffleFrequency" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500">
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="manual">Manual Only</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-2">Draw Day</label>
+                                <select id="raffleDrawDay" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500">
+                                    <option value="0">Sunday</option>
+                                    <option value="1">Monday</option>
+                                    <option value="2">Tuesday</option>
+                                    <option value="3">Wednesday</option>
+                                    <option value="4">Thursday</option>
+                                    <option value="5" selected>Friday</option>
+                                    <option value="6">Saturday</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-2">Draw Time</label>
+                                <input type="time" id="raffleDrawTime" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-pink-500" value="15:00">
+                            </div>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="flex flex-wrap gap-4 mb-6">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="raffleActive" checked class="w-5 h-5 rounded text-pink-600">
+                                <span>Active (visible to students)</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="raffleAutoDraw" class="w-5 h-5 rounded text-pink-600">
+                                <span>Enable Auto-Draw</span>
+                            </label>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex justify-end gap-3">
+                            <button type="button" onclick="closeRaffleModal()" class="px-6 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+                            <button type="submit" class="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700">
+                                <i class="fas fa-save mr-2"></i>Save Raffle
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Draw Confirmation Modal -->
+        <div id="drawConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <div class="text-center">
+                    <div class="text-6xl mb-4">🎲</div>
+                    <h3 class="text-xl font-bold mb-2">Draw Winner?</h3>
+                    <p class="text-gray-600 mb-4" id="drawConfirmText">This will randomly select a winner from all entries.</p>
+                    <p class="text-lg font-semibold text-pink-600 mb-6" id="drawConfirmEntries">0 entries in this raffle</p>
+                    <div class="flex justify-center gap-3">
+                        <button onclick="closeDrawConfirmModal()" class="px-6 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+                        <button onclick="confirmDraw()" class="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700">
+                            <i class="fas fa-random mr-2"></i>Draw Winner
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Winner Announcement Modal -->
+        <div id="winnerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+                <div class="text-center">
+                    <div class="text-6xl mb-4">🎉</div>
+                    <h3 class="text-2xl font-bold text-green-600 mb-2">We Have a Winner!</h3>
+                    <div class="bg-green-50 border-2 border-green-500 rounded-lg p-4 mb-4">
+                        <p class="text-lg font-bold" id="winnerName">-</p>
+                        <p class="text-gray-600" id="winnerDetails">-</p>
+                    </div>
+                    <p class="text-gray-600 mb-4" id="winnerPrize">Prize: -</p>
+                    <button onclick="closeWinnerModal()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <i class="fas fa-check mr-2"></i>Got It!
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raffle Entries Modal -->
+        <div id="entriesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-y-auto">
+            <div class="min-h-screen px-4 py-8 flex items-start justify-center">
+                <div class="bg-white rounded-lg p-8 max-w-3xl w-full mx-4 my-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold" id="entriesModalTitle">Raffle Entries</h3>
+                        <button onclick="closeEntriesModal()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div id="entriesModalContent">
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-spinner fa-spin text-4xl mb-3"></i>
+                            <p>Loading entries...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3719,6 +3963,11 @@ function updateRestrictedTeachersCount() {
             else if (tab === 'siteSettings') {
                 console.log('Site Settings tab activated - loading data...');
                 loadSiteSettings();
+            }
+            else if (tab === 'raffles') {
+                console.log('Raffles tab activated - loading data...');
+                loadRaffles();
+                loadRaffleWinners();
             }
         }
 
@@ -7206,6 +7455,418 @@ function updateRestrictedTeachersCount() {
         }
 
         // End of site settings functions
+
+        // ==================== RAFFLE MANAGEMENT FUNCTIONS ====================
+        
+        let currentRaffleId = null;
+        let rafflesData = [];
+        
+        async function loadRaffles() {
+            try {
+                const response = await fetch('/api/admin/raffles');
+                rafflesData = await response.json();
+                renderRafflesList();
+                updateRaffleStats();
+            } catch (error) {
+                console.error('Error loading raffles:', error);
+                document.getElementById('raffles-list').innerHTML = `
+                    <div class="text-center py-8 text-red-500">
+                        <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                        <p>Error loading raffles</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function updateRaffleStats() {
+            const active = rafflesData.filter(r => r.is_active).length;
+            const totalEntries = rafflesData.reduce((sum, r) => sum + (r.active_entries || 0), 0);
+            const totalDraws = rafflesData.reduce((sum, r) => sum + (r.total_draws || 0), 0);
+            const totalPoints = rafflesData.reduce((sum, r) => sum + ((r.active_entries || 0) * r.entry_cost), 0);
+            
+            document.getElementById('raffle-stat-active').textContent = active;
+            document.getElementById('raffle-stat-entries').textContent = totalEntries;
+            document.getElementById('raffle-stat-draws').textContent = totalDraws;
+            document.getElementById('raffle-stat-points').textContent = totalPoints.toLocaleString();
+        }
+        
+        function renderRafflesList() {
+            const container = document.getElementById('raffles-list');
+            
+            if (rafflesData.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 bg-gray-50 rounded-lg">
+                        <i class="fas fa-ticket-alt text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">No Raffles Yet</h3>
+                        <p class="text-gray-500 mb-4">Create your first raffle to get started!</p>
+                        <button onclick="openCreateRaffleModal()" class="bg-pink-600 text-white px-6 py-2 rounded-lg hover:bg-pink-700">
+                            <i class="fas fa-plus mr-2"></i>Create Raffle
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = rafflesData.map(raffle => `
+                <div class="bg-white rounded-lg shadow-md p-6 ${raffle.is_active ? '' : 'opacity-60'}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-3xl">${raffle.emoji || '🎟️'}</span>
+                                <div>
+                                    <h3 class="text-lg font-bold">${raffle.name}</h3>
+                                    <span class="text-sm ${raffle.is_active ? 'text-green-600' : 'text-gray-500'}">
+                                        <i class="fas fa-circle text-xs mr-1"></i>
+                                        ${raffle.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
+                            </div>
+                            ${raffle.description ? `<p class="text-gray-600 mb-2">${raffle.description}</p>` : ''}
+                            <div class="flex flex-wrap gap-4 text-sm">
+                                <span class="bg-pink-100 text-pink-700 px-3 py-1 rounded-full">
+                                    <i class="fas fa-coins mr-1"></i>${raffle.entry_cost} points/entry
+                                </span>
+                                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
+                                    <i class="fas fa-users mr-1"></i>${raffle.active_entries || 0} entries
+                                </span>
+                                <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
+                                    <i class="fas fa-trophy mr-1"></i>${raffle.total_draws || 0} draws
+                                </span>
+                                <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
+                                    <i class="fas fa-clock mr-1"></i>${raffle.draw_frequency || 'weekly'}
+                                </span>
+                            </div>
+                            <div class="mt-3 p-3 bg-yellow-50 rounded-lg">
+                                <span class="font-semibold text-yellow-800"><i class="fas fa-gift mr-1"></i>Prize:</span>
+                                <span class="text-yellow-900">${raffle.prize_description}</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2 ml-4">
+                            <button onclick="openDrawConfirmModal(${raffle.id}, ${raffle.active_entries || 0})" 
+                                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 ${raffle.active_entries > 0 ? '' : 'opacity-50 cursor-not-allowed'}"
+                                    ${raffle.active_entries > 0 ? '' : 'disabled'}>
+                                <i class="fas fa-random mr-1"></i>Draw
+                            </button>
+                            <button onclick="viewRaffleEntries(${raffle.id})" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                                <i class="fas fa-list mr-1"></i>Entries
+                            </button>
+                            <button onclick="editRaffle(${raffle.id})" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
+                                <i class="fas fa-edit mr-1"></i>Edit
+                            </button>
+                            <button onclick="toggleRaffleStatus(${raffle.id}, ${raffle.is_active})" 
+                                    class="${raffle.is_active ? 'bg-gray-500 hover:bg-gray-600' : 'bg-green-500 hover:bg-green-600'} text-white px-4 py-2 rounded-lg">
+                                <i class="fas fa-${raffle.is_active ? 'pause' : 'play'} mr-1"></i>
+                                ${raffle.is_active ? 'Pause' : 'Resume'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function openCreateRaffleModal() {
+            currentRaffleId = null;
+            document.getElementById('raffleModalTitle').textContent = 'Create New Raffle';
+            document.getElementById('raffleForm').reset();
+            document.getElementById('raffleId').value = '';
+            document.getElementById('raffleEmoji').value = '🎟️';
+            document.getElementById('raffleEntryCost').value = '100';
+            document.getElementById('raffleMaxEntries').value = '10';
+            document.getElementById('raffleDrawDay').value = '5';
+            document.getElementById('raffleDrawTime').value = '15:00';
+            document.getElementById('raffleActive').checked = true;
+            document.getElementById('raffleAutoDraw').checked = false;
+            document.getElementById('raffleModal').classList.remove('hidden');
+        }
+        
+        function editRaffle(raffleId) {
+            const raffle = rafflesData.find(r => r.id === raffleId);
+            if (!raffle) return;
+            
+            currentRaffleId = raffleId;
+            document.getElementById('raffleModalTitle').textContent = 'Edit Raffle';
+            document.getElementById('raffleId').value = raffleId;
+            document.getElementById('raffleName').value = raffle.name;
+            document.getElementById('raffleEmoji').value = raffle.emoji || '🎟️';
+            document.getElementById('raffleDescription').value = raffle.description || '';
+            document.getElementById('rafflePrize').value = raffle.prize_description;
+            document.getElementById('raffleEntryCost').value = raffle.entry_cost;
+            document.getElementById('raffleMaxEntries').value = raffle.max_entries_per_student || 10;
+            document.getElementById('raffleFrequency').value = raffle.draw_frequency || 'weekly';
+            document.getElementById('raffleActive').checked = raffle.is_active;
+            document.getElementById('raffleAutoDraw').checked = raffle.auto_draw_enabled;
+            document.getElementById('raffleModal').classList.remove('hidden');
+        }
+        
+        function closeRaffleModal() {
+            document.getElementById('raffleModal').classList.add('hidden');
+            currentRaffleId = null;
+        }
+        
+        async function saveRaffle(event) {
+            event.preventDefault();
+            
+            const data = {
+                name: document.getElementById('raffleName').value,
+                emoji: document.getElementById('raffleEmoji').value || '🎟️',
+                description: document.getElementById('raffleDescription').value,
+                prize_description: document.getElementById('rafflePrize').value,
+                entry_cost: parseInt(document.getElementById('raffleEntryCost').value),
+                max_entries_per_student: parseInt(document.getElementById('raffleMaxEntries').value) || 10,
+                draw_frequency: document.getElementById('raffleFrequency').value,
+                draw_day_of_week: parseInt(document.getElementById('raffleDrawDay').value),
+                draw_time: document.getElementById('raffleDrawTime').value,
+                is_active: document.getElementById('raffleActive').checked,
+                auto_draw_enabled: document.getElementById('raffleAutoDraw').checked
+            };
+            
+            try {
+                const raffleId = document.getElementById('raffleId').value;
+                const url = raffleId ? `/api/admin/raffles/${raffleId}` : '/api/admin/raffles';
+                const method = raffleId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success || result.raffle_id) {
+                    closeRaffleModal();
+                    loadRaffles();
+                    alert(raffleId ? 'Raffle updated successfully!' : 'Raffle created successfully!');
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to save raffle'));
+                }
+            } catch (error) {
+                console.error('Error saving raffle:', error);
+                alert('Error saving raffle. Please try again.');
+            }
+        }
+        
+        async function toggleRaffleStatus(raffleId, currentStatus) {
+            try {
+                const response = await fetch(`/api/admin/raffles/${raffleId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_active: !currentStatus })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    loadRaffles();
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to update raffle'));
+                }
+            } catch (error) {
+                console.error('Error toggling raffle:', error);
+                alert('Error updating raffle status.');
+            }
+        }
+        
+        function openDrawConfirmModal(raffleId, entryCount) {
+            currentRaffleId = raffleId;
+            document.getElementById('drawConfirmEntries').textContent = `${entryCount} entries in this raffle`;
+            document.getElementById('drawConfirmModal').classList.remove('hidden');
+        }
+        
+        function closeDrawConfirmModal() {
+            document.getElementById('drawConfirmModal').classList.add('hidden');
+            currentRaffleId = null;
+        }
+        
+        async function confirmDraw() {
+            if (!currentRaffleId) return;
+            
+            closeDrawConfirmModal();
+            
+            try {
+                const response = await fetch(`/api/admin/raffles/${currentRaffleId}/draw`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.winner) {
+                    document.getElementById('winnerName').textContent = result.winner.name;
+                    document.getElementById('winnerDetails').textContent = result.winner.class || 'Guest User';
+                    document.getElementById('winnerPrize').textContent = `Prize: ${result.prize || 'See raffle details'}`;
+                    document.getElementById('winnerModal').classList.remove('hidden');
+                    loadRaffles();
+                    loadRaffleWinners();
+                } else if (result.error) {
+                    alert('Draw failed: ' + result.error);
+                } else {
+                    alert('No entries to draw from!');
+                }
+            } catch (error) {
+                console.error('Error performing draw:', error);
+                alert('Error performing draw. Please try again.');
+            }
+        }
+        
+        function closeWinnerModal() {
+            document.getElementById('winnerModal').classList.add('hidden');
+        }
+        
+        async function viewRaffleEntries(raffleId) {
+            const raffle = rafflesData.find(r => r.id === raffleId);
+            document.getElementById('entriesModalTitle').textContent = `Entries: ${raffle ? raffle.name : 'Raffle'}`;
+            document.getElementById('entriesModal').classList.remove('hidden');
+            
+            try {
+                const response = await fetch(`/api/admin/raffles/${raffleId}/entries`);
+                const entries = await response.json();
+                
+                if (entries.length === 0) {
+                    document.getElementById('entriesModalContent').innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-3"></i>
+                            <p>No entries yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Group entries by student
+                const grouped = {};
+                entries.forEach(e => {
+                    const key = e.student_name || e.guest_code || 'Unknown';
+                    if (!grouped[key]) {
+                        grouped[key] = { count: 0, entries: [], isGuest: !!e.guest_code };
+                    }
+                    grouped[key].count++;
+                    grouped[key].entries.push(e);
+                });
+                
+                const sortedStudents = Object.entries(grouped).sort((a, b) => b[1].count - a[1].count);
+                
+                document.getElementById('entriesModalContent').innerHTML = `
+                    <div class="mb-4 text-sm text-gray-600">
+                        Total: ${entries.length} entries from ${sortedStudents.length} participants
+                    </div>
+                    <div class="space-y-2 max-h-96 overflow-y-auto">
+                        ${sortedStudents.map(([name, data]) => `
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <span class="font-semibold">${name}</span>
+                                    ${data.isGuest ? '<span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded ml-2">Guest</span>' : ''}
+                                </div>
+                                <span class="bg-pink-100 text-pink-700 px-3 py-1 rounded-full font-semibold">
+                                    ${data.count} ${data.count === 1 ? 'entry' : 'entries'}
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading entries:', error);
+                document.getElementById('entriesModalContent').innerHTML = `
+                    <div class="text-center py-8 text-red-500">
+                        <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                        <p>Error loading entries</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function closeEntriesModal() {
+            document.getElementById('entriesModal').classList.add('hidden');
+        }
+        
+        async function loadRaffleWinners() {
+            try {
+                const response = await fetch('/api/admin/raffles/winners');
+                const winners = await response.json();
+                
+                const tbody = document.getElementById('raffle-winners-tbody');
+                
+                if (!winners || winners.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No winners yet</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = winners.slice(0, 10).map(w => `
+                    <tr class="border-t">
+                        <td class="px-4 py-3 text-sm">${formatDate(w.drawn_at)}</td>
+                        <td class="px-4 py-3">
+                            <span class="mr-1">${w.emoji || '🎟️'}</span>
+                            ${w.raffle_name}
+                        </td>
+                        <td class="px-4 py-3 font-semibold text-green-600">${w.winner_name}</td>
+                        <td class="px-4 py-3 text-sm">${w.prize_description || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${w.total_entries || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading winners:', error);
+            }
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+        
+        async function runAutoDraw() {
+            const resultDiv = document.getElementById('auto-draw-result');
+            const contentDiv = document.getElementById('auto-draw-result-content');
+            
+            resultDiv.classList.remove('hidden');
+            contentDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Running auto-draw check...';
+            
+            try {
+                const response = await fetch('/api/admin/raffles/auto-draw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    contentDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>Error: ${result.error}`;
+                } else {
+                    let html = `
+                        <div class="font-semibold mb-2">
+                            <i class="fas fa-check-circle mr-2"></i>Auto-draw complete!
+                        </div>
+                        <div class="flex gap-4 mb-2">
+                            <span><i class="fas fa-search mr-1"></i>${result.checked || 0} checked</span>
+                            <span><i class="fas fa-trophy mr-1"></i>${result.drawn || 0} drawn</span>
+                            <span><i class="fas fa-forward mr-1"></i>${result.skipped || 0} skipped</span>
+                        </div>
+                    `;
+                    
+                    if (result.details && result.details.length > 0) {
+                        html += '<div class="text-xs mt-2 max-h-32 overflow-y-auto">';
+                        result.details.forEach(d => {
+                            const icon = d.action === 'drawn' ? 'check text-green-300' : 
+                                        d.action === 'error' ? 'times text-red-300' : 'minus text-gray-300';
+                            html += `<div><i class="fas fa-${icon} mr-1"></i>${d.raffle}: ${d.reason}</div>`;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    contentDiv.innerHTML = html;
+                    
+                    // Reload raffles and winners
+                    if (result.drawn > 0) {
+                        loadRaffles();
+                        loadRaffleWinners();
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error running auto-draw:', error);
+                contentDiv.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>Error: ${error.message}`;
+            }
+        }
+        
+        // ==================== END RAFFLE FUNCTIONS ====================
     </script>
 </body>
 </html>

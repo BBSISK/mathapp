@@ -191,6 +191,170 @@
         .status-pending { color: #ffc107; }
         .status-fulfilled { color: #28a745; }
         .status-expired { color: #dc3545; }
+        
+        /* ==================== RAFFLE STYLES ==================== */
+        .shop-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .shop-tab-btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .shop-tab-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .shop-tab-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .raffle-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .raffle-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+        
+        .raffle-header {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .raffle-emoji {
+            font-size: 3.5rem;
+            display: block;
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0e6ff, #e6e6ff);
+        }
+        
+        .raffle-info {
+            padding: 20px;
+        }
+        
+        .raffle-prize-box {
+            background: #fff8e6;
+            border: 1px solid #ffd700;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .raffle-prize-box .label {
+            font-size: 0.8rem;
+            color: #b8860b;
+            font-weight: 600;
+        }
+        
+        .raffle-prize-box .value {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .raffle-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        
+        .raffle-stat {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .raffle-stat .value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .raffle-stat .label {
+            font-size: 0.75rem;
+            color: #666;
+        }
+        
+        .entry-badge-green {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .btn-raffle {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border: none;
+            width: 100%;
+            padding: 12px;
+            font-weight: bold;
+            color: white;
+            border-radius: 8px;
+        }
+        
+        .btn-raffle:hover {
+            background: linear-gradient(135deg, #7c4ddb, #5558e3);
+            color: white;
+        }
+        
+        .btn-raffle:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .my-entries-item {
+            background: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .winner-item {
+            background: rgba(255,215,0,0.2);
+            border: 1px solid rgba(255,215,0,0.5);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .tab-content-section {
+            display: none;
+        }
+        
+        .tab-content-section.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -218,6 +382,22 @@
             </div>
         </div>
         
+        <!-- Shop Tabs -->
+        <div class="shop-tabs">
+            <button class="shop-tab-btn active" onclick="showShopTab('prizes')" id="prizesTabBtn">
+                <i class="fas fa-gift me-2"></i>Prizes
+            </button>
+            <button class="shop-tab-btn" onclick="showShopTab('raffles')" id="rafflesTabBtn">
+                <i class="fas fa-ticket-alt me-2"></i>Raffles
+            </button>
+            <button class="shop-tab-btn" onclick="showShopTab('myEntries')" id="myEntriesTabBtn">
+                <i class="fas fa-list me-2"></i>My Entries
+            </button>
+        </div>
+        
+        <!-- PRIZES TAB CONTENT -->
+        <div id="prizesTabContent" class="tab-content-section active">
+        
         <!-- School Selection (if no school selected) -->
         <div id="school-selection" class="school-select-card mb-4" style="display: none;">
             <i class="fas fa-school fa-3x mb-3 opacity-50"></i>
@@ -242,6 +422,55 @@
             <h4 class="text-white mb-3"><i class="fas fa-history me-2"></i>My Redemptions</h4>
             <div id="redemptions-list"></div>
         </div>
+        
+        </div><!-- END PRIZES TAB CONTENT -->
+        
+        <!-- RAFFLES TAB CONTENT -->
+        <div id="rafflesTabContent" class="tab-content-section">
+            <!-- Raffle Info Banner -->
+            <div class="shop-header mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <span style="font-size: 3rem;">🎟️</span>
+                    <div>
+                        <h3 class="mb-1">Lucky Draw Raffles!</h3>
+                        <p class="mb-0 opacity-75">Spend points on tickets for a chance to win prizes. More tickets = better odds!</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Raffles Grid -->
+            <div id="raffles-container" class="row g-4">
+                <div class="col-12 text-center text-white py-5">
+                    <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
+                    <p>Loading raffles...</p>
+                </div>
+            </div>
+        </div><!-- END RAFFLES TAB CONTENT -->
+        
+        <!-- MY ENTRIES TAB CONTENT -->
+        <div id="myEntriesTabContent" class="tab-content-section">
+            <!-- My Raffle Entries -->
+            <div class="my-redemptions mb-4">
+                <h4 class="text-white mb-3"><i class="fas fa-ticket-alt me-2"></i>My Raffle Entries</h4>
+                <div id="my-entries-list">
+                    <div class="text-center text-white py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                        <p>Loading your entries...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Winners -->
+            <div class="my-redemptions">
+                <h4 class="text-white mb-3"><i class="fas fa-trophy me-2"></i>Recent Winners</h4>
+                <div id="recent-winners-list">
+                    <div class="text-center text-white py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                        <p>Loading winners...</p>
+                    </div>
+                </div>
+            </div>
+        </div><!-- END MY ENTRIES TAB CONTENT -->
         
     </div>
     
@@ -377,20 +606,135 @@
         </div>
     </div>
     
+    <!-- Buy Raffle Tickets Modal -->
+    <div class="modal fade" id="buyTicketsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-ticket-alt me-2"></i>Buy Raffle Tickets</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <span id="modal-raffle-emoji" style="font-size: 4rem;">🎟️</span>
+                        <h4 id="modal-raffle-name">Raffle Name</h4>
+                    </div>
+                    
+                    <div class="raffle-prize-box mb-3">
+                        <div class="label"><i class="fas fa-gift me-1"></i>Prize:</div>
+                        <div class="value" id="modal-raffle-prize">Prize description</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Cost per ticket:</span>
+                        <strong id="modal-ticket-cost">100 points</strong>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Your entries:</span>
+                        <strong id="modal-current-entries">0 / 10</strong>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">How many tickets?</label>
+                        <div class="d-flex align-items-center gap-3">
+                            <button type="button" class="btn btn-outline-secondary btn-lg" onclick="adjustTickets(-1)">−</button>
+                            <input type="number" class="form-control form-control-lg text-center" id="ticket-count" value="1" min="1" max="10" style="max-width: 100px;">
+                            <button type="button" class="btn btn-outline-secondary btn-lg" onclick="adjustTickets(1)">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info text-center">
+                        <strong>Total cost: </strong><span id="modal-total-cost" class="fs-4">100 points</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-lg" onclick="confirmTicketPurchase()" id="confirm-ticket-btn">
+                        <i class="fas fa-ticket-alt me-2"></i>Buy Tickets
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Raffle Success Modal -->
+    <div class="modal fade" id="raffleSuccessModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-5">
+                    <div style="font-size: 5rem;">🎉</div>
+                    <h3 class="text-success mt-3">Tickets Purchased!</h3>
+                    <p class="text-muted" id="raffle-success-message">You now have X entries in this raffle.</p>
+                    <p class="small text-muted">Good luck in the draw!</p>
+                    <button class="btn btn-success btn-lg mt-3" data-bs-dismiss="modal">
+                        <i class="fas fa-check me-2"></i>Got It!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Winner Notification Modal -->
+    <div class="modal fade" id="winnerModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #ffd700, #ff8c00); color: #333;">
+                    <h5 class="modal-title"><i class="fas fa-trophy me-2"></i>🎉 YOU WON! 🎉</h5>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <div style="font-size: 4rem;">🏆</div>
+                    <h4 class="mt-3" id="win-raffle-name">Raffle Name</h4>
+                    <div class="alert alert-success mt-3">
+                        <strong>Your Prize:</strong><br>
+                        <span id="win-prize-description">Prize description</span>
+                    </div>
+                    <p class="text-muted">Congratulations! Show this to your teacher to claim your prize.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-warning btn-lg" onclick="acknowledgeWin()">
+                        <i class="fas fa-star me-2"></i>Awesome!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let studentPoints = 0;
         let currentSchool = null;
         let schoolModal, redeemModal, successModal;
         
+        // Raffle variables
+        let buyTicketsModal, raffleSuccessModal, winnerModal;
+        let rafflesData = [];
+        let currentRaffleId = null;
+        let currentRaffle = null;
+        let pendingWins = [];
+        
         document.addEventListener('DOMContentLoaded', function() {
             schoolModal = new bootstrap.Modal(document.getElementById('schoolModal'));
             redeemModal = new bootstrap.Modal(document.getElementById('redeemModal'));
             successModal = new bootstrap.Modal(document.getElementById('successModal'));
             
+            // Initialize raffle modals
+            buyTicketsModal = new bootstrap.Modal(document.getElementById('buyTicketsModal'));
+            raffleSuccessModal = new bootstrap.Modal(document.getElementById('raffleSuccessModal'));
+            winnerModal = new bootstrap.Modal(document.getElementById('winnerModal'));
+            
             loadSchools();
             loadPrizes();
             loadMyRedemptions();
+            
+            // Load raffles and check for wins
+            loadRaffles();
+            checkForWins();
+            
+            // Update total cost when ticket count changes
+            document.getElementById('ticket-count').addEventListener('input', updateTotalCost);
         });
         
         async function loadSchools() {
@@ -748,6 +1092,348 @@
                 `).join('');
             } catch (error) {
                 console.error('Error loading redemptions:', error);
+            }
+        }
+        
+        // ==================== TAB NAVIGATION ====================
+        
+        function showShopTab(tab) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.shop-tab-btn').forEach(el => el.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tab + 'TabContent').classList.add('active');
+            document.getElementById(tab + 'TabBtn').classList.add('active');
+            
+            // Load data for tab
+            if (tab === 'raffles') {
+                loadRaffles();
+            } else if (tab === 'myEntries') {
+                loadMyEntries();
+                loadRecentWinners();
+            }
+        }
+        
+        // ==================== RAFFLE FUNCTIONS ====================
+        
+        async function loadRaffles() {
+            const container = document.getElementById('raffles-container');
+            
+            try {
+                const response = await fetch('/api/raffles/available');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load raffles');
+                }
+                
+                rafflesData = await response.json();
+                
+                if (!rafflesData || rafflesData.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-12 text-center text-white py-5">
+                            <i class="fas fa-ticket-alt fa-4x mb-3 opacity-50"></i>
+                            <h4>No Raffles Available</h4>
+                            <p class="opacity-75">Check back soon for exciting raffle opportunities!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = rafflesData.map(raffle => renderRaffleCard(raffle)).join('');
+                
+            } catch (error) {
+                console.error('Error loading raffles:', error);
+                container.innerHTML = `
+                    <div class="col-12 text-center text-white py-5">
+                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                        <p>Unable to load raffles. Please try again.</p>
+                        <button class="btn btn-outline-light" onclick="loadRaffles()">
+                            <i class="fas fa-sync me-2"></i>Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderRaffleCard(raffle) {
+            const myEntries = raffle.my_entries || 0;
+            const maxEntries = raffle.max_entries_per_student || 10;
+            const canBuyMore = myEntries < maxEntries;
+            
+            return `
+                <div class="col-md-6 col-lg-4">
+                    <div class="raffle-card">
+                        <div class="raffle-header">
+                            <span><i class="fas fa-clock me-1"></i>${formatDrawFrequency(raffle.draw_frequency)}</span>
+                            <span><i class="fas fa-users me-1"></i>${raffle.total_entries || 0} entries</span>
+                        </div>
+                        <div class="raffle-emoji">${raffle.emoji || '🎟️'}</div>
+                        <div class="raffle-info">
+                            <h5 class="mb-2">${raffle.name}</h5>
+                            ${raffle.description ? `<p class="text-muted small">${raffle.description}</p>` : ''}
+                            
+                            <div class="raffle-prize-box">
+                                <div class="label"><i class="fas fa-gift me-1"></i>Prize:</div>
+                                <div class="value">${raffle.prize_description}</div>
+                            </div>
+                            
+                            <div class="raffle-stats">
+                                <div class="raffle-stat">
+                                    <div class="value">${raffle.entry_cost}</div>
+                                    <div class="label">Points/Ticket</div>
+                                </div>
+                                <div class="raffle-stat">
+                                    <div class="value">${myEntries}/${maxEntries}</div>
+                                    <div class="label">Your Entries</div>
+                                </div>
+                            </div>
+                            
+                            ${myEntries > 0 ? `
+                                <div class="entry-badge-green">
+                                    <i class="fas fa-check-circle me-1"></i>You're entered!
+                                </div>
+                            ` : ''}
+                            
+                            <button class="btn btn-raffle" 
+                                    onclick="openBuyTicketsModal(${raffle.id})"
+                                    ${!canBuyMore ? 'disabled' : ''}>
+                                <i class="fas fa-ticket-alt me-2"></i>
+                                ${canBuyMore ? 'Buy Tickets' : 'Max Entries Reached'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function formatDrawFrequency(freq) {
+            const formats = {
+                'weekly': 'Weekly Draw',
+                'monthly': 'Monthly Draw',
+                'daily': 'Daily Draw',
+                'manual': 'Special Draw'
+            };
+            return formats[freq] || freq || 'Draw';
+        }
+        
+        function openBuyTicketsModal(raffleId) {
+            currentRaffleId = raffleId;
+            currentRaffle = rafflesData.find(r => r.id === raffleId);
+            
+            if (!currentRaffle) return;
+            
+            document.getElementById('modal-raffle-emoji').textContent = currentRaffle.emoji || '🎟️';
+            document.getElementById('modal-raffle-name').textContent = currentRaffle.name;
+            document.getElementById('modal-raffle-prize').textContent = currentRaffle.prize_description;
+            document.getElementById('modal-ticket-cost').textContent = `${currentRaffle.entry_cost} points`;
+            document.getElementById('modal-current-entries').textContent = 
+                `${currentRaffle.my_entries || 0} / ${currentRaffle.max_entries_per_student || 10}`;
+            
+            // Reset ticket count
+            const maxCanBuy = (currentRaffle.max_entries_per_student || 10) - (currentRaffle.my_entries || 0);
+            const ticketInput = document.getElementById('ticket-count');
+            ticketInput.value = 1;
+            ticketInput.max = maxCanBuy;
+            
+            updateTotalCost();
+            buyTicketsModal.show();
+        }
+        
+        function adjustTickets(delta) {
+            const input = document.getElementById('ticket-count');
+            let value = parseInt(input.value) + delta;
+            const max = parseInt(input.max);
+            value = Math.max(1, Math.min(value, max));
+            input.value = value;
+            updateTotalCost();
+        }
+        
+        function updateTotalCost() {
+            if (!currentRaffle) return;
+            const count = parseInt(document.getElementById('ticket-count').value) || 1;
+            const total = count * currentRaffle.entry_cost;
+            document.getElementById('modal-total-cost').textContent = `${total} points`;
+            
+            // Disable button if not enough points
+            const btn = document.getElementById('confirm-ticket-btn');
+            if (total > studentPoints) {
+                btn.disabled = true;
+                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-primary');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-primary');
+            }
+        }
+        
+        async function confirmTicketPurchase() {
+            if (!currentRaffleId) return;
+            
+            const count = parseInt(document.getElementById('ticket-count').value) || 1;
+            const btn = document.getElementById('confirm-ticket-btn');
+            const originalText = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            
+            try {
+                const response = await fetch(`/api/raffles/${currentRaffleId}/enter`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entries: count })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    buyTicketsModal.hide();
+                    
+                    // Update points display
+                    studentPoints = result.remaining_points;
+                    document.getElementById('student-points').textContent = studentPoints.toLocaleString();
+                    
+                    // Show success message
+                    document.getElementById('raffle-success-message').textContent = 
+                        `You now have ${result.total_entries} entries in this raffle!`;
+                    raffleSuccessModal.show();
+                    
+                    // Reload raffles to update counts
+                    loadRaffles();
+                } else {
+                    alert('Error: ' + (result.error || 'Purchase failed'));
+                }
+            } catch (error) {
+                console.error('Error purchasing tickets:', error);
+                alert('Error purchasing tickets. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+        
+        async function loadMyEntries() {
+            const container = document.getElementById('my-entries-list');
+            
+            // Use rafflesData to show entries
+            if (!rafflesData || rafflesData.length === 0) {
+                await loadRaffles();
+            }
+            
+            const myRaffles = rafflesData.filter(r => r.my_entries > 0);
+            
+            if (myRaffles.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-white py-4">
+                        <i class="fas fa-ticket-alt fa-3x mb-3 opacity-50"></i>
+                        <p>You haven't entered any raffles yet.</p>
+                        <button class="btn btn-outline-light btn-sm" onclick="showShopTab('raffles')">
+                            Browse Raffles →
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = myRaffles.map(raffle => `
+                <div class="my-entries-item">
+                    <div class="d-flex align-items-center gap-3">
+                        <span style="font-size: 2rem;">${raffle.emoji || '🎟️'}</span>
+                        <div>
+                            <strong>${raffle.name}</strong>
+                            <div class="small text-muted">${formatDrawFrequency(raffle.draw_frequency)}</div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-success fs-6">${raffle.my_entries} ticket${raffle.my_entries !== 1 ? 's' : ''}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function loadRecentWinners() {
+            const container = document.getElementById('recent-winners-list');
+            
+            try {
+                const response = await fetch('/api/raffles/winners');
+                const winners = await response.json();
+                
+                if (!winners || winners.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-white py-4">
+                            <i class="fas fa-trophy fa-3x mb-3 opacity-50"></i>
+                            <p>No winners yet. You could be the first!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = winners.slice(0, 5).map(w => `
+                    <div class="winner-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <span style="font-size: 1.5rem;">${w.emoji || '🎟️'}</span>
+                                <div>
+                                    <strong>${w.winner_name}</strong>
+                                    <div class="small opacity-75">${w.raffle_name}</div>
+                                </div>
+                            </div>
+                            <span class="small opacity-75">${formatWinDate(w.drawn_at)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading winners:', error);
+                container.innerHTML = `<p class="text-center text-white py-3">Unable to load winners.</p>`;
+            }
+        }
+        
+        function formatWinDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-IE', { day: 'numeric', month: 'short' });
+        }
+        
+        async function checkForWins() {
+            try {
+                const response = await fetch('/api/raffles/check-wins');
+                const wins = await response.json();
+                
+                if (wins && wins.length > 0) {
+                    pendingWins = wins;
+                    showNextWin();
+                }
+            } catch (error) {
+                console.error('Error checking wins:', error);
+            }
+        }
+        
+        function showNextWin() {
+            if (pendingWins.length === 0) return;
+            
+            const win = pendingWins[0];
+            document.getElementById('win-raffle-name').textContent = win.raffle_name;
+            document.getElementById('win-prize-description').textContent = win.prize_description;
+            winnerModal.show();
+        }
+        
+        async function acknowledgeWin() {
+            if (pendingWins.length === 0) return;
+            
+            const win = pendingWins.shift();
+            
+            try {
+                await fetch(`/api/raffles/wins/${win.id}/acknowledge`, { method: 'POST' });
+            } catch (error) {
+                console.error('Error acknowledging win:', error);
+            }
+            
+            winnerModal.hide();
+            
+            // Show next win if any
+            if (pendingWins.length > 0) {
+                setTimeout(showNextWin, 500);
             }
         }
     </script>
