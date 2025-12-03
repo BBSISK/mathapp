@@ -2304,6 +2304,379 @@
     </div>
 </div>
 
+    <!-- Sets Question Generator Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold"><i class="fas fa-circle-notch mr-2 text-purple-600"></i>Sets Question Generator</h3>
+            <span class="text-sm px-3 py-1 rounded-full bg-purple-100 text-purple-800">
+                <i class="fas fa-image mr-1"></i> Auto-generates Venn diagrams
+            </span>
+        </div>
+        
+        <p class="text-gray-600 mb-4">
+            Generate sets and Venn diagram questions aligned with Irish Junior Cycle. 
+            Includes set notation, union, intersection, complements, and real-world contexts.
+        </p>
+        
+        <div id="setsGeneratorContent">
+            <!-- Question Type Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Select Question Types:</label>
+                <div class="flex flex-wrap gap-3">
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="setsTypeSurvey" checked class="w-4 h-4 text-purple-600">
+                        <span><i class="fas fa-users text-blue-500"></i> Survey (real-world)</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="setsTypeNumber" checked class="w-4 h-4 text-purple-600">
+                        <span><i class="fas fa-hashtag text-green-500"></i> Number Sets</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="setsTypeNotation" checked class="w-4 h-4 text-purple-600">
+                        <span><i class="fas fa-subscript text-purple-500"></i> Notation Only</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Difficulty Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Select Difficulty Levels:</label>
+                <div class="flex flex-wrap gap-3">
+                    <label class="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-green-100">
+                        <input type="checkbox" id="setsDiffBeginner" checked class="w-4 h-4 text-green-600">
+                        <span class="text-green-700"><i class="fas fa-seedling mr-1"></i> Beginner</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-yellow-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-yellow-100">
+                        <input type="checkbox" id="setsDiffIntermediate" checked class="w-4 h-4 text-yellow-600">
+                        <span class="text-yellow-700"><i class="fas fa-chart-line mr-1"></i> Intermediate</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-red-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-red-100">
+                        <input type="checkbox" id="setsDiffAdvanced" checked class="w-4 h-4 text-red-600">
+                        <span class="text-red-700"><i class="fas fa-rocket mr-1"></i> Advanced</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Sets per Type -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Sets per type/difficulty:</label>
+                <div class="flex items-center gap-3">
+                    <input type="number" id="setsSetsPerType" value="3" min="1" max="10" 
+                           class="w-20 border rounded-lg px-3 py-2 text-center">
+                    <span class="text-sm text-gray-600">
+                        (Each set generates 3-7 questions depending on difficulty)
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Current Counts -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm font-medium text-gray-700 mb-2">Current Sets Questions:</div>
+                <div id="setsQuestionCounts" class="flex gap-4 text-sm">
+                    <span class="text-green-600"><i class="fas fa-seedling mr-1"></i> Beginner: <strong id="setsCountBeginner">--</strong></span>
+                    <span class="text-yellow-600"><i class="fas fa-chart-line mr-1"></i> Intermediate: <strong id="setsCountIntermediate">--</strong></span>
+                    <span class="text-red-600"><i class="fas fa-rocket mr-1"></i> Advanced: <strong id="setsCountAdvanced">--</strong></span>
+                </div>
+            </div>
+            
+            <!-- Features List -->
+            <div class="mb-6 p-4 bg-purple-50 rounded-lg">
+                <div class="text-sm font-medium text-purple-800 mb-2">Generated Question Types:</div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-purple-700">
+                    <div>• ∩ Intersection</div>
+                    <div>• ∪ Union</div>
+                    <div>• ' Complement</div>
+                    <div>• \ Set difference</div>
+                    <div>• # Cardinal number</div>
+                    <div>• ∈ Membership</div>
+                </div>
+            </div>
+            
+            <!-- Generate Button -->
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-1"></i>Questions saved to "sets" topic with auto-generated Venn diagrams.
+                </div>
+                <button onclick="generateSetsQuestions()" id="setsGenerateBtn" 
+                        class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    <i class="fas fa-circle-notch mr-2"></i>Generate Sets Questions
+                </button>
+            </div>
+            
+            <!-- Progress/Results -->
+            <div id="setsGeneratorProgress" class="mt-4 hidden">
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-spinner fa-spin text-purple-600 mr-3"></i>
+                        <span>Generating sets questions and Venn diagrams...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="setsGeneratorResult" class="mt-4 hidden"></div>
+        </div>
+    </div>
+
+    <!-- Percentages Question Generator Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold"><i class="fas fa-percent mr-2 text-green-600"></i>Percentages Question Generator</h3>
+            <span class="text-sm px-3 py-1 rounded-full bg-green-100 text-green-800">
+                <i class="fas fa-euro-sign mr-1"></i> Irish Financial Maths
+            </span>
+        </div>
+        
+        <p class="text-gray-600 mb-4">
+            Generate percentage and financial maths questions aligned with Irish Junior Cycle. 
+            Includes VAT (Irish rates), profit/loss, mark-up/margin, compound interest, and value for money.
+        </p>
+        
+        <div id="percentagesGeneratorContent">
+            <!-- Question Type Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Select Question Types:</label>
+                <div class="flex flex-wrap gap-3">
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="pctTypeBasic" checked class="w-4 h-4 text-green-600">
+                        <span><i class="fas fa-calculator text-blue-500"></i> Basic %</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="pctTypeIncDec" checked class="w-4 h-4 text-green-600">
+                        <span><i class="fas fa-arrow-up text-green-500"></i> Increase/Decrease</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="pctTypeProfitLoss" checked class="w-4 h-4 text-green-600">
+                        <span><i class="fas fa-coins text-yellow-500"></i> Profit/Loss</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="pctTypeVAT" checked class="w-4 h-4 text-green-600">
+                        <span><i class="fas fa-receipt text-red-500"></i> VAT</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="pctTypeCompound" checked class="w-4 h-4 text-green-600">
+                        <span><i class="fas fa-piggy-bank text-pink-500"></i> Compound Interest</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="pctTypeValue" checked class="w-4 h-4 text-green-600">
+                        <span><i class="fas fa-balance-scale text-purple-500"></i> Value for Money</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Difficulty Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Select Difficulty Levels:</label>
+                <div class="flex flex-wrap gap-3">
+                    <label class="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-green-100">
+                        <input type="checkbox" id="pctDiffBeginner" checked class="w-4 h-4 text-green-600">
+                        <span class="text-green-700"><i class="fas fa-seedling mr-1"></i> Beginner</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-yellow-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-yellow-100">
+                        <input type="checkbox" id="pctDiffIntermediate" checked class="w-4 h-4 text-yellow-600">
+                        <span class="text-yellow-700"><i class="fas fa-chart-line mr-1"></i> Intermediate</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-red-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-red-100">
+                        <input type="checkbox" id="pctDiffAdvanced" checked class="w-4 h-4 text-red-600">
+                        <span class="text-red-700"><i class="fas fa-rocket mr-1"></i> Advanced</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Sets per Type -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Sets per type/difficulty:</label>
+                <div class="flex items-center gap-3">
+                    <input type="number" id="pctSetsPerType" value="3" min="1" max="10" 
+                           class="w-20 border rounded-lg px-3 py-2 text-center">
+                    <span class="text-sm text-gray-600">
+                        (Each set generates 2-4 questions)
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Current Counts -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm font-medium text-gray-700 mb-2">Current Percentages Questions:</div>
+                <div id="pctQuestionCounts" class="flex gap-4 text-sm">
+                    <span class="text-green-600"><i class="fas fa-seedling mr-1"></i> Beginner: <strong id="pctCountBeginner">--</strong></span>
+                    <span class="text-yellow-600"><i class="fas fa-chart-line mr-1"></i> Intermediate: <strong id="pctCountIntermediate">--</strong></span>
+                    <span class="text-red-600"><i class="fas fa-rocket mr-1"></i> Advanced: <strong id="pctCountAdvanced">--</strong></span>
+                </div>
+            </div>
+            
+            <!-- Features List -->
+            <div class="mb-6 p-4 bg-green-50 rounded-lg">
+                <div class="text-sm font-medium text-green-800 mb-2">Irish Context Features:</div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-green-700">
+                    <div>• 🇮🇪 Irish VAT rates (23%, 13.5%, 9%)</div>
+                    <div>• 🏪 Irish shop names</div>
+                    <div>• 👤 Irish student names</div>
+                    <div>• 💶 Euro currency</div>
+                    <div>• 📈 Mark-up & Margin</div>
+                    <div>• 🏦 Compound interest (3 years)</div>
+                </div>
+            </div>
+            
+            <!-- Generate Button -->
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-1"></i>Questions saved to "percentages" topic.
+                </div>
+                <button onclick="generatePercentagesQuestions()" id="pctGenerateBtn" 
+                        class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    <i class="fas fa-percent mr-2"></i>Generate Percentages Questions
+                </button>
+            </div>
+            
+            <!-- Progress/Results -->
+            <div id="pctGeneratorProgress" class="mt-4 hidden">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-spinner fa-spin text-green-600 mr-3"></i>
+                        <span>Generating percentages questions...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="pctGeneratorResult" class="mt-4 hidden"></div>
+        </div>
+    </div>
+
+    <!-- Probability Question Generator Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold"><i class="fas fa-dice mr-2 text-indigo-600"></i>Probability Question Generator</h3>
+            <span class="text-sm px-3 py-1 rounded-full bg-indigo-100 text-indigo-800">
+                <i class="fas fa-random mr-1"></i> Irish Junior Cycle
+            </span>
+        </div>
+        
+        <p class="text-gray-600 mb-4">
+            Generate probability questions aligned with Irish Junior Cycle. 
+            Includes dice, coins, cards, bags, expected frequency, and combined events.
+        </p>
+        
+        <div id="probabilityGeneratorContent">
+            <!-- Question Type Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Select Question Types:</label>
+                <div class="flex flex-wrap gap-3">
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="probTypeBasic" checked class="w-4 h-4 text-indigo-600">
+                        <span><i class="fas fa-question-circle text-blue-500"></i> Basic Concepts</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="probTypeDice" checked class="w-4 h-4 text-indigo-600">
+                        <span><i class="fas fa-dice text-red-500"></i> Dice</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="probTypeCoins" checked class="w-4 h-4 text-indigo-600">
+                        <span><i class="fas fa-coins text-yellow-500"></i> Coins</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="probTypeCards" checked class="w-4 h-4 text-indigo-600">
+                        <span><i class="fas fa-heart text-pink-500"></i> Cards</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="probTypeBags" checked class="w-4 h-4 text-indigo-600">
+                        <span><i class="fas fa-shopping-bag text-purple-500"></i> Bags/Marbles</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="probTypeExpected" checked class="w-4 h-4 text-indigo-600">
+                        <span><i class="fas fa-calculator text-green-500"></i> Expected Frequency</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="probTypeRelative" checked class="w-4 h-4 text-indigo-600">
+                        <span><i class="fas fa-percentage text-orange-500"></i> Relative Frequency</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-gray-100">
+                        <input type="checkbox" id="probTypeCombined" checked class="w-4 h-4 text-indigo-600">
+                        <span><i class="fas fa-layer-group text-teal-500"></i> Combined Events</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Difficulty Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Select Difficulty Levels:</label>
+                <div class="flex flex-wrap gap-3">
+                    <label class="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-green-100">
+                        <input type="checkbox" id="probDiffBeginner" checked class="w-4 h-4 text-green-600">
+                        <span class="text-green-700"><i class="fas fa-seedling mr-1"></i> Beginner</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-yellow-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-yellow-100">
+                        <input type="checkbox" id="probDiffIntermediate" checked class="w-4 h-4 text-yellow-600">
+                        <span class="text-yellow-700"><i class="fas fa-chart-line mr-1"></i> Intermediate</span>
+                    </label>
+                    <label class="flex items-center gap-2 bg-red-50 px-4 py-2 rounded-lg cursor-pointer hover:bg-red-100">
+                        <input type="checkbox" id="probDiffAdvanced" checked class="w-4 h-4 text-red-600">
+                        <span class="text-red-700"><i class="fas fa-rocket mr-1"></i> Advanced</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Sets per Type -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Sets per type/difficulty:</label>
+                <div class="flex items-center gap-3">
+                    <input type="number" id="probSetsPerType" value="3" min="1" max="10" 
+                           class="w-20 border rounded-lg px-3 py-2 text-center">
+                    <span class="text-sm text-gray-600">
+                        (Each set generates 1-2 questions)
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Current Counts -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm font-medium text-gray-700 mb-2">Current Probability Questions:</div>
+                <div id="probQuestionCounts" class="flex gap-4 text-sm">
+                    <span class="text-green-600"><i class="fas fa-seedling mr-1"></i> Beginner: <strong id="probCountBeginner">--</strong></span>
+                    <span class="text-yellow-600"><i class="fas fa-chart-line mr-1"></i> Intermediate: <strong id="probCountIntermediate">--</strong></span>
+                    <span class="text-red-600"><i class="fas fa-rocket mr-1"></i> Advanced: <strong id="probCountAdvanced">--</strong></span>
+                </div>
+            </div>
+            
+            <!-- Features List -->
+            <div class="mb-6 p-4 bg-indigo-50 rounded-lg">
+                <div class="text-sm font-medium text-indigo-800 mb-2">Topics Covered:</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-indigo-700">
+                    <div>• 🎲 Single & two dice</div>
+                    <div>• 🪙 Coin flips (1-3)</div>
+                    <div>• 🃏 Card probabilities</div>
+                    <div>• 🎱 Bag/marble problems</div>
+                    <div>• 📊 Sample space</div>
+                    <div>• 🔢 Expected frequency</div>
+                    <div>• 📈 Relative frequency</div>
+                    <div>• ➕ Combined events (AND/OR)</div>
+                </div>
+            </div>
+            
+            <!-- Generate Button -->
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-1"></i>Questions saved to "probability" topic.
+                </div>
+                <button onclick="generateProbabilityQuestions()" id="probGenerateBtn" 
+                        class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    <i class="fas fa-dice mr-2"></i>Generate Probability Questions
+                </button>
+            </div>
+            
+            <!-- Progress/Results -->
+            <div id="probGeneratorProgress" class="mt-4 hidden">
+                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-spinner fa-spin text-indigo-600 mr-3"></i>
+                        <span>Generating probability questions...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="probGeneratorResult" class="mt-4 hidden"></div>
+        </div>
+    </div>
+
 <!-- Strand Modal -->
 <div id="strandModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
     <div class="bg-white rounded-lg p-6 w-full max-w-md">
@@ -5824,6 +6197,9 @@ function updateRestrictedTeachersCount() {
             loadCoordinateQuestionCounts();
             loadSDTQuestionCounts();
             loadCurrencyQuestionCounts();
+            loadSetsQuestionCounts();
+            loadPercentagesQuestionCounts();
+            loadProbabilityQuestionCounts();
         }
         
         // =================================================================
@@ -6529,6 +6905,248 @@ function updateRestrictedTeachersCount() {
                         <p class="text-sm text-green-600 mt-2">Beginner: ${data.counts.beginner} | Intermediate: ${data.counts.intermediate} | Advanced: ${data.counts.advanced}</p>
                     </div>`;
                     loadCurrencyQuestionCounts();
+                    loadTopicsAdmin();
+                } else {
+                    result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p class="text-red-700"><i class="fas fa-exclamation-circle mr-2"></i>${data.error || 'Error occurred'}</p>
+                    </div>`;
+                }
+                result.classList.remove('hidden');
+            } catch (error) {
+                progress.classList.add('hidden');
+                btn.disabled = false;
+                result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p class="text-red-700">Network error: ${error.message}</p>
+                </div>`;
+                result.classList.remove('hidden');
+            }
+        }
+
+        // =================================================================
+        // SETS QUESTION GENERATOR FUNCTIONS
+        // =================================================================
+        
+        async function loadSetsQuestionCounts() {
+            try {
+                const response = await fetch('/api/admin/question-counts/sets');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('setsCountBeginner').textContent = data.beginner || 0;
+                    document.getElementById('setsCountIntermediate').textContent = data.intermediate || 0;
+                    document.getElementById('setsCountAdvanced').textContent = data.advanced || 0;
+                }
+            } catch (err) {
+                console.log('Could not load sets counts:', err);
+            }
+        }
+        
+        async function generateSetsQuestions() {
+            const questionTypes = [];
+            if (document.getElementById('setsTypeSurvey').checked) questionTypes.push('survey');
+            if (document.getElementById('setsTypeNumber').checked) questionTypes.push('number');
+            if (document.getElementById('setsTypeNotation').checked) questionTypes.push('notation');
+            
+            const difficulties = [];
+            if (document.getElementById('setsDiffBeginner').checked) difficulties.push('beginner');
+            if (document.getElementById('setsDiffIntermediate').checked) difficulties.push('intermediate');
+            if (document.getElementById('setsDiffAdvanced').checked) difficulties.push('advanced');
+            
+            const setsPerType = parseInt(document.getElementById('setsSetsPerType').value) || 3;
+            
+            if (questionTypes.length === 0 || difficulties.length === 0) {
+                alert('Please select at least one question type and difficulty');
+                return;
+            }
+            
+            const btn = document.getElementById('setsGenerateBtn');
+            const progress = document.getElementById('setsGeneratorProgress');
+            const result = document.getElementById('setsGeneratorResult');
+            
+            btn.disabled = true;
+            progress.classList.remove('hidden');
+            result.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/admin/generate-sets-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question_types: questionTypes, difficulties, sets_per_type: setsPerType })
+                });
+                
+                const data = await response.json();
+                progress.classList.add('hidden');
+                btn.disabled = false;
+                
+                if (data.success) {
+                    result.innerHTML = `<div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p class="text-green-700"><i class="fas fa-check-circle mr-2"></i>${data.message}</p>
+                        <p class="text-sm text-green-600 mt-2">Beginner: ${data.counts.beginner} | Intermediate: ${data.counts.intermediate} | Advanced: ${data.counts.advanced}</p>
+                    </div>`;
+                    loadSetsQuestionCounts();
+                    loadTopicsAdmin();
+                } else {
+                    result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p class="text-red-700"><i class="fas fa-exclamation-circle mr-2"></i>${data.error || 'Error occurred'}</p>
+                    </div>`;
+                }
+                result.classList.remove('hidden');
+            } catch (error) {
+                progress.classList.add('hidden');
+                btn.disabled = false;
+                result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p class="text-red-700">Network error: ${error.message}</p>
+                </div>`;
+                result.classList.remove('hidden');
+            }
+        }
+
+        // =================================================================
+        // PERCENTAGES QUESTION GENERATOR FUNCTIONS
+        // =================================================================
+        
+        async function loadPercentagesQuestionCounts() {
+            try {
+                const response = await fetch('/api/admin/question-counts/percentages');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('pctCountBeginner').textContent = data.beginner || 0;
+                    document.getElementById('pctCountIntermediate').textContent = data.intermediate || 0;
+                    document.getElementById('pctCountAdvanced').textContent = data.advanced || 0;
+                }
+            } catch (err) {
+                console.log('Could not load percentages counts:', err);
+            }
+        }
+        
+        async function generatePercentagesQuestions() {
+            const questionTypes = [];
+            if (document.getElementById('pctTypeBasic').checked) questionTypes.push('basic');
+            if (document.getElementById('pctTypeIncDec').checked) questionTypes.push('increase_decrease');
+            if (document.getElementById('pctTypeProfitLoss').checked) questionTypes.push('profit_loss');
+            if (document.getElementById('pctTypeVAT').checked) questionTypes.push('vat');
+            if (document.getElementById('pctTypeCompound').checked) questionTypes.push('compound_interest');
+            if (document.getElementById('pctTypeValue').checked) questionTypes.push('value_for_money');
+            
+            const difficulties = [];
+            if (document.getElementById('pctDiffBeginner').checked) difficulties.push('beginner');
+            if (document.getElementById('pctDiffIntermediate').checked) difficulties.push('intermediate');
+            if (document.getElementById('pctDiffAdvanced').checked) difficulties.push('advanced');
+            
+            const setsPerType = parseInt(document.getElementById('pctSetsPerType').value) || 3;
+            
+            if (questionTypes.length === 0 || difficulties.length === 0) {
+                alert('Please select at least one question type and difficulty');
+                return;
+            }
+            
+            const btn = document.getElementById('pctGenerateBtn');
+            const progress = document.getElementById('pctGeneratorProgress');
+            const result = document.getElementById('pctGeneratorResult');
+            
+            btn.disabled = true;
+            progress.classList.remove('hidden');
+            result.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/admin/generate-percentages-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question_types: questionTypes, difficulties, sets_per_type: setsPerType })
+                });
+                
+                const data = await response.json();
+                progress.classList.add('hidden');
+                btn.disabled = false;
+                
+                if (data.success) {
+                    result.innerHTML = `<div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p class="text-green-700"><i class="fas fa-check-circle mr-2"></i>${data.message}</p>
+                        <p class="text-sm text-green-600 mt-2">Beginner: ${data.counts.beginner} | Intermediate: ${data.counts.intermediate} | Advanced: ${data.counts.advanced}</p>
+                    </div>`;
+                    loadPercentagesQuestionCounts();
+                    loadTopicsAdmin();
+                } else {
+                    result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p class="text-red-700"><i class="fas fa-exclamation-circle mr-2"></i>${data.error || 'Error occurred'}</p>
+                    </div>`;
+                }
+                result.classList.remove('hidden');
+            } catch (error) {
+                progress.classList.add('hidden');
+                btn.disabled = false;
+                result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p class="text-red-700">Network error: ${error.message}</p>
+                </div>`;
+                result.classList.remove('hidden');
+            }
+        }
+
+        // =================================================================
+        // PROBABILITY QUESTION GENERATOR FUNCTIONS
+        // =================================================================
+        
+        async function loadProbabilityQuestionCounts() {
+            try {
+                const response = await fetch('/api/admin/question-counts/probability');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('probCountBeginner').textContent = data.beginner || 0;
+                    document.getElementById('probCountIntermediate').textContent = data.intermediate || 0;
+                    document.getElementById('probCountAdvanced').textContent = data.advanced || 0;
+                }
+            } catch (err) {
+                console.log('Could not load probability counts:', err);
+            }
+        }
+        
+        async function generateProbabilityQuestions() {
+            const questionTypes = [];
+            if (document.getElementById('probTypeBasic').checked) questionTypes.push('basic');
+            if (document.getElementById('probTypeDice').checked) questionTypes.push('dice');
+            if (document.getElementById('probTypeCoins').checked) questionTypes.push('coins');
+            if (document.getElementById('probTypeCards').checked) questionTypes.push('cards');
+            if (document.getElementById('probTypeBags').checked) questionTypes.push('bags');
+            if (document.getElementById('probTypeExpected').checked) questionTypes.push('expected_frequency');
+            if (document.getElementById('probTypeRelative').checked) questionTypes.push('relative_frequency');
+            if (document.getElementById('probTypeCombined').checked) questionTypes.push('combined_events');
+            
+            const difficulties = [];
+            if (document.getElementById('probDiffBeginner').checked) difficulties.push('beginner');
+            if (document.getElementById('probDiffIntermediate').checked) difficulties.push('intermediate');
+            if (document.getElementById('probDiffAdvanced').checked) difficulties.push('advanced');
+            
+            const setsPerType = parseInt(document.getElementById('probSetsPerType').value) || 3;
+            
+            if (questionTypes.length === 0 || difficulties.length === 0) {
+                alert('Please select at least one question type and difficulty');
+                return;
+            }
+            
+            const btn = document.getElementById('probGenerateBtn');
+            const progress = document.getElementById('probGeneratorProgress');
+            const result = document.getElementById('probGeneratorResult');
+            
+            btn.disabled = true;
+            progress.classList.remove('hidden');
+            result.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/api/admin/generate-probability-questions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question_types: questionTypes, difficulties, sets_per_type: setsPerType })
+                });
+                
+                const data = await response.json();
+                progress.classList.add('hidden');
+                btn.disabled = false;
+                
+                if (data.success) {
+                    result.innerHTML = `<div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p class="text-green-700"><i class="fas fa-check-circle mr-2"></i>${data.message}</p>
+                        <p class="text-sm text-green-600 mt-2">Beginner: ${data.counts.beginner} | Intermediate: ${data.counts.intermediate} | Advanced: ${data.counts.advanced}</p>
+                    </div>`;
+                    loadProbabilityQuestionCounts();
                     loadTopicsAdmin();
                 } else {
                     result.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4">

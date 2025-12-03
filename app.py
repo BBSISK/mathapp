@@ -4153,15 +4153,20 @@ def get_bonus_question_archive():
     """Get user's bonus question history for the archive"""
     from sqlalchemy import text
     
-    user_id = session.get('user_id') if not session.get('is_guest') else None
+    # Check guest_code FIRST (repeat guests have both user_id and guest_code)
     guest_code = session.get('guest_code')
+    user_id = session.get('user_id')
+    
+    # For repeat guests, always use guest_code
+    if guest_code:
+        user_id = None  # Force guest_code lookup
     
     if not user_id and not guest_code:
         return jsonify({'error': 'Not authenticated', 'attempts': [], 'total': 0, 'correct': 0})
     
     try:
-        # Build query based on user type
-        if user_id:
+        # Build query based on user type - guest_code takes priority
+        if guest_code:
             query = text("""
                 SELECT 
                     bqa.id,
@@ -4179,11 +4184,11 @@ def get_bonus_question_archive():
                     bq.category
                 FROM bonus_question_attempts bqa
                 JOIN bonus_questions bq ON bqa.question_id = bq.id
-                WHERE bqa.user_id = :user_id
+                WHERE bqa.guest_code = :guest_code
                 ORDER BY bqa.attempted_at DESC
                 LIMIT 100
             """)
-            result = db.session.execute(query, {'user_id': user_id}).fetchall()
+            result = db.session.execute(query, {'guest_code': guest_code}).fetchall()
         else:
             query = text("""
                 SELECT 
@@ -4215,6 +4220,14 @@ def get_bonus_question_archive():
             if row.is_correct:
                 total_correct += 1
             
+            # Handle attempted_at - might be string from SQLite or datetime object
+            attempted_at_str = None
+            if row.attempted_at:
+                if isinstance(row.attempted_at, str):
+                    attempted_at_str = row.attempted_at
+                else:
+                    attempted_at_str = row.attempted_at.isoformat()
+            
             attempts.append({
                 'id': row.id,
                 'question_id': row.question_id,
@@ -4223,7 +4236,7 @@ def get_bonus_question_archive():
                 'points_earned': row.points_earned,
                 'quiz_topic': row.quiz_topic,
                 'quiz_score': row.quiz_score,
-                'attempted_at': row.attempted_at.isoformat() if row.attempted_at else None,
+                'attempted_at': attempted_at_str,
                 'correct_answer': row.correct_answer,
                 'image_url': row.image_url,
                 'fun_fact': row.fun_fact,
@@ -8461,20 +8474,377 @@ def admin_who_am_i_copy_topic():
     })
 
 
+# ==================== WHO'S ONLINE COUNTER ====================
+
+@app.route('/api/online-count')
+def get_online_count():
+    """Get count of users active in the last 5 minutes"""
+    from sqlalchemy import text
+    from datetime import datetime, timedelta
+    
+    try:
+        five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+        
+        # Count registered users active recently
+        registered_count = 0
+        try:
+            result = db.session.execute(text("""
+                SELECT COUNT(DISTINCT user_id) FROM quiz_attempts 
+                WHERE created_at > :since
+            """), {'since': five_minutes_ago}).fetchone()
+            registered_count = result[0] if result else 0
+        except:
+            pass
+        
+        # Count guest users active recently
+        guest_count = 0
+        try:
+            result = db.session.execute(text("""
+                SELECT COUNT(*) FROM guest_users 
+                WHERE last_active > :since
+            """), {'since': five_minutes_ago}).fetchone()
+            guest_count = result[0] if result else 0
+        except:
+            pass
+        
+        total_online = registered_count + guest_count
+        
+        # Add some variability/minimum to make it look active
+        # During low activity, show at least 1 (the current user)
+        if total_online == 0:
+            total_online = 1
+        
+        return jsonify({
+            'count': total_online,
+            'online_count': total_online,
+            'registered': registered_count,
+            'guests': guest_count
+        })
+        
+    except Exception as e:
+        print(f"Error getting online count: {e}")
+        return jsonify({'count': 1, 'online_count': 1})
+
+
+# ==================== DAY 2: QUICK PLAY API ====================
+
+@app.route('/api/quick-play/<difficulty>')
+@login_required
+def get_quick_play_questions(difficulty):
+    """Get 10 random questions from Junior Cycle topics only for Quick Play mode"""
+    from sqlalchemy import text
+    
+    try:
+        # Get 10 random questions from Junior Cycle strands only
+        # Exclude any strand containing 'Senior' in the name
+        result = db.session.execute(text("""
+            SELECT q.id, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d,
+                   q.correct_answer, q.explanation, q.hint_text, q.topic, q.difficulty,
+                   q.image_url, q.image_caption, q.strand
+            FROM questions q
+            WHERE LOWER(q.difficulty) = LOWER(:difficulty)
+            AND (q.strand IS NULL OR LOWER(q.strand) NOT LIKE '%senior%')
+            ORDER BY RANDOM()
+            LIMIT 10
+        """), {'difficulty': difficulty}).fetchall()
+        
+        questions = []
+        for row in result:
+            questions.append({
+                'id': row.id,
+                'question': row.question_text,
+                'options': [row.option_a, row.option_b, row.option_c, row.option_d],
+                'correct': row.correct_answer,
+                'explanation': row.explanation,
+                'hint': row.hint_text,
+                'topic': row.topic,
+                'difficulty': row.difficulty,
+                'image_url': row.image_url,
+                'image_caption': row.image_caption
+            })
+        
+        return jsonify(questions)
+        
+    except Exception as e:
+        print(f"Quick Play error: {e}")
+        return jsonify([]), 500
+
+
+# ==================== DAY 2: WEEKLY CHALLENGE API ====================
+
+@app.route('/api/weekly-challenge/status')
+@login_required
+def get_weekly_challenge_status():
+    """Get user's weekly challenge progress"""
+    from sqlalchemy import text
+    from datetime import datetime, timedelta
+    
+    guest_code = session.get('guest_code')
+    user_id = session.get('user_id')
+    
+    # Get start of current week (Monday)
+    today = datetime.utcnow().date()
+    start_of_week = today - timedelta(days=today.weekday())
+    
+    try:
+        # Count quizzes this week
+        if guest_code:
+            quiz_count = db.session.execute(text("""
+                SELECT COUNT(*) FROM guest_quiz_attempts
+                WHERE guest_code = :code AND DATE(completed_at) >= :start
+            """), {'code': guest_code, 'start': start_of_week}).fetchone()[0]
+            
+            high_score_count = db.session.execute(text("""
+                SELECT COUNT(*) FROM guest_quiz_attempts
+                WHERE guest_code = :code AND DATE(completed_at) >= :start AND percentage >= 80
+            """), {'code': guest_code, 'start': start_of_week}).fetchone()[0]
+        else:
+            quiz_count = db.session.execute(text("""
+                SELECT COUNT(*) FROM quiz_attempts
+                WHERE user_id = :uid AND DATE(created_at) >= :start
+            """), {'uid': user_id, 'start': start_of_week}).fetchone()[0]
+            
+            high_score_count = db.session.execute(text("""
+                SELECT COUNT(*) FROM quiz_attempts
+                WHERE user_id = :uid AND DATE(created_at) >= :start AND percentage >= 80
+            """), {'uid': user_id, 'start': start_of_week}).fetchone()[0]
+        
+        # For streak, we'd need to track max streak per quiz - simplified for now
+        max_streak = 0
+        
+        return jsonify({
+            'challenge': {
+                'goals': [
+                    {'id': 'goal1', 'target': 5, 'current': quiz_count, 'points': 50, 'type': 'quizzes'},
+                    {'id': 'goal2', 'target': 3, 'current': high_score_count, 'points': 75, 'type': 'highscores'},
+                    {'id': 'goal3', 'target': 5, 'current': max_streak, 'points': 100, 'type': 'streak'}
+                ]
+            },
+            'week_start': start_of_week.isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Weekly challenge error: {e}")
+        return jsonify({'challenge': None, 'error': str(e)})
+
+
+@app.route('/api/weekly-challenge/update', methods=['POST'])
+@login_required
+def update_weekly_challenge():
+    """Update weekly challenge progress (called after quiz completion)"""
+    # Progress is tracked via quiz_attempts, so this is mainly for acknowledgment
+    return jsonify({'success': True})
+
+
+# ==================== DAY 2: ENHANCED LEADERBOARD API ====================
+
+@app.route('/api/leaderboard/<period>')
+@login_required
+def get_leaderboard(period):
+    """Get leaderboard - weekly or all-time, includes user position even if not in top 20"""
+    from sqlalchemy import text
+    from datetime import datetime, timedelta
+    
+    current_guest = session.get('guest_code')
+    
+    try:
+        if period == 'weekly':
+            # Get start of current week
+            today = datetime.utcnow().date()
+            start_of_week = today - timedelta(days=today.weekday())
+            
+            # Weekly leaderboard from guest_quiz_attempts - top 20
+            result = db.session.execute(text("""
+                SELECT guest_code, SUM(score) as total_score,
+                       COUNT(*) as quiz_count
+                FROM guest_quiz_attempts
+                WHERE DATE(completed_at) >= :start
+                GROUP BY guest_code
+                ORDER BY total_score DESC
+                LIMIT 20
+            """), {'start': start_of_week}).fetchall()
+            
+            # Get current user's position if not in top 20
+            user_position = None
+            user_score = None
+            if current_guest:
+                # Get user's rank
+                rank_result = db.session.execute(text("""
+                    SELECT COUNT(*) + 1 as rank, 
+                           (SELECT SUM(score) FROM guest_quiz_attempts 
+                            WHERE guest_code = :code AND DATE(completed_at) >= :start) as my_score
+                    FROM (
+                        SELECT guest_code, SUM(score) as total_score
+                        FROM guest_quiz_attempts
+                        WHERE DATE(completed_at) >= :start
+                        GROUP BY guest_code
+                    ) rankings
+                    WHERE total_score > COALESCE(
+                        (SELECT SUM(score) FROM guest_quiz_attempts 
+                         WHERE guest_code = :code AND DATE(completed_at) >= :start), 0
+                    )
+                """), {'code': current_guest, 'start': start_of_week}).fetchone()
+                if rank_result:
+                    user_position = rank_result.rank
+                    user_score = rank_result.my_score or 0
+            
+        else:  # all-time
+            # All-time leaderboard from guest_users - top 20
+            result = db.session.execute(text("""
+                SELECT guest_code, total_score, quizzes_completed as quiz_count
+                FROM guest_users
+                WHERE is_active = 1
+                ORDER BY total_score DESC
+                LIMIT 20
+            """)).fetchall()
+            
+            # Get current user's position if not in top 20
+            user_position = None
+            user_score = None
+            if current_guest:
+                rank_result = db.session.execute(text("""
+                    SELECT COUNT(*) + 1 as rank,
+                           (SELECT total_score FROM guest_users WHERE guest_code = :code) as my_score
+                    FROM guest_users
+                    WHERE is_active = 1 
+                    AND total_score > COALESCE(
+                        (SELECT total_score FROM guest_users WHERE guest_code = :code), 0
+                    )
+                """), {'code': current_guest}).fetchone()
+                if rank_result:
+                    user_position = rank_result.rank
+                    user_score = rank_result.my_score or 0
+        
+        leaderboard = []
+        user_in_top20 = False
+        
+        for row in result:
+            is_current = row.guest_code == current_guest
+            if is_current:
+                user_in_top20 = True
+            leaderboard.append({
+                'guest_code': row.guest_code,
+                'name': row.guest_code.capitalize() if row.guest_code else 'Anonymous',
+                'total_score': row.total_score or 0,
+                'points': row.total_score or 0,
+                'quiz_count': row.quiz_count or 0,
+                'is_current_user': is_current
+            })
+        
+        # Build response
+        response_data = {
+            'leaderboard': leaderboard,
+            'period': period
+        }
+        
+        # Add user position if not in top 20
+        if current_guest and not user_in_top20 and user_position:
+            response_data['my_position'] = {
+                'rank': user_position,
+                'guest_code': current_guest,
+                'name': current_guest.capitalize(),
+                'points': user_score,
+                'is_current_user': True
+            }
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        print(f"Leaderboard error: {e}")
+        return jsonify({'leaderboard': [], 'error': str(e)})
+
+
 # ==================== WHO AM I? API ENDPOINTS ====================
+
+@app.route('/api/debug-session')
+def debug_session():
+    """Debug endpoint to check session state - REMOVE IN PRODUCTION"""
+    return jsonify({
+        'user_id': session.get('user_id'),
+        'guest_code': session.get('guest_code'),
+        'is_guest': session.get('is_guest'),
+        'guest_type': session.get('guest_type'),
+        'role': session.get('role'),
+        'session_keys': list(session.keys())
+    })
+
+@app.route('/api/debug-bonus-attempts')
+def debug_bonus_attempts():
+    """Debug endpoint to check bonus attempts in database"""
+    from sqlalchemy import text
+    
+    guest_code = session.get('guest_code')
+    user_id = session.get('user_id')
+    
+    results = {
+        'session_guest_code': guest_code,
+        'session_user_id': user_id,
+        'attempts_by_guest_code': [],
+        'attempts_by_user_id': [],
+        'total_in_table': 0
+    }
+    
+    try:
+        # Count total attempts
+        total = db.session.execute(text("SELECT COUNT(*) FROM bonus_question_attempts")).fetchone()
+        results['total_in_table'] = total[0] if total else 0
+        
+        # Check attempts by guest_code
+        if guest_code:
+            by_guest = db.session.execute(text("""
+                SELECT id, question_id, guest_code, user_id, is_correct, attempted_at 
+                FROM bonus_question_attempts 
+                WHERE guest_code = :code
+                ORDER BY attempted_at DESC
+                LIMIT 10
+            """), {'code': guest_code}).fetchall()
+            
+            results['attempts_by_guest_code'] = [
+                {'id': r[0], 'question_id': r[1], 'guest_code': r[2], 'user_id': r[3], 'is_correct': r[4], 'attempted_at': str(r[5])}
+                for r in by_guest
+            ]
+        
+        # Check attempts by user_id
+        if user_id:
+            by_user = db.session.execute(text("""
+                SELECT id, question_id, guest_code, user_id, is_correct, attempted_at 
+                FROM bonus_question_attempts 
+                WHERE user_id = :uid
+                ORDER BY attempted_at DESC
+                LIMIT 10
+            """), {'uid': user_id}).fetchall()
+            
+            results['attempts_by_user_id'] = [
+                {'id': r[0], 'question_id': r[1], 'guest_code': r[2], 'user_id': r[3], 'is_correct': r[4], 'attempted_at': str(r[5])}
+                for r in by_user
+            ]
+            
+    except Exception as e:
+        results['error'] = str(e)
+    
+    return jsonify(results)
 
 @app.route('/api/who-am-i/start', methods=['POST'])
 def who_am_i_start():
     """Initialize a new Who Am I session for a quiz"""
     from sqlalchemy import text
 
-    if 'user_id' not in session:
+    # Support both regular users and repeat guests
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    print(f"🔍 WHO AM I START - user_id: {user_id}, guest_code: {guest_code}")
+    
+    if not user_id and not guest_code:
+        print("❌ WHO AM I START - No user_id or guest_code in session")
         return jsonify({'error': 'Not logged in'}), 401
 
     data = request.json
     topic = data.get('topic')
     difficulty = data.get('difficulty')
     quiz_attempt_id = data.get('quiz_attempt_id')
+    
+    print(f"🔍 WHO AM I START - topic: {topic}, difficulty: {difficulty}, quiz_attempt_id: {quiz_attempt_id}")
 
     # Get a random active image for this topic/difficulty
     # Now uses the junction table for multi-topic support
@@ -8488,25 +8858,46 @@ def who_am_i_start():
     """), {'topic': topic, 'difficulty': difficulty}).fetchone()
 
     if not result:
+        print(f"❌ WHO AM I START - No images found for topic={topic}, difficulty={difficulty}")
         return jsonify({'error': 'No images available for this topic/difficulty'}), 404
 
     image_id = result.id
     image_filename = result.image_filename
     answer = result.answer
     hint = result.hint
+    
+    print(f"✅ WHO AM I START - Found image: {image_id}, answer: {answer}")
 
-    # Create session
-    insert_result = db.session.execute(text("""
-        INSERT INTO who_am_i_sessions (user_id, quiz_attempt_id, image_id, tiles_revealed, guesses_made)
-        VALUES (:user_id, :quiz_attempt_id, :image_id, '[]', 0)
-    """), {
-        'user_id': session['user_id'],
-        'quiz_attempt_id': quiz_attempt_id,
-        'image_id': image_id
-    })
+    # Create session - include guest_code for repeat guests
+    # First, ensure guest_code column exists (add it if missing)
+    try:
+        db.session.execute(text("SELECT guest_code FROM who_am_i_sessions LIMIT 1"))
+    except:
+        try:
+            db.session.execute(text("ALTER TABLE who_am_i_sessions ADD COLUMN guest_code VARCHAR(50)"))
+            db.session.commit()
+            print("✅ Added guest_code column to who_am_i_sessions")
+        except:
+            db.session.rollback()
+    
+    try:
+        insert_result = db.session.execute(text("""
+            INSERT INTO who_am_i_sessions (user_id, guest_code, quiz_attempt_id, image_id, tiles_revealed, guesses_made)
+            VALUES (:user_id, :guest_code, :quiz_attempt_id, :image_id, '[]', 0)
+        """), {
+            'user_id': user_id,
+            'guest_code': guest_code,
+            'quiz_attempt_id': quiz_attempt_id,
+            'image_id': image_id
+        })
 
-    db.session.commit()
-    session_id = insert_result.lastrowid
+        db.session.commit()
+        session_id = insert_result.lastrowid
+        print(f"✅ WHO AM I START - Created session: {session_id}")
+    except Exception as e:
+        print(f"❌ WHO AM I START - Error creating session: {e}")
+        db.session.rollback()
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
 
     return jsonify({
         'session_id': session_id,
@@ -8521,17 +8912,27 @@ def who_am_i_reveal():
     """Reveal a tile after correct answer"""
     from sqlalchemy import text
 
-    if 'user_id' not in session:
+    # Support both regular users and repeat guests
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
         return jsonify({'error': 'Not logged in'}), 401
 
     data = request.json
     session_id = data.get('session_id')
 
-    # Get current session
-    result = db.session.execute(text("""
-        SELECT tiles_revealed FROM who_am_i_sessions
-        WHERE id = :session_id AND user_id = :user_id
-    """), {'session_id': session_id, 'user_id': session['user_id']}).fetchone()
+    # Get current session - match on guest_code for repeat guests, user_id for others
+    if guest_code:
+        result = db.session.execute(text("""
+            SELECT tiles_revealed FROM who_am_i_sessions
+            WHERE id = :session_id AND guest_code = :guest_code
+        """), {'session_id': session_id, 'guest_code': guest_code}).fetchone()
+    else:
+        result = db.session.execute(text("""
+            SELECT tiles_revealed FROM who_am_i_sessions
+            WHERE id = :session_id AND user_id = :user_id AND guest_code IS NULL
+        """), {'session_id': session_id, 'user_id': user_id}).fetchone()
 
     if not result:
         return jsonify({'error': 'Session not found'}), 404
@@ -8570,21 +8971,34 @@ def who_am_i_guess():
     """Submit a guess for Who Am I"""
     from sqlalchemy import text
 
-    if 'user_id' not in session:
+    # Support both regular users and repeat guests
+    user_id = session.get('user_id')
+    guest_code = session.get('guest_code')
+    
+    if not user_id and not guest_code:
         return jsonify({'error': 'Not logged in'}), 401
 
     data = request.json
     session_id = data.get('session_id')
     guess = data.get('guess', '').strip()
 
-    # Get session and image details - IMPORTANT: Include quiz_attempt_id!
-    result = db.session.execute(text("""
-        SELECT s.tiles_revealed, s.guesses_made, s.correct_guess, s.quiz_attempt_id,
-               i.answer, i.accepted_answers
-        FROM who_am_i_sessions s
-        JOIN who_am_i_images i ON s.image_id = i.id
-        WHERE s.id = :session_id AND s.user_id = :user_id
-    """), {'session_id': session_id, 'user_id': session['user_id']}).fetchone()
+    # Get session and image details - match on guest_code for repeat guests
+    if guest_code:
+        result = db.session.execute(text("""
+            SELECT s.tiles_revealed, s.guesses_made, s.correct_guess, s.quiz_attempt_id,
+                   i.answer, i.accepted_answers
+            FROM who_am_i_sessions s
+            JOIN who_am_i_images i ON s.image_id = i.id
+            WHERE s.id = :session_id AND s.guest_code = :guest_code
+        """), {'session_id': session_id, 'guest_code': guest_code}).fetchone()
+    else:
+        result = db.session.execute(text("""
+            SELECT s.tiles_revealed, s.guesses_made, s.correct_guess, s.quiz_attempt_id,
+                   i.answer, i.accepted_answers
+            FROM who_am_i_sessions s
+            JOIN who_am_i_images i ON s.image_id = i.id
+            WHERE s.id = :session_id AND s.user_id = :user_id AND s.guest_code IS NULL
+        """), {'session_id': session_id, 'user_id': user_id}).fetchone()
 
     if not result:
         return jsonify({'error': 'Session not found'}), 404
@@ -8716,12 +9130,13 @@ def who_am_i_guess():
 
                 if next_image:
                     print(f"✅ Next image found! ID: {next_image.id}, Answer: {next_image.answer}")
-                    # Create new session for next image
+                    # Create new session for next image - include guest_code for repeat guests
                     new_session = db.session.execute(text("""
-                        INSERT INTO who_am_i_sessions (user_id, quiz_attempt_id, image_id, tiles_revealed, guesses_made)
-                        VALUES (:user_id, :quiz_attempt_id, :image_id, '[]', 0)
+                        INSERT INTO who_am_i_sessions (user_id, guest_code, quiz_attempt_id, image_id, tiles_revealed, guesses_made)
+                        VALUES (:user_id, :guest_code, :quiz_attempt_id, :image_id, '[]', 0)
                     """), {
-                        'user_id': session['user_id'],
+                        'user_id': user_id,
+                        'guest_code': guest_code,
                         'quiz_attempt_id': quiz_attempt_id,
                         'image_id': next_image.id
                     })

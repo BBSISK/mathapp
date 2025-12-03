@@ -136,6 +136,783 @@
             50% { transform: scale(1.05); }
         }
         
+        /* ==================== HOT STREAK INDICATOR ==================== */
+        .hot-streak-display {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .hot-streak-display.streak-cold {
+            background: rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .hot-streak-display.streak-warming {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            /* No animation - subtle */
+        }
+        
+        .hot-streak-display.streak-hot {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+            /* Gentle pulse only */
+            animation: streak-pulse 2s ease-in-out infinite;
+        }
+        
+        .hot-streak-display.streak-fire {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            animation: streak-pulse 1.5s ease-in-out infinite;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+        
+        .hot-streak-display.streak-legendary {
+            background: linear-gradient(135deg, #dc2626, #9333ea);
+            color: white;
+            animation: streak-pulse 1s ease-in-out infinite;
+            box-shadow: 0 2px 10px rgba(147, 51, 234, 0.4);
+        }
+        
+        @keyframes streak-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        
+        .streak-flame {
+            font-size: 16px;
+            display: inline-block;
+        }
+        
+        .streak-multiplier {
+            background: rgba(0,0,0,0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 4px;
+        }
+        
+        /* ==================== WHO'S ONLINE COUNTER ==================== */
+        .online-counter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 25px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+        }
+        
+        .online-counter .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse-online 2s infinite;
+        }
+        
+        @keyframes pulse-online {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        .online-counter-mini {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: rgba(16, 185, 129, 0.3);
+            border-radius: 15px;
+            color: white;
+            font-weight: 500;
+            font-size: 12px;
+        }
+        
+        .online-counter-mini .pulse-dot {
+            width: 6px;
+            height: 6px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse-online 2s infinite;
+        }
+        
+        /* ==================== SOUND EFFECTS TOGGLE ==================== */
+        .sound-toggle {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .sound-toggle.muted i {
+            opacity: 0.5;
+        }
+        
+        .sound-toggle.muted::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 24px;
+            background: white;
+            transform: rotate(45deg);
+            top: 6px;
+            left: 17px;
+        }
+        
+        /* ==================== DAY 2: QUICK PLAY MODE ==================== */
+        .quick-play-card {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            border-radius: 20px;
+            padding: 24px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quick-play-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(245, 158, 11, 0.4);
+        }
+        
+        .quick-play-card::before {
+            content: '⚡';
+            position: absolute;
+            font-size: 120px;
+            opacity: 0.1;
+            right: -20px;
+            bottom: -30px;
+        }
+        
+        .quick-play-badge {
+            background: rgba(255,255,255,0.25);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .quick-play-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .quick-play-desc {
+            opacity: 0.9;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .quick-play-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+        }
+        
+        .quick-play-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        /* ==================== DAY 2: WEEKLY CHALLENGE TRACKER ==================== */
+        .weekly-challenge-card {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            border-radius: 20px;
+            padding: 24px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .weekly-challenge-card::before {
+            content: '🏆';
+            position: absolute;
+            font-size: 100px;
+            opacity: 0.1;
+            right: -10px;
+            top: -20px;
+        }
+        
+        .challenge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .challenge-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .challenge-timer {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .challenge-progress-container {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 3px;
+            margin-bottom: 15px;
+        }
+        
+        .challenge-progress-bar {
+            height: 20px;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            border-radius: 8px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #92400e;
+        }
+        
+        .challenge-goals {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .challenge-goal {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .challenge-goal.completed {
+            background: rgba(74, 222, 128, 0.3);
+            border: 2px solid rgba(74, 222, 128, 0.5);
+        }
+        
+        .challenge-goal-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .challenge-goal-text {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+        
+        .challenge-goal-points {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fbbf24;
+            margin-top: 4px;
+        }
+        
+        /* ==================== DAY 2: ENHANCED LEADERBOARD ==================== */
+        .leaderboard-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        .leaderboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .leaderboard-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .leaderboard-tabs {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .leaderboard-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .leaderboard-tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f9fafb;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        
+        .leaderboard-item:hover {
+            background: #f3f4f6;
+            transform: translateX(5px);
+        }
+        
+        .leaderboard-item.top-1 {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 2px solid #f59e0b;
+        }
+        
+        .leaderboard-item.top-2 {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            border: 2px solid #9ca3af;
+        }
+        
+        .leaderboard-item.top-3 {
+            background: linear-gradient(135deg, #fed7aa, #fdba74);
+            border: 2px solid #ea580c;
+        }
+        
+        .leaderboard-item.is-me {
+            background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+            border: 2px solid #8b5cf6;
+        }
+        
+        .leaderboard-rank {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #6b7280;
+            margin-right: 12px;
+        }
+        
+        .leaderboard-rank.gold { color: #f59e0b; font-size: 24px; }
+        .leaderboard-rank.silver { color: #6b7280; font-size: 22px; }
+        .leaderboard-rank.bronze { color: #ea580c; font-size: 20px; }
+        
+        .leaderboard-name {
+            flex: 1;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .leaderboard-score {
+            font-weight: 700;
+            color: #8b5cf6;
+            font-size: 16px;
+        }
+        
+        .leaderboard-change {
+            margin-left: 10px;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        
+        .leaderboard-change.up {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .leaderboard-change.down {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        /* ==================== SIDEBAR CARDS (Day 2 Redesign) ==================== */
+        .sidebar-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: all 0.2s;
+        }
+        
+        .sidebar-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        }
+        
+        .sidebar-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .sidebar-card-icon {
+            font-size: 24px;
+        }
+        
+        .sidebar-card-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: #1f2937;
+        }
+        
+        .sidebar-card-content {
+            flex: 1;
+        }
+        
+        .sidebar-card-desc {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .sidebar-card-arrow {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+        
+        /* Quick Play Mini */
+        .quick-play-mini {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .quick-play-mini:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+        }
+        
+        .quick-play-mini .sidebar-card-title {
+            color: white;
+            font-size: 16px;
+        }
+        
+        .quick-play-mini .sidebar-card-desc {
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .quick-play-mini .sidebar-card-arrow {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        /* Weekly Challenge Mini */
+        .weekly-challenge-mini {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+        }
+        
+        .weekly-challenge-mini .sidebar-card-title {
+            color: white;
+        }
+        
+        .challenge-mini-progress {
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+        
+        .challenge-mini-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        .challenge-mini-status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .challenge-mini-timer {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .challenge-mini-goals {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .challenge-mini-goal {
+            font-size: 20px;
+            opacity: 0.5;
+            transition: all 0.2s;
+            cursor: help;
+        }
+        
+        .challenge-mini-goal.completed {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        /* Leaderboard Mini */
+        .leaderboard-mini {
+            background: white;
+        }
+        
+        .leaderboard-expand-btn {
+            margin-left: auto;
+            background: #f3f4f6;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+        
+        .leaderboard-expand-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .leaderboard-expand-btn.expanded i {
+            transform: rotate(180deg);
+        }
+        
+        .leaderboard-tabs-mini {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+        
+        .lb-tab-mini {
+            flex: 1;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: #f3f4f6;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+        
+        .lb-tab-mini.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .leaderboard-mini-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .lb-mini-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            background: #f9fafb;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+        
+        .lb-mini-item.top-1 {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+        }
+        
+        .lb-mini-item.top-2 {
+            background: #f3f4f6;
+        }
+        
+        .lb-mini-item.top-3 {
+            background: linear-gradient(135deg, #fed7aa, #fdba74);
+        }
+        
+        .lb-mini-item.is-me {
+            background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+        }
+        
+        .lb-mini-rank {
+            width: 20px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .lb-mini-rank.gold { color: #f59e0b; }
+        .lb-mini-rank.silver { color: #6b7280; }
+        .lb-mini-rank.bronze { color: #ea580c; }
+        
+        .lb-mini-name {
+            flex: 1;
+            font-weight: 600;
+            color: #374151;
+            margin-left: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .lb-mini-score {
+            font-weight: 700;
+            color: #8b5cf6;
+        }
+        
+        .leaderboard-expanded-list {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #e5e7eb;
+        }
+        
+        .leaderboard-expanded-list.hidden {
+            display: none;
+        }
+        
+        .lb-mini-divider {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 12px;
+            padding: 4px 0;
+        }
+        
+        /* ==================== MOBILE LAYOUT REORDER ==================== */
+        @media (max-width: 1023px) {
+            .main-layout {
+                display: flex;
+                flex-direction: column;
+            }
+            /* On mobile, we need stats first, then topics, then other sidebar items */
+            .main-layout .topics-column {
+                order: 2;
+            }
+            .main-layout .sidebar-column {
+                order: 1; /* This won't work as we need to split sidebar items */
+                display: contents; /* Allow children to participate in parent flex */
+            }
+            .stats-card {
+                order: 1 !important;
+            }
+            .quick-play-mini {
+                order: 3 !important;
+            }
+            .weekly-challenge-mini {
+                order: 4 !important;
+            }
+            .leaderboard-mini {
+                order: 5 !important;
+            }
+            .topics-column {
+                order: 2 !important;
+            }
+            /* Add margin since display:contents removes the container spacing */
+            .sidebar-column > * {
+                margin-bottom: 1rem;
+            }
+        }
+        
+        /* ==================== COMPACT ACTION BUTTONS ==================== */
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        /* ==================== SIDEBAR STATS CARD ==================== */
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .stats-card .sidebar-card-header {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .stats-card .sidebar-card-title {
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 8px 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            display: block;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            display: block;
+            font-size: 10px;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+        
+        .recent-badges-mini {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
         .compact-quiz-header .tools {
             display: flex;
             align-items: center;
@@ -1026,11 +1803,41 @@
             background: #fef2f2;
         }
         
+        .dino-archive-card-image-wrapper {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            overflow: hidden;
+        }
+        
         .dino-archive-card-image {
             width: 100%;
             height: 150px;
             object-fit: cover;
             background: #e5e7eb;
+        }
+        
+        .dino-placeholder {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            color: white;
+        }
+        
+        .dino-placeholder span {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+        
+        .dino-placeholder small {
+            font-size: 12px;
+            opacity: 0.8;
+            text-align: center;
+            padding: 0 10px;
         }
         
         .dino-archive-card-body {
@@ -2061,53 +2868,31 @@
 
     <div id="app" class="container mx-auto px-4 py-8">
         <!-- Badge Summary Widget -->
-        <div id="badge-widget" class="badge-summary-widget" style="display: none;">
-            <div class="badge-summary-header">
-                <h2 class="badge-summary-title">🏆 Your Progress</h2>
-                <div class="flex gap-2 flex-wrap">
+        <!-- Compact Action Bar (replaces large badge widget) -->
+        <div id="badge-widget" class="bg-white shadow-sm rounded-xl p-3 mb-4" style="display: none;">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-3">
+                    <!-- Online Counter -->
+                    <div class="online-counter" id="onlineCounter" title="Students learning right now!" style="padding: 6px 12px; font-size: 13px;">
+                        <span class="pulse-dot"></span>
+                        <span id="onlineCount">--</span> online
+                    </div>
+                    <!-- Sound Toggle -->
+                    <button onclick="toggleSoundEffects()" class="sound-toggle p-2 rounded-lg bg-purple-100 hover:bg-purple-200 transition-all" id="soundToggleBtn" title="Toggle Sound Effects">
+                        <i class="fas fa-volume-up text-purple-600" id="soundIcon"></i>
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-2">
                     {% if feature_flags.AVATAR_SYSTEM_ENABLED %}
-                    <a href="/avatar/shop" class="view-badges-btn" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">🎨 Avatar Shop</a>
+                    <a href="/avatar/shop" class="action-btn" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">🎨 Avatar</a>
                     {% endif %}
-                    <a href="/racing-car" class="view-badges-btn" style="background: linear-gradient(135deg, #e10600, #ff4444); color: white;">🏎️ My Race Car</a>
-                    <button onclick="openDinoArchive()" class="view-badges-btn" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">🦕 Dino Archive</button>
+                    <a href="/racing-car" class="action-btn" style="background: linear-gradient(135deg, #e10600, #ff4444); color: white;">🏎️ Race Car</a>
+                    <button onclick="openDinoArchive()" class="action-btn" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">🦕 Dinos</button>
                     {% if feature_flags.PRIZE_SYSTEM_ENABLED %}
-                    <a href="/prizes" class="view-badges-btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #333;">🎁 Prize Shop</a>
+                    <a href="/prizes" class="action-btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #333;">🎁 Prizes</a>
                     {% endif %}
-                    <a href="/student/badges" class="view-badges-btn">View All Badges →</a>
+                    <a href="/student/badges" class="action-btn" style="background: #f3f4f6; color: #374151;">🏅 Badges</a>
                 </div>
-            </div>
-
-            <div class="badge-summary-stats">
-                <div class="badge-stat-box">
-                    <span id="stat-level" class="badge-stat-value">-</span>
-                    <div class="badge-stat-label">Level</div>
-                </div>
-                <div class="badge-stat-box">
-                    <span id="stat-points" class="badge-stat-value">-</span>
-                    <div class="badge-stat-label">Points</div>
-                </div>
-                <div class="badge-stat-box">
-                    <span id="stat-badges" class="badge-stat-value">-</span>
-                    <div class="badge-stat-label">Badges</div>
-                </div>
-                <div class="badge-stat-box">
-                    <span id="stat-quizzes" class="badge-stat-value">-</span>
-                    <div class="badge-stat-label">Quizzes</div>
-                </div>
-                <div class="badge-stat-box" id="streak-box" title="Complete quizzes on consecutive school days to build your streak!">
-                    <span id="stat-streak" class="badge-stat-value">-</span>
-                    <div class="badge-stat-label">🔥 Streak</div>
-                    <div id="streak-next-milestone" class="text-xs opacity-70 mt-1" style="display: none;"></div>
-                </div>
-                <div class="badge-stat-box">
-                    <span id="stat-accuracy" class="badge-stat-value">-</span>
-                    <div class="badge-stat-label">Accuracy</div>
-                </div>
-            </div>
-
-            <div id="recent-badges-container" style="margin-top: 15px; display: none;">
-                <div style="opacity: 0.9; margin-bottom: 8px; font-size: 0.9em;">Recent Badges:</div>
-                <div id="recent-badges"></div>
             </div>
         </div>
 
@@ -2119,20 +2904,117 @@
 
         <!-- Topic Selection Screen -->
         <div id="topicScreen" class="hidden">
-            <div class="text-center mb-12">
-                <h2 class="text-5xl font-bold text-gray-800 mb-4">🚀 Your Learning Journey</h2>
-                <p class="text-xl text-gray-600">Choose your path and master mathematics!</p>
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold text-gray-800 mb-2">🚀 Your Learning Journey</h2>
+                <p class="text-lg text-gray-600">Choose a topic to practice</p>
             </div>
 
-            <!-- Learning Paths Container (Dynamically generated by Junior Cycle strands) -->
-            <div class="space-y-12" id="learningPathsContainer">
-                <!-- Strand cards will be generated dynamically based on database strands -->
-            </div>
+            <!-- Main Layout: 3/4 Topics, 1/4 Sidebar -->
+            <div class="flex flex-col lg:flex-row gap-6 main-layout">
+                
+                <!-- LEFT: Main Topics Area (3/4) -->
+                <div class="w-full lg:w-3/4 topics-column">
+                    <!-- Learning Paths Container (Dynamically generated by Junior Cycle strands) -->
+                    <div class="space-y-8" id="learningPathsContainer">
+                        <!-- Strand cards will be generated dynamically based on database strands -->
+                    </div>
+                    <!-- Hidden div to maintain progressSummary element for JS compatibility -->
+                    <div id="progressSummary" class="hidden"></div>
+                </div>
 
-            <!-- Progress Summary -->
-            <div class="bg-white rounded-2xl p-6 shadow-lg">
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">📊 Your Progress</h3>
-                <div id="progressSummary" class="text-gray-600">Loading...</div>
+                <!-- RIGHT: Sidebar (1/4) -->
+                <div class="w-full lg:w-1/4 space-y-4 sidebar-column">
+                    
+                    <!-- Your Stats Card -->
+                    <div class="sidebar-card stats-card">
+                        <div class="sidebar-card-header">
+                            <span class="sidebar-card-icon">🏆</span>
+                            <span class="sidebar-card-title">Your Stats</span>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span id="stat-level" class="stat-value">-</span>
+                                <span class="stat-label">Level</span>
+                            </div>
+                            <div class="stat-item">
+                                <span id="stat-points" class="stat-value">-</span>
+                                <span class="stat-label">Points</span>
+                            </div>
+                            <div class="stat-item">
+                                <span id="stat-badges" class="stat-value">-</span>
+                                <span class="stat-label">Badges</span>
+                            </div>
+                            <div class="stat-item">
+                                <span id="stat-quizzes" class="stat-value">-</span>
+                                <span class="stat-label">Quizzes</span>
+                            </div>
+                            <div class="stat-item" id="streak-box" title="Complete quizzes on consecutive school days!">
+                                <span id="stat-streak" class="stat-value">-</span>
+                                <span class="stat-label">🔥 Streak</span>
+                            </div>
+                            <div class="stat-item">
+                                <span id="stat-accuracy" class="stat-value">-</span>
+                                <span class="stat-label">Accuracy</span>
+                            </div>
+                        </div>
+                        <div id="recent-badges-container" class="recent-badges-mini" style="display: none;">
+                            <div class="text-xs text-gray-500 mb-1">Recent:</div>
+                            <div id="recent-badges" class="flex flex-wrap gap-1"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Play Mini Card -->
+                    <div class="sidebar-card quick-play-mini" onclick="showQuickPlayModal()">
+                        <div class="sidebar-card-icon">⚡</div>
+                        <div class="sidebar-card-content">
+                            <h4 class="sidebar-card-title">Quick Play</h4>
+                            <p class="sidebar-card-desc">10 random questions</p>
+                        </div>
+                        <i class="fas fa-chevron-right sidebar-card-arrow"></i>
+                    </div>
+
+                    <!-- Weekly Challenge Mini Card -->
+                    <div class="sidebar-card weekly-challenge-mini">
+                        <div class="sidebar-card-header">
+                            <span class="sidebar-card-icon">📅</span>
+                            <span class="sidebar-card-title">Weekly Challenge</span>
+                        </div>
+                        <div class="challenge-mini-progress">
+                            <div class="challenge-mini-bar" id="challengeProgressBarMini" style="width: 0%;"></div>
+                        </div>
+                        <div class="challenge-mini-status">
+                            <span id="challengeProgressTextMini">0/3 Goals</span>
+                            <span class="challenge-mini-timer"><i class="fas fa-clock"></i> <span id="challengeTimeLeftMini">--</span></span>
+                        </div>
+                        <div class="challenge-mini-goals" id="challengeGoalsMini">
+                            <div class="challenge-mini-goal" id="goal1Mini" title="Complete 5 quizzes (+50 pts)">📝</div>
+                            <div class="challenge-mini-goal" id="goal2Mini" title="Score 80%+ three times (+75 pts)">🎯</div>
+                            <div class="challenge-mini-goal" id="goal3Mini" title="Get a 5-streak (+100 pts)">🔥</div>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard Mini Card -->
+                    <div class="sidebar-card leaderboard-mini">
+                        <div class="sidebar-card-header">
+                            <span class="sidebar-card-icon">🏆</span>
+                            <span class="sidebar-card-title">Top Learners</span>
+                            <button class="leaderboard-expand-btn" onclick="toggleLeaderboardExpand()" title="Show more">
+                                <i class="fas fa-chevron-down" id="leaderboardExpandIcon"></i>
+                            </button>
+                        </div>
+                        <div class="leaderboard-tabs-mini">
+                            <button class="lb-tab-mini active" onclick="switchLeaderboard('weekly', event)">Week</button>
+                            <button class="lb-tab-mini" onclick="switchLeaderboard('alltime', event)">All Time</button>
+                        </div>
+                        <div class="leaderboard-mini-list" id="leaderboardListMini">
+                            <!-- Top 3 shown by default -->
+                        </div>
+                        <div class="leaderboard-expanded-list hidden" id="leaderboardListExpanded">
+                            <!-- Positions 4-20 shown when expanded -->
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
 
@@ -2165,9 +3047,24 @@
                     <span id="compactTopicTitle" class="topic-title"></span>
                     <span id="compactQuestionBadge" class="question-badge">Q1/20</span>
                     <span id="compactScoreBadge" class="score-badge">Score: 0/20</span>
-                    <span id="compactStreakBadge" class="streak-badge">🔥 3x</span>
+                    <!-- Enhanced Hot Streak Display -->
+                    <div id="hotStreakDisplay" class="hot-streak-display streak-cold">
+                        <span class="streak-flame">🔥</span>
+                        <span id="streakCount">0</span>
+                        <span id="streakLabel">streak</span>
+                        <span id="streakMultiplierBadge" class="streak-multiplier" style="display: none;">1.5x</span>
+                    </div>
+                    <!-- Mini Online Counter in Quiz -->
+                    <div class="online-counter-mini" id="onlineCounterMini" title="Students online now">
+                        <span class="pulse-dot"></span>
+                        <span id="onlineCountMini">--</span>
+                    </div>
                 </div>
                 <div class="tools">
+                    <!-- Sound Toggle in Quiz -->
+                    <button onclick="toggleSoundEffects()" class="tool-btn sound-toggle" id="soundToggleBtnQuiz" title="Toggle Sound Effects">
+                        <i class="fas fa-volume-up" id="soundIconQuiz"></i>
+                    </button>
                     <!-- Hint Button (icon only) -->
                     <button id="compactHintBtn" onclick="showHint()" class="tool-btn hint-btn" title="Show Hint (-50% points)" style="display: none;">
                         <i class="fas fa-lightbulb"></i>
@@ -2387,6 +3284,596 @@
         
         let masteryData = {}; // Stores mastery status for all topics/difficulties
 
+        // ==================== DAY 1 FEATURES ====================
+        // Sound Effects, Online Counter, Hot Streak Indicator
+        
+        // === SOUND EFFECTS SYSTEM ===
+        let soundEnabled = localStorage.getItem('agentmath_sound') !== 'false'; // Default ON
+        
+        // Sound effect URLs (using Web Audio API for reliability)
+        const soundEffects = {
+            correct: null,
+            incorrect: null,
+            streak3: null,
+            streak5: null,
+            streak10: null,
+            levelUp: null
+        };
+        
+        // Initialize audio context and sounds
+        let audioContext = null;
+        
+        function initSoundSystem() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('🔊 Sound system initialized');
+            } catch (e) {
+                console.log('⚠️ Web Audio API not supported');
+            }
+            updateSoundToggleUI();
+        }
+        
+        // Play a tone-based sound effect
+        function playSound(type) {
+            if (!soundEnabled || !audioContext) return;
+            
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Different sounds for different events
+                switch(type) {
+                    case 'correct':
+                        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.3);
+                        break;
+                        
+                    case 'incorrect':
+                        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                        oscillator.frequency.setValueAtTime(150, audioContext.currentTime + 0.1);
+                        oscillator.type = 'sawtooth';
+                        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.3);
+                        break;
+                        
+                    case 'streak3':
+                        // Rising arpeggio for streak milestones
+                        playArpeggio([523.25, 659.25, 783.99], 0.1, 0.3); // C5, E5, G5
+                        break;
+                        
+                    case 'streak5':
+                        playArpeggio([523.25, 659.25, 783.99, 1046.50], 0.08, 0.4); // C5, E5, G5, C6
+                        break;
+                        
+                    case 'streak10':
+                        playArpeggio([523.25, 659.25, 783.99, 1046.50, 1318.51], 0.06, 0.5); // Extended arpeggio
+                        break;
+                        
+                    case 'levelUp':
+                        playArpeggio([261.63, 329.63, 392.00, 523.25, 659.25, 783.99], 0.1, 0.8);
+                        break;
+                }
+            } catch (e) {
+                console.log('Sound play error:', e);
+            }
+        }
+        
+        function playArpeggio(frequencies, noteLength, totalDuration) {
+            if (!audioContext) return;
+            
+            frequencies.forEach((freq, index) => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.frequency.value = freq;
+                osc.type = 'sine';
+                
+                const startTime = audioContext.currentTime + (index * noteLength);
+                gain.gain.setValueAtTime(0.2, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + noteLength * 1.5);
+                
+                osc.start(startTime);
+                osc.stop(startTime + noteLength * 2);
+            });
+        }
+        
+        function toggleSoundEffects() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('agentmath_sound', soundEnabled);
+            updateSoundToggleUI();
+            
+            // Play a test sound when enabling
+            if (soundEnabled) {
+                // Resume audio context if suspended (browser autoplay policy)
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                playSound('correct');
+            }
+        }
+        
+        function updateSoundToggleUI() {
+            const btn1 = document.getElementById('soundToggleBtn');
+            const btn2 = document.getElementById('soundToggleBtnQuiz');
+            const icon1 = document.getElementById('soundIcon');
+            const icon2 = document.getElementById('soundIconQuiz');
+            
+            [btn1, btn2].forEach(btn => {
+                if (btn) {
+                    if (soundEnabled) {
+                        btn.classList.remove('muted');
+                    } else {
+                        btn.classList.add('muted');
+                    }
+                }
+            });
+            
+            [icon1, icon2].forEach(icon => {
+                if (icon) {
+                    icon.className = soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+                }
+            });
+        }
+        
+        // === WHO'S ONLINE COUNTER ===
+        let onlineCountInterval = null;
+        
+        async function fetchOnlineCount() {
+            try {
+                const response = await fetch('/api/online-count');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateOnlineDisplay(data.count || data.online_count || 0);
+                }
+            } catch (e) {
+                console.log('Could not fetch online count');
+            }
+        }
+        
+        function updateOnlineDisplay(count) {
+            const el1 = document.getElementById('onlineCount');
+            const el2 = document.getElementById('onlineCountMini');
+            
+            if (el1) el1.textContent = count;
+            if (el2) el2.textContent = count;
+        }
+        
+        function startOnlineCounter() {
+            fetchOnlineCount(); // Fetch immediately
+            onlineCountInterval = setInterval(fetchOnlineCount, 30000); // Update every 30 seconds
+        }
+        
+        function stopOnlineCounter() {
+            if (onlineCountInterval) {
+                clearInterval(onlineCountInterval);
+                onlineCountInterval = null;
+            }
+        }
+        
+        // === ENHANCED HOT STREAK INDICATOR ===
+        let currentStreak = 0;
+        
+        function updateHotStreakDisplay(streak) {
+            currentStreak = streak;
+            const display = document.getElementById('hotStreakDisplay');
+            const countEl = document.getElementById('streakCount');
+            const labelEl = document.getElementById('streakLabel');
+            const multiplierEl = document.getElementById('streakMultiplierBadge');
+            
+            if (!display) return;
+            
+            countEl.textContent = streak;
+            
+            // Remove all streak classes
+            display.classList.remove('streak-cold', 'streak-warming', 'streak-hot', 'streak-fire', 'streak-legendary');
+            
+            // Apply appropriate class based on streak level
+            if (streak === 0) {
+                display.classList.add('streak-cold');
+                labelEl.textContent = 'streak';
+                multiplierEl.style.display = 'none';
+            } else if (streak < 3) {
+                display.classList.add('streak-warming');
+                labelEl.textContent = 'in a row!';
+                multiplierEl.style.display = 'none';
+            } else if (streak < 5) {
+                display.classList.add('streak-hot');
+                labelEl.textContent = 'HOT!';
+                multiplierEl.textContent = '1.5x';
+                multiplierEl.style.display = 'inline';
+                // Play streak sound on reaching 3
+                if (streak === 3) playSound('streak3');
+            } else if (streak < 10) {
+                display.classList.add('streak-fire');
+                labelEl.textContent = 'ON FIRE!';
+                multiplierEl.textContent = '2x';
+                multiplierEl.style.display = 'inline';
+                // Play streak sound on reaching 5
+                if (streak === 5) playSound('streak5');
+            } else {
+                display.classList.add('streak-legendary');
+                labelEl.textContent = 'LEGENDARY!';
+                multiplierEl.textContent = '3x';
+                multiplierEl.style.display = 'inline';
+                // Play streak sound on reaching 10
+                if (streak === 10) playSound('streak10');
+            }
+            
+            // Update the old streak badge for compatibility
+            const oldBadge = document.getElementById('compactStreakBadge');
+            if (oldBadge) {
+                if (streak >= 3) {
+                    let multiplier = streak >= 10 ? '3x' : (streak >= 5 ? '2x' : '1.5x');
+                    oldBadge.innerHTML = `🔥 ${multiplier}`;
+                    oldBadge.classList.add('visible');
+                } else {
+                    oldBadge.classList.remove('visible');
+                }
+            }
+        }
+        
+        // Initialize Day 1 features on page load
+        function initDay1Features() {
+            initSoundSystem();
+            startOnlineCounter();
+            updateHotStreakDisplay(0);
+            console.log('🚀 Day 1 features initialized: Sound Effects, Online Counter, Hot Streak');
+        }
+        
+        // ==================== END DAY 1 FEATURES ====================
+        
+        // ==================== DAY 2 FEATURES ====================
+        // Quick Play, Weekly Challenge, Enhanced Leaderboard
+        
+        // === QUICK PLAY MODE ===
+        let quickPlayDifficulty = 'intermediate';
+        let isQuickPlayMode = false;
+        
+        function showQuickPlayModal() {
+            document.getElementById('quickPlayModal').classList.remove('hidden');
+            document.getElementById('quickPlayModal').classList.add('flex');
+        }
+        
+        function closeQuickPlayModal() {
+            document.getElementById('quickPlayModal').classList.add('hidden');
+            document.getElementById('quickPlayModal').classList.remove('flex');
+        }
+        
+        function setQuickPlayDifficulty(diff) {
+            quickPlayDifficulty = diff;
+            // Update button states
+            document.querySelectorAll('.quick-diff-btn').forEach(btn => {
+                if (btn.dataset.diff === diff) {
+                    btn.classList.add('border-orange-400', 'bg-orange-50');
+                    btn.classList.remove('border-gray-200');
+                } else {
+                    btn.classList.remove('border-orange-400', 'bg-orange-50');
+                    btn.classList.add('border-gray-200');
+                }
+            });
+        }
+        
+        async function startQuickPlay() {
+            closeQuickPlayModal();
+            isQuickPlayMode = true;
+            
+            // Show loading
+            document.getElementById('topicScreen').classList.add('hidden');
+            document.getElementById('loadingScreen').classList.remove('hidden');
+            
+            try {
+                // Fetch 10 random questions from various topics
+                const response = await fetch(`/api/quick-play/${quickPlayDifficulty}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load quick play questions');
+                }
+                
+                questions = await response.json();
+                
+                if (questions.length === 0) {
+                    alert('No questions available for Quick Play. Try a regular quiz!');
+                    document.getElementById('loadingScreen').classList.add('hidden');
+                    document.getElementById('topicScreen').classList.remove('hidden');
+                    isQuickPlayMode = false;
+                    return;
+                }
+                
+                // Set up quiz state
+                currentTopic = 'quick_play';
+                currentDifficulty = quickPlayDifficulty;
+                currentQuestionIndex = 0;
+                score = 0;
+                answered = false;
+                startTime = Date.now();
+                
+                // Reset tracking
+                consecutiveCorrect = 0;
+                maxConsecutiveCorrect = 0;
+                questionsAnsweredInQuiz = 0;
+                shownMilestones.clear();
+                totalMilestonePoints = 0;
+                currentStreak = 0;
+                hintUsedThisQuestion = false;
+                updateHotStreakDisplay(0);
+                
+                // Show quiz
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('quizScreen').classList.remove('hidden');
+                document.body.classList.add('quiz-active');
+                
+                // Update header
+                document.getElementById('compactTopicTitle').textContent = '⚡ Quick Play';
+                
+                showQuestion();
+                
+            } catch (error) {
+                console.error('Quick Play error:', error);
+                alert('Could not start Quick Play. Please try again.');
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('topicScreen').classList.remove('hidden');
+                isQuickPlayMode = false;
+            }
+        }
+        
+        // === WEEKLY CHALLENGE SYSTEM ===
+        let weeklyChallenge = {
+            quizzesCompleted: 0,
+            highScoreCount: 0,
+            maxStreak: 0,
+            goals: [
+                { id: 'goal1', target: 5, current: 0, points: 50, type: 'quizzes' },
+                { id: 'goal2', target: 3, current: 0, points: 75, type: 'highscores' },
+                { id: 'goal3', target: 5, current: 0, points: 100, type: 'streak' }
+            ]
+        };
+        
+        async function loadWeeklyChallenge() {
+            try {
+                const response = await fetch('/api/weekly-challenge/status');
+                if (response.ok) {
+                    const data = await response.json();
+                    weeklyChallenge = data.challenge || weeklyChallenge;
+                }
+            } catch (e) {
+                console.log('Weekly challenge status not available');
+            }
+            updateWeeklyChallengeUI();
+        }
+        
+        function updateWeeklyChallengeUI() {
+            // Update progress bar
+            const completedGoals = weeklyChallenge.goals.filter(g => g.current >= g.target).length;
+            const progressPercent = (completedGoals / 3) * 100;
+            
+            // Update mini sidebar version
+            const progressBarMini = document.getElementById('challengeProgressBarMini');
+            const progressTextMini = document.getElementById('challengeProgressTextMini');
+            
+            if (progressBarMini) {
+                progressBarMini.style.width = progressPercent + '%';
+            }
+            if (progressTextMini) {
+                progressTextMini.textContent = `${completedGoals}/3 Goals`;
+            }
+            
+            // Update individual goals (mini version)
+            weeklyChallenge.goals.forEach((goal, index) => {
+                const goalEl = document.getElementById(`goal${index + 1}Mini`);
+                if (goalEl) {
+                    if (goal.current >= goal.target) {
+                        goalEl.classList.add('completed');
+                    }
+                }
+            });
+            
+            // Update timer
+            updateChallengeTimer();
+        }
+        
+        function updateChallengeTimer() {
+            const now = new Date();
+            const endOfWeek = new Date();
+            endOfWeek.setDate(now.getDate() + (7 - now.getDay())); // Next Sunday
+            endOfWeek.setHours(23, 59, 59, 999);
+            
+            const diff = endOfWeek - now;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            const timerStr = days > 0 ? `${days}d ${hours}h` : `${hours}h`;
+            
+            // Update mini version
+            const timerElMini = document.getElementById('challengeTimeLeftMini');
+            if (timerElMini) {
+                timerElMini.textContent = timerStr;
+            }
+        }
+        
+        // Update challenge progress after quiz completion
+        function updateChallengeProgress(quizScore, percentage, maxStreakAchieved) {
+            // Goal 1: Complete quizzes
+            weeklyChallenge.goals[0].current++;
+            
+            // Goal 2: Score 80%+
+            if (percentage >= 80) {
+                weeklyChallenge.goals[1].current++;
+            }
+            
+            // Goal 3: Get 5-streak
+            if (maxStreakAchieved >= 5) {
+                weeklyChallenge.goals[2].current = Math.max(weeklyChallenge.goals[2].current, maxStreakAchieved);
+            }
+            
+            updateWeeklyChallengeUI();
+            
+            // Save to server
+            fetch('/api/weekly-challenge/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    quizzes: weeklyChallenge.goals[0].current,
+                    highscores: weeklyChallenge.goals[1].current,
+                    max_streak: weeklyChallenge.goals[2].current
+                })
+            }).catch(e => console.log('Could not save challenge progress'));
+        }
+        
+        // === ENHANCED LEADERBOARD ===
+        let currentLeaderboardType = 'weekly';
+        let leaderboardExpanded = false;
+        let fullLeaderboardData = [];
+        
+        async function loadLeaderboard(type = 'weekly') {
+            currentLeaderboardType = type;
+            const listEl = document.getElementById('leaderboardListMini');
+            
+            if (!listEl) return;
+            
+            listEl.innerHTML = '<div class="text-center text-gray-400 py-2" style="font-size:11px;"><i class="fas fa-spinner fa-spin"></i></div>';
+            
+            try {
+                const response = await fetch(`/api/leaderboard/${type}`);
+                if (!response.ok) throw new Error('Failed to load');
+                
+                const data = await response.json();
+                fullLeaderboardData = data.leaderboard || [];
+                renderLeaderboardMini(fullLeaderboardData, data.my_position);
+            } catch (e) {
+                console.log('Leaderboard load error:', e);
+                listEl.innerHTML = '<div class="text-center text-gray-400 py-2" style="font-size:11px;">Could not load</div>';
+            }
+        }
+        
+        function renderLeaderboardMini(leaderboard, myPosition) {
+            const listEl = document.getElementById('leaderboardListMini');
+            const expandedEl = document.getElementById('leaderboardListExpanded');
+            if (!listEl) return;
+            
+            if (leaderboard.length === 0) {
+                listEl.innerHTML = '<div class="text-center text-gray-400 py-2" style="font-size:11px;">No data yet</div>';
+                return;
+            }
+            
+            // Get current user's guest code for highlighting
+            const myGuestCode = document.body.dataset.guestCode || '';
+            
+            // Render top 3
+            let topHtml = '';
+            leaderboard.slice(0, 3).forEach((player, index) => {
+                const rank = index + 1;
+                const isMe = player.guest_code === myGuestCode || player.is_current_user;
+                
+                let rankClass = rank === 1 ? 'gold' : (rank === 2 ? 'silver' : 'bronze');
+                let rankDisplay = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : '🥉');
+                let itemClass = `lb-mini-item top-${rank}${isMe ? ' is-me' : ''}`;
+                
+                topHtml += `
+                    <div class="${itemClass}">
+                        <span class="lb-mini-rank ${rankClass}">${rankDisplay}</span>
+                        <span class="lb-mini-name">${player.name || player.guest_code || 'Anon'}${isMe ? ' (You)' : ''}</span>
+                        <span class="lb-mini-score">${player.points || player.total_score || 0}</span>
+                    </div>
+                `;
+            });
+            
+            // If user is not in top 3 but we have their position, show it
+            const userInTop3 = leaderboard.slice(0, 3).some(p => p.is_current_user || p.guest_code === myGuestCode);
+            if (!userInTop3 && myPosition) {
+                topHtml += `
+                    <div class="lb-mini-divider">···</div>
+                    <div class="lb-mini-item is-me">
+                        <span class="lb-mini-rank">#${myPosition.rank}</span>
+                        <span class="lb-mini-name">${myPosition.name} (You)</span>
+                        <span class="lb-mini-score">${myPosition.points || 0}</span>
+                    </div>
+                `;
+            }
+            
+            listEl.innerHTML = topHtml;
+            
+            // Render expanded (4-20)
+            if (expandedEl && leaderboard.length > 3) {
+                let expandedHtml = '';
+                leaderboard.slice(3, 20).forEach((player, index) => {
+                    const rank = index + 4;
+                    const isMe = player.guest_code === myGuestCode || player.is_current_user;
+                    let itemClass = `lb-mini-item${isMe ? ' is-me' : ''}`;
+                    
+                    expandedHtml += `
+                        <div class="${itemClass}">
+                            <span class="lb-mini-rank">${rank}</span>
+                            <span class="lb-mini-name">${player.name || player.guest_code || 'Anon'}${isMe ? ' (You)' : ''}</span>
+                            <span class="lb-mini-score">${player.points || player.total_score || 0}</span>
+                        </div>
+                    `;
+                });
+                
+                // If user is not in top 20 but we have their position, show at bottom of expanded
+                const userInTop20 = leaderboard.some(p => p.is_current_user || p.guest_code === myGuestCode);
+                if (!userInTop20 && myPosition && myPosition.rank > 20) {
+                    expandedHtml += `
+                        <div class="lb-mini-divider">···</div>
+                        <div class="lb-mini-item is-me">
+                            <span class="lb-mini-rank">#${myPosition.rank}</span>
+                            <span class="lb-mini-name">${myPosition.name} (You)</span>
+                            <span class="lb-mini-score">${myPosition.points || 0}</span>
+                        </div>
+                    `;
+                }
+                
+                expandedEl.innerHTML = expandedHtml;
+            }
+        }
+        
+        function toggleLeaderboardExpand() {
+            leaderboardExpanded = !leaderboardExpanded;
+            const expandedEl = document.getElementById('leaderboardListExpanded');
+            const btn = document.querySelector('.leaderboard-expand-btn');
+            
+            if (expandedEl) {
+                if (leaderboardExpanded) {
+                    expandedEl.classList.remove('hidden');
+                    btn?.classList.add('expanded');
+                } else {
+                    expandedEl.classList.add('hidden');
+                    btn?.classList.remove('expanded');
+                }
+            }
+        }
+        
+        function switchLeaderboard(type, event) {
+            // Update tabs
+            document.querySelectorAll('.lb-tab-mini').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            loadLeaderboard(type);
+        }
+        
+        // Initialize Day 2 features
+        function initDay2Features() {
+            loadWeeklyChallenge();
+            loadLeaderboard('weekly');
+            console.log('📊 Day 2 features initialized: Quick Play, Weekly Challenge, Leaderboard');
+        }
+        
+        // ==================== END DAY 2 FEATURES ====================
+
         const iconMap = {
             'calculator': 'fa-calculator',
             'divide': 'fa-divide',
@@ -2476,6 +3963,8 @@
             await loadTopics();
             await loadProgress();
             await loadBadgeWidget(); // Load badge widget
+            initDay1Features(); // Initialize Day 1: Sound, Online Counter, Hot Streak
+            initDay2Features(); // Initialize Day 2: Quick Play, Weekly Challenge, Leaderboard
         };
 
         // Generate BLANK number line (for questions - no solution shown)
@@ -2689,13 +4178,24 @@
                 const container = document.getElementById('learningPathsContainer');
                 container.innerHTML = '';
 
-                // Iterate through strands in order
-                Object.entries(strands).forEach(([strandName, strandTopics], strandIndex) => {
+                // Sort strands: Junior Cycle first, Senior Cycle last
+                const sortedStrands = Object.entries(strands).sort((a, b) => {
+                    const aIsSenior = a[0].toLowerCase().includes('senior');
+                    const bIsSenior = b[0].toLowerCase().includes('senior');
+                    if (aIsSenior && !bIsSenior) return 1;  // a goes after b
+                    if (!aIsSenior && bIsSenior) return -1; // a goes before b
+                    return 0; // keep original order
+                });
+
+                // Iterate through strands in sorted order
+                sortedStrands.forEach(([strandName, strandTopics], strandIndex) => {
                     const info = strandInfo[strandName] || {
                         icon: '📚',
                         color: '#667eea',
                         description: 'Learn and master these topics'
                     };
+                    
+                    const isSeniorCycle = strandName.toLowerCase().includes('senior');
 
                     // Create strand card
                     const strandCard = document.createElement('div');
@@ -2706,7 +4206,7 @@
                     const header = document.createElement('div');
                     header.className = 'path-header';
                     header.innerHTML = `
-                        <div class="path-number" style="background: ${info.color}">${strandName.includes('Senior Cycle') ? 'Senior Cycle' : (strandName.includes('Senior Cycle') ? 'Senior Cycle' : 'Junior Cycle')}</div>
+                        <div class="path-number" style="background: ${info.color}">${isSeniorCycle ? 'Senior Cycle' : 'Junior Cycle'}</div>
                         <h3 class="path-title">${info.icon} ${strandName}</h3>
                         <p class="path-description">${info.description}</p>
                     `;
@@ -2989,6 +4489,9 @@
             currentStreak = 0;
             hintUsedThisQuestion = false;
             
+            // Reset hot streak display
+            updateHotStreakDisplay(0);
+            
             console.log('✅ Milestone and streak tracking reset for new quiz');
             
             // AVATAR: Store points before quiz for unlock detection (if function exists)
@@ -3088,8 +4591,8 @@
             }
         }
 
-        // Streak tracking for bonus points
-        let currentStreak = 0;
+        // Streak tracking for bonus points (currentStreak defined in Day 1 features above)
+        // let currentStreak = 0;  // REMOVED - duplicate declaration
         let hintUsedThisQuestion = false;
         let currentHintPenalty = 50;
 
@@ -3107,14 +4610,20 @@
             const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
             document.getElementById('compactProgressBar').style.width = progress + '%';
             
-            // Update streak badge in header
+            // Update streak badge in header (use new hot streak display)
             const streakBadge = document.getElementById('compactStreakBadge');
-            if (currentStreak >= 3) {
-                const multiplier = getStreakMultiplier();
-                streakBadge.innerHTML = `🔥 ${multiplier}x`;
-                streakBadge.classList.add('visible');
-            } else {
-                streakBadge.classList.remove('visible');
+            if (streakBadge) {
+                if (currentStreak >= 3) {
+                    const multiplier = getStreakMultiplier();
+                    streakBadge.innerHTML = `🔥 ${multiplier}x`;
+                    streakBadge.classList.add('visible');
+                } else {
+                    streakBadge.classList.remove('visible');
+                }
+            }
+            // Also update the new hot streak display
+            if (typeof updateHotStreakDisplay === 'function') {
+                updateHotStreakDisplay(currentStreak);
             }
 
             document.getElementById('questionText').innerHTML = question.question;
@@ -3293,6 +4802,12 @@
                 maxConsecutiveCorrect = Math.max(maxConsecutiveCorrect, consecutiveCorrect);
                 console.log(`✅ Correct! Streak: ${currentStreak}, Multiplier: ${getStreakMultiplier()}x`);
                 
+                // Play correct sound
+                playSound('correct');
+                
+                // Update hot streak display
+                updateHotStreakDisplay(currentStreak);
+                
                 // Check for "10 in a Row" milestone
                 if (consecutiveCorrect === 10 && !shownMilestones.has('ten_streak')) {
                     shownMilestones.add('ten_streak');
@@ -3309,6 +4824,12 @@
                 currentStreak = 0; // Reset streak on wrong answer
                 consecutiveCorrect = 0;
                 console.log(`❌ Incorrect. Streak reset.`);
+                
+                // Play incorrect sound
+                playSound('incorrect');
+                
+                // Update hot streak display
+                updateHotStreakDisplay(0);
             }
 
             // Check for "20 Questions Completed" milestone
@@ -3441,14 +4962,16 @@
             // Update compact header with new score
             document.getElementById('compactScoreBadge').textContent = `Score: ${score}/${questions.length}`;
             
-            // Update streak badge
+            // Update streak badge (with null check for new UI)
             const streakBadge = document.getElementById('compactStreakBadge');
-            if (currentStreak >= 3) {
-                const multiplier = getStreakMultiplier();
-                streakBadge.innerHTML = `🔥 ${multiplier}x`;
-                streakBadge.classList.add('visible');
-            } else {
-                streakBadge.classList.remove('visible');
+            if (streakBadge) {
+                if (currentStreak >= 3) {
+                    const multiplier = getStreakMultiplier();
+                    streakBadge.innerHTML = `🔥 ${multiplier}x`;
+                    streakBadge.classList.add('visible');
+                } else {
+                    streakBadge.classList.remove('visible');
+                }
             }
 
             // Legacy feedback (hidden but kept for compatibility)
@@ -3940,8 +5463,14 @@
                     <div class="dino-archive-grid">
                         ${data.attempts.map(attempt => `
                             <div class="dino-archive-card ${attempt.is_correct ? 'correct' : 'incorrect'}">
-                                <img src="${attempt.image_url}" alt="${attempt.correct_answer}" class="dino-archive-card-image" 
-                                     onerror="this.src='/static/images/placeholder-dino.png'">
+                                <div class="dino-archive-card-image-wrapper">
+                                    ${attempt.image_url ? `
+                                        <img src="${attempt.image_url}" alt="${attempt.correct_answer}" class="dino-archive-card-image" 
+                                             onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'dino-placeholder\\'><span>🦕</span><small>${attempt.correct_answer}</small></div>';">
+                                    ` : `
+                                        <div class="dino-placeholder"><span>🦕</span><small>${attempt.correct_answer}</small></div>
+                                    `}
+                                </div>
                                 <div class="dino-archive-card-body">
                                     <div class="dino-archive-card-answer">
                                         ${attempt.is_correct ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>'}
@@ -7722,6 +9251,54 @@ console.log('Tutorial Manager initialized');
         <div class="dino-archive-footer">
             <button onclick="closeDinoArchive()" class="bonus-close-btn">
                 Close Archive
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Day 2: Quick Play Modal -->
+<div id="quickPlayModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 transform transition-all">
+        <div class="text-center mb-6">
+            <div class="text-6xl mb-4">⚡</div>
+            <h2 class="text-2xl font-bold text-gray-800">Quick Play</h2>
+            <p class="text-gray-600 mt-2">10 rapid-fire questions from mixed topics!</p>
+        </div>
+        
+        <div class="bg-gradient-to-r from-orange-100 to-red-100 rounded-xl p-4 mb-6">
+            <h3 class="font-bold text-gray-800 mb-3">🎮 Rules:</h3>
+            <ul class="text-sm text-gray-700 space-y-2">
+                <li>• <strong>10 questions</strong> from random topics</li>
+                <li>• <strong>Mixed difficulties</strong> - mostly your level</li>
+                <li>• <strong>2x Points</strong> for all correct answers!</li>
+                <li>• <strong>Speed bonus</strong> - finish fast for extra points</li>
+            </ul>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select your base level:</label>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="setQuickPlayDifficulty('beginner')" class="quick-diff-btn p-3 rounded-lg border-2 border-gray-200 hover:border-orange-400 transition-all" data-diff="beginner">
+                    <div class="text-2xl">🌱</div>
+                    <div class="text-xs font-medium">Beginner</div>
+                </button>
+                <button onclick="setQuickPlayDifficulty('intermediate')" class="quick-diff-btn p-3 rounded-lg border-2 border-orange-400 bg-orange-50 transition-all" data-diff="intermediate">
+                    <div class="text-2xl">📚</div>
+                    <div class="text-xs font-medium">Intermediate</div>
+                </button>
+                <button onclick="setQuickPlayDifficulty('advanced')" class="quick-diff-btn p-3 rounded-lg border-2 border-gray-200 hover:border-orange-400 transition-all" data-diff="advanced">
+                    <div class="text-2xl">🚀</div>
+                    <div class="text-xs font-medium">Advanced</div>
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex gap-3">
+            <button onclick="closeQuickPlayModal()" class="flex-1 py-3 px-6 rounded-xl border-2 border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all">
+                Cancel
+            </button>
+            <button onclick="startQuickPlay()" class="flex-1 py-3 px-6 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold hover:from-orange-600 hover:to-red-600 transition-all">
+                ⚡ Start!
             </button>
         </div>
     </div>
